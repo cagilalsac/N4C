@@ -1,0 +1,289 @@
+﻿@inherits Microsoft.VisualStudio.Web.CodeGeneration.Templating.RazorTemplateBase
+@{
+if (@Model.NullableEnabled)
+{
+@:#nullable disable
+@:
+}
+}
+@using System.Collections.Generic;
+@using System.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Net;
+using N4C.App.Services;
+using N4C.App;
+using N4C.Controllers;
+@{
+    foreach (var namespaceName in Model.RequiredNamespaces)
+    {
+@:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Services.Models");
+@:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Domain");
+    }
+}
+
+// Generated from N4C Template.
+
+namespace @Model.ControllerNamespace
+{
+@{
+    string routePrefix;
+    if (String.IsNullOrEmpty(Model.AreaName))
+    {
+        routePrefix = Model.ControllerRootName;
+    }
+    else
+    {
+        routePrefix = Model.AreaName + "/" + Model.ControllerRootName;
+    }
+    var modelProperties = new List<string>();
+    foreach (var property in Model.ModelMetadata.Properties)
+    {
+        if (property.Scaffold)
+        {
+            modelProperties.Add(property.PropertyName);
+        }
+    }
+    var bindString = string.Join(",", modelProperties);
+    var contextTypeName = Model.ContextTypeName;
+    var entitySetName = Model.ModelMetadata.EntitySetName;
+    var entitySetVar = Model.EntitySetVariable ??
+        (String.IsNullOrEmpty(entitySetName)
+            ? entitySetName
+            : (entitySetName.Substring(0, length: 1).ToLowerInvariant() + entitySetName.Substring(1)));
+    var primaryKeyName = Model.ModelMetadata.PrimaryKeys[0].PropertyName;
+    var primaryKeyShortTypeName = Model.ModelMetadata.PrimaryKeys[0].ShortTypeName;
+    var primaryKeyType = Model.ModelMetadata.PrimaryKeys[0].TypeName;
+    var primaryKeyNullableTypeName = GetNullableTypeName(primaryKeyType, primaryKeyShortTypeName);
+    var lambdaVar = Model.ModelVariable[0];
+    var relatedProperties = new Dictionary<string, dynamic>();
+    foreach (var nav in Model.ModelMetadata.Navigations)
+    {
+        relatedProperties.Add(nav.AssociationPropertyName, nav);
+
+    }
+
+    var inlineIncludes = "";
+    foreach (var property in relatedProperties.Values)
+    {
+        inlineIncludes += string.Format("{0}                .Include({1} => {1}.{2})", Environment.NewLine, lambdaVar, property.AssociationPropertyName);
+    }
+
+    if (!string.IsNullOrEmpty(Model.AreaName))
+    {
+    @:@string.Format("[Area(\"{0}\")]", Model.AreaName)
+    }
+
+    var requestType = Model.ModelTypeName + "Request";
+    var responseType = Model.ModelTypeName + "Response";
+    var serviceAbstractType = "Service<" + Model.ModelTypeName + ", " + requestType + ", " + responseType + ">";
+    var requestVariable = Model.ModelVariable + "Request";
+    var serviceAbstractName = Model.ModelVariable + "Service";
+    var _serviceAbstractName = "_" + Model.ModelVariable + "Service";
+}
+    //[Authorize]
+    public class @Model.ControllerName : MvcController
+    {
+        // Service injections:
+        private readonly @serviceAbstractType @(_serviceAbstractName);
+@foreach (var relatedProperty in relatedProperties.Keys)
+{
+        @:private readonly Service<@relatedProperty.Substring(1), @(relatedProperty.Substring(1) + "Request"), @(relatedProperty.Substring(1) + "Response")> _@(relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service");
+}
+
+        /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+        //private readonly Service<{Entity}, {Entity}Request, {Entity}Response> _{Entity}Service;
+
+        public @(Model.ControllerName + "(" + serviceAbstractType + " " + serviceAbstractName)
+@foreach (var relatedProperty in relatedProperties.Keys)
+{
+            @:@(", Service<" + relatedProperty.Substring(1) + ", " + relatedProperty.Substring(1) + "Request, " + relatedProperty.Substring(1) + "Response> " + relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service")
+}
+
+            /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+            //, Service<{Entity}, {Entity}Request, {Entity}Response> {Entity}Service
+        )
+        {
+            @(_serviceAbstractName) = @serviceAbstractName;
+@foreach (var relatedProperty in relatedProperties.Keys)
+{
+            @:@("_" + relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service = " + relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service");
+}
+
+            /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+            //_{Entity}Service = {Entity}Service;
+        }
+
+        void SetViewData(string message = default, HttpStatusCode httpStatusCode = HttpStatusCode.OK, PageOrder pageOrder = default)
+        {
+@{
+            @:// Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
+    if (relatedProperties.Values.Any())
+    {
+            @:
+        foreach (var property in relatedProperties.Values)
+        {
+            @:ViewBag.@(property.ForeignKeyPropertyNames[0]) = new SelectList(_@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(2))Service.List().Result.Data, "Id", "Name");
+        }
+    }
+}           
+
+            /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+            //ViewBag.{Entity}Ids = new MultiSelectList(_{Entity}Service.List().Result.Data, "Id", "Name");
+
+            SetViewData(@(_serviceAbstractName).Culture, message, httpStatusCode, @(_serviceAbstractName).Title, pageOrder);
+        }
+
+        // GET: @routePrefix
+        //[AllowAnonymous]
+        public async Task<IActionResult> Index(PageOrder pageOrder)
+        {
+            // Get collection logic:
+            var result = pageOrder is null ? await @(_serviceAbstractName).List() : await @(_serviceAbstractName).List(pageOrder);
+            
+            SetViewData(result.Message, result.HttpStatusCode, pageOrder);
+            return View(result);
+        }
+
+        // GET: @routePrefix/Details/5
+        public async Task<IActionResult> Details(@primaryKeyShortTypeName id)
+        {
+            // Get item logic:
+            var result = await @(_serviceAbstractName).Item(id);
+
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View(result);
+        }
+
+        // GET: @routePrefix/Create
+        public IActionResult Create()
+        {
+            var result = @(_serviceAbstractName).ItemForCreate();
+            SetViewData();
+            return View(result.Data);
+        }
+
+        // POST: @routePrefix/Create
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(@requestType @requestVariable)
+        {
+            var result = @(_serviceAbstractName).Validate(@requestVariable, ModelState, "<br>");
+            if (result.Success)
+            {
+@{
+                @:// Insert item logic:
+                @:result = await @(_serviceAbstractName).Create(@requestVariable);
+                @:
+                @:if (result.Success)
+}  
+                {
+                    SetTempData(result.Message);
+                    return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+                }
+            }
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View(@requestVariable);
+        }
+
+        // GET: @routePrefix/Edit/5
+        public async Task<IActionResult> Edit(@primaryKeyShortTypeName id)
+        {
+            // Get item to edit logic:
+            var result = await @(_serviceAbstractName).ItemForEdit(id);
+
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View(result.Data);
+        }
+
+        // POST: @routePrefix/Edit
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(@requestType @requestVariable)
+        {
+            var result = @(_serviceAbstractName).Validate(@requestVariable, ModelState, "<br>");
+            if (result.Success)
+            {
+@{
+                @:// Update item logic:
+                @:result = await @(_serviceAbstractName).Update(@requestVariable);
+                @:
+                @:if (result.Success)
+}  
+                {
+                    SetTempData(result.Message);
+                    return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+                }
+            }
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View(@requestVariable);
+        }
+
+        // GET: @routePrefix/Delete/5
+        public async Task<IActionResult> Delete(@primaryKeyShortTypeName id)
+        {
+            // Get item to delete logic:
+            var result = await @(_serviceAbstractName).ItemForDelete(id);
+
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View(result);
+        }
+
+        // POST: @routePrefix/Delete
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(@requestType @requestVariable)
+        {
+            // Delete item logic:
+            var result = await @(_serviceAbstractName).Delete(@requestVariable);
+
+            SetTempData(result.Message, result.HttpStatusCode);         
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: @routePrefix/DeleteByAlertify/5
+        public async Task<IActionResult> DeleteByAlertify(@requestType @requestVariable)
+        {
+            // Delete item logic:
+            var result = await @(_serviceAbstractName).Delete(@requestVariable);
+
+            SetTempData(result.Message, result.HttpStatusCode);             
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    //[Route("[controller]")]
+    ////[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    //public class @(Model.ModelTypeName + "ServiceApiController") : ServiceApiController@("<" + Model.ModelTypeName + ", " + @requestType + ", " + @responseType + ">")
+    //{
+        //public @(Model.ModelTypeName + "ServiceApiController")(@(serviceAbstractType + " " + serviceAbstractName)) : base(@serviceAbstractName)
+        //{
+        //}
+    //}
+}
+@functions
+{
+    // This function converts the primary key short type name to its nullable equivalent when possible. This is required to make
+    // sure that an HTTP 400 error is thrown when the user tries to access the edit, delete, or details action with null values.
+    string GetNullableTypeName(string typeName, string shortTypeName)
+    {
+        // The exceptions are caught because if for any reason the type is user defined, then the short type name will be used.
+        // In that case the user will receive a server error if null is passed to the edit, delete, or details actions.
+        Type primaryKeyType = null;
+        try
+        {
+            primaryKeyType = Type.GetType(typeName);
+        }
+        catch
+        {
+        }
+        if (primaryKeyType != null && (!Microsoft.VisualStudio.Web.CodeGeneration.Templating.TypeUtilities.IsNullable(primaryKeyType) || IsGuid(typeName)))
+        {
+            return shortTypeName + "?";
+        }
+        return shortTypeName;
+    }
+
+    bool IsGuid(string typeName) {
+        return String.Equals("System.Guid", typeName, StringComparison.OrdinalIgnoreCase);
+    }
+}

@@ -1,0 +1,94 @@
+﻿@using N4C.App
+@using N4C.Extensions
+@using N4C
+
+@model Result<ProductResponse>
+
+@* Generated from N4C Template. *@
+@* ProductResponse namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var title = view?.Title;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var details = culture == Cultures.TR ? "Detayı" : "Details";
+    var edit = culture == Cultures.TR ? "Düzenle" : "Edit";
+    var delete = culture == Cultures.TR ? "Sil" : "Delete";
+    var backToList = culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    var deleteFile = culture == Cultures.TR ? "Dosya Sil" : "Delete File";
+    var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
+    var mainFileMessage = culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
+    var isAuthenticated = User.Identity.IsAuthenticated;
+    isAuthenticated = true;
+}
+@{
+    ViewData["Title"] = $"{title} {details}";
+}
+<partial name="_N4Cexception" />
+@if (Model is not null && Model.Data is not null)
+{
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" />
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Name, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Name)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data._UnitPrice, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data._UnitPrice)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.StockAmount, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.StockAmount)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data._ExpirationDate, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data._ExpirationDate)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Category, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Category)
+        </div>
+    </div>
+
+@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
+    
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            <b>@Html.DisplayNameFor(model => model.Data.Stores, culture)</b>
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Stores)
+        </div>
+    </div>
+   
+
+    <hr /> 
+@if (isAuthenticated)
+{
+    <a asp-action="Edit" asp-route-id="@Model.Data.Id">@edit</a>@:&nbsp;|&nbsp;
+    <a asp-action="Delete" asp-route-id="@Model.Data.Id">@delete</a>@:&nbsp;|&nbsp;
+}
+    <a asp-action="Index" asp-route-session="true">@backToList</a>
+</div>
+}

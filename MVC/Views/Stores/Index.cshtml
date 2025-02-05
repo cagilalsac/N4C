@@ -1,0 +1,115 @@
+﻿@using N4C.App
+@using N4C.Extensions
+@using N4C
+
+@model Result<List<StoreResponse>>
+
+@* Generated from N4C Template. *@
+@* StoreResponse namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var title = view?.Title;
+    var pageOrder = view.PageOrder is null ? null : view.PageOrder as PageOrder;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var list = culture == Cultures.TR ? "Listesi" : "List";
+    var details = culture == Cultures.TR ? "Detay" : "Details";
+    var create = culture == Cultures.TR ? "Yeni" : "Create";
+    var edit = culture == Cultures.TR ? "Düzenle" : "Edit";
+    var delete = culture == Cultures.TR ? "Sil" : "Delete";
+    var export = culture == Cultures.TR ? "Excel'e Aktar" : "Export to Excel";
+    var isAuthenticated = User.Identity.IsAuthenticated;
+    isAuthenticated = true;
+}
+@{
+    ViewData["Title"] = $"{title} {list}";
+}
+<partial name="_N4Cexception" />
+@if (Model is not null && Model.Data is not null)
+{
+<form asp-action="Index" autocomplete="off" id="form">
+    <div class="@containerDivClass">
+        <div class="row">
+            <div class="col-10">
+                <partial name="_N4Cmessage" />
+            </div>
+            <div class="col-2 text-end">
+            @if (isAuthenticated)
+            {
+                <a asp-action="Export">@export</a>
+                @:&nbsp;|&nbsp;
+                <a asp-action="Create">@create</a>
+            }
+            </div>
+        </div>
+        @if (Model.Data.Any())
+        {
+        if (pageOrder is not null)
+        {
+        <partial name="_N4CpageOrder" model="pageOrder" />  
+        }
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-secondary">
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().Name, culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First()._Virtual, culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().ProductsCount, culture)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+		        @foreach (var item in Model.Data) {
+				<tr>
+					<td>
+						@Html.Raw(item.Name)
+					</td>
+					<td>
+						@Html.Raw(item._Virtual)
+					</td>
+                    <td>
+                        @Html.Raw(item.ProductsCount)
+                    </td>
+					<td class="text-end w-25">
+                    @if (isAuthenticated)
+                    {
+						<a asp-action="Details" asp-route-id="@item.Id">@details</a>@:&nbsp;|&nbsp;
+						<a asp-action="Edit" asp-route-id="@item.Id">@edit</a>@:&nbsp;|&nbsp;
+                        <a href="#" onclick="deleteRecord(@item.Id);">@delete</a>
+                    }
+					</td>
+				</tr>
+		        }
+            </tbody>
+        </table>
+        }
+    </div>
+</form>
+}
+
+@section Scripts {
+    <partial name="_N4Calertify" />
+    @if (pageOrder is not null)
+    {
+    <script>
+        $(function () {
+            $(document).on('change', '.pagenumber', function () {
+                $('#form').submit();
+            });
+            $(document).on('change', '.recordsperpagecount', function () {
+                $('.pagenumber').val('1');
+                $('#form').submit();
+            });
+            $(document).on('change', '.orderexpression', function () {
+                $('#form').submit();
+            });
+        });
+    </script>
+    }
+}
