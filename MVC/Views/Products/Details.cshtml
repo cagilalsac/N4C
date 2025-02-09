@@ -48,6 +48,14 @@
     </div>
     <div class="row mb-3">
         <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data._UnitPriceText, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data._UnitPriceText)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
             @Html.DisplayNameFor(model => model.Data.StockAmount, culture)
         </div>
         <div class="col-10">
@@ -70,6 +78,59 @@
             @Html.Raw(Model.Data.Category)
         </div>
     </div>
+    <hr />
+    <div style="@filesStyle">
+        <div class="row mb-3">
+            <div class="col-2 fw-bold">
+                @Html.DisplayNameFor(model => model.Data.MainFile, culture)
+            </div>
+            @if (string.IsNullOrWhiteSpace(Model.Data.MainFile))
+            {
+            <div class="col-4">
+                <span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
+            </div>
+            }
+            else
+            {
+            <div class="col-4">
+                <span class="text-danger mainfilemessage"></span>
+                <br />
+                <a asp-action="Download" asp-route-path="@Model.Data.MainFile"><img src="@Model.Data.MainFile" class="img-fluid" /></a>
+            </div>
+            <div class="col-6 text-end pe-12">
+                <a asp-action="DeleteFile" asp-route-id="@Model.Data.Id" asp-route-path="@Model.Data.MainFile" class="deletemainfile">@deleteFile</a>
+            </div>
+            }
+        </div>
+        <hr />
+        <div class="row mb-3">
+            <div class="col-2 fw-bold">
+                @Html.DisplayNameFor(model => model.Data.OtherFiles, culture)
+            </div>
+            <div class="col-10">
+            @if (Model.Data.OtherFiles is not null && Model.Data.OtherFiles.Any())
+            {
+            foreach (var otherFile in Model.Data.OtherFiles)
+            {
+                <div class="row">
+                    <div class="col-4">
+                        <a asp-action="Download" asp-route-path="@otherFile"><img src="@otherFile" class="img-fluid" /></a>
+                        <input type="hidden" value="@otherFile" class="otherfiles" />
+                    </div>
+                    <div class="col-8 text-end pe-12">
+                        <a asp-action="DeleteFile" asp-route-id="@Model.Data.Id" asp-route-path="@otherFile">@deleteFile</a>
+                    </div>
+                </div>
+                <hr />
+            }
+            }
+            else
+            {
+                <span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
+            }
+            </div>
+        </div> 
+    </div>
 
 @* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
     
@@ -82,7 +143,6 @@
         </div>
     </div>
    
-
     <hr /> 
 @if (isAuthenticated)
 {
@@ -91,4 +151,25 @@
 }
     <a asp-action="Index" asp-route-session="true">@backToList</a>
 </div>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('.deletemainfile').click(function (event) {
+                var preventEvent = false;
+                if ($('.mainfile').val() != '') {
+                    $('.otherfiles').each(function () {
+                        if ($(this).val() != '') {
+                            preventEvent = true;
+                        }
+                    });
+                }
+                if (preventEvent) {
+                    event.preventDefault();
+                    $('.mainfilemessage').text('@Html.Raw(mainFileMessage)');
+                }
+            });
+        });
+    </script>
 }

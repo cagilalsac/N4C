@@ -9,11 +9,16 @@ namespace APP.Services.Models
         [DisplayName("Adı")]
         public string Name { get; set; }
 
+        [ExcelIgnore]
         public bool Virtual { get; set; }
 
         [DisplayName("Sanal")]
         [JsonIgnore]
+        [ExcelIgnore]
         public string _Virtual { get; set; }
+
+        [JsonIgnore]
+        public string _IsVirtual { get; set; }
 
         [DisplayName("Ürün Sayısı")]
         [JsonIgnore]
@@ -21,6 +26,7 @@ namespace APP.Services.Models
 
         [DisplayName("Ürünler")]
         [JsonIgnore]
+        [ExcelIgnore]
         public string Products { get; set; }
     }
 }

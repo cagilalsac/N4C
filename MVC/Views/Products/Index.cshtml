@@ -37,7 +37,7 @@
             <div class="col-2 text-end">
             @if (isAuthenticated)
             {
-                <a asp-action="Export">@export</a>
+                <a asp-action="ExportToExcel">@export</a>
                 @:&nbsp;|&nbsp;
                 <a asp-action="Create">@create</a>
             }
@@ -67,6 +67,9 @@
                     <th>
                         @Html.DisplayNameFor(model => model.Data.First().Category, culture)
                     </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().MainFile, culture)
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -88,6 +91,16 @@
 					<td>
 						@Html.Raw(item.Category)
 					</td>
+                    <td style="width:10%;">
+                        @if (string.IsNullOrWhiteSpace(item.MainFile))
+                        {
+                            <span><i class="bx bx-image" style="font-size:x-large;"></i></span>
+                        }
+                        else
+                        {
+                            <a asp-action="Download" asp-route-path="@item.MainFile"><img src="@item.MainFile" class="img-thumbnail" /></a>
+                        }
+                    </td>   
 					<td class="text-end w-25">
                     @if (isAuthenticated)
                     {

@@ -284,11 +284,11 @@ namespace MVC.Controllers
 
                 _db.SaveChanges();
 
-                //var files = Directory.GetFiles(Path.Combine("wwwroot", "files"));
-                //foreach (var file in files)
-                //{
-                //    System.IO.File.Delete(file);
-                //}
+                var files = Directory.GetFiles(Path.Combine("wwwroot", "files"));
+                foreach (var file in files)
+                {
+                    System.IO.File.Delete(file);
+                }
 
                 SetTempData("Database seed successful.");
             }

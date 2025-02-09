@@ -16,9 +16,6 @@
     var question = culture == Cultures.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
     var save = culture == Cultures.TR ? "Evet" : "Yes";
     var backToList = culture == Cultures.TR ? "Hayır" : "No";
-    var deleteFile = culture == Cultures.TR ? "Dosya Sil" : "Delete File";
-    var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
-    var mainFileMessage = culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
 }
 @{
     ViewData["Title"] = $"{title} {delete}";
@@ -44,19 +41,6 @@
             @Html.Raw(Model.Data.Description)
         </div>
     </div>
-
-@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
-    @*
-    <div class="row mb-3">
-        <div class="col-2 fw-bold">
-            <b>@Html.DisplayNameFor(model => model.Data.{Entity}s, culture)</b>
-        </div>
-        <div class="col-10">
-            @Html.Raw(Model.Data.{Entity}s)
-        </div>
-    </div>
-    *@
-
     <hr />
     <h5 class="text-danger">@question</h5>
     <form asp-action="Delete">

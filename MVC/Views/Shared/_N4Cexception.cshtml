@@ -8,13 +8,13 @@
 }
 @if (view is not null && view.HttpStatusCode == HttpStatusCode.InternalServerError)
 {
-	<p class="text-danger">
+	<p class="text-danger ps-6">
 		@Html.Raw(view.Message)
 	</p>
 }
 @if (!string.IsNullOrWhiteSpace(message) && httpStatusCode == (int)HttpStatusCode.InternalServerError)
 {
-	<p class="text-danger">
+	<p class="text-danger ps-6">
 		@Html.Raw(message)
 	</p>
 }

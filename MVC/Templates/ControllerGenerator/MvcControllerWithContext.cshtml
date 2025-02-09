@@ -125,13 +125,13 @@ namespace @Model.ControllerNamespace
             @:
         foreach (var property in relatedProperties.Values)
         {
-            @:ViewBag.@(property.ForeignKeyPropertyNames[0]) = new SelectList(_@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(2))Service.List().Result.Data, "Id", "Name");
+            @:ViewBag.@(property.ForeignKeyPropertyNames[0]) = new SelectList(_@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(2))Service.GetList().Result.Data, "Id", "Name");
         }
     }
 }           
 
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-            //ViewBag.{Entity}Ids = new MultiSelectList(_{Entity}Service.List().Result.Data, "Id", "Name");
+            //ViewBag.{Entity}Ids = new MultiSelectList(_{Entity}Service.GetList().Result.Data, "Id", "Name");
 
             SetViewData(@(_serviceAbstractName).Culture, message, httpStatusCode, @(_serviceAbstractName).Title, pageOrder);
         }
@@ -141,7 +141,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Index(PageOrder pageOrder)
         {
             // Get collection logic:
-            var result = pageOrder is null ? await @(_serviceAbstractName).List() : await @(_serviceAbstractName).List(pageOrder);
+            var result = pageOrder is null ? await @(_serviceAbstractName).GetList() : await @(_serviceAbstractName).GetList(pageOrder);
             
             SetViewData(result.Message, result.HttpStatusCode, pageOrder);
             return View(result);
@@ -151,7 +151,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Details(@primaryKeyShortTypeName id)
         {
             // Get item logic:
-            var result = await @(_serviceAbstractName).Item(id);
+            var result = await @(_serviceAbstractName).GetItem(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result);
@@ -160,7 +160,7 @@ namespace @Model.ControllerNamespace
         // GET: @routePrefix/Create
         public IActionResult Create()
         {
-            var result = @(_serviceAbstractName).ItemForCreate();
+            var result = @(_serviceAbstractName).GetItemForCreate();
             SetViewData();
             return View(result.Data);
         }
@@ -191,7 +191,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Edit(@primaryKeyShortTypeName id)
         {
             // Get item to edit logic:
-            var result = await @(_serviceAbstractName).ItemForEdit(id);
+            var result = await @(_serviceAbstractName).GetItemForEdit(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result.Data);
@@ -223,7 +223,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Delete(@primaryKeyShortTypeName id)
         {
             // Get item to delete logic:
-            var result = await @(_serviceAbstractName).ItemForDelete(id);
+            var result = await @(_serviceAbstractName).GetItemForDelete(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result);
@@ -248,6 +248,29 @@ namespace @Model.ControllerNamespace
 
             SetTempData(result.Message, result.HttpStatusCode);             
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> DeleteFile(@primaryKeyShortTypeName id, string path = null)
+        {
+            // Delete file logic:
+            var result = await @("_" + serviceAbstractName).DeleteFiles(id, path);
+
+            SetTempData(result.Message, result.HttpStatusCode); 
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        public async Task ExportToExcel()
+        {
+            await @("_" + serviceAbstractName).GetExcel();
+        }
+
+        public IActionResult Download(string path)
+        {
+            var result = @("_" + serviceAbstractName).GetFile(path);
+            if (result.Success)
+                return File(result.Data.Stream, result.Data.ContentType, result.Data.Name);
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View("_N4Cmessage");
         }
     }
 

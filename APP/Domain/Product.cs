@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace APP.Domain
 {
-    public class Product : Entity, IModified
+    public class Product : Entity, IModified, IFile
     {
         [Required]
         [StringLength(150)]
@@ -36,5 +36,8 @@ namespace APP.Domain
         public string CreatedBy { get; set; }
         public DateTime? UpdateDate { get; set; }
         public string UpdatedBy { get; set; }
+
+        public string MainFile { get; set; }
+        public List<string> OtherFiles { get; set; }
     }
 }

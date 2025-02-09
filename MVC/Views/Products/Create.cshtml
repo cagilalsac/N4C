@@ -65,6 +65,19 @@
                 <validation asp-for="CategoryId" asp-culture="@culture" class="text-danger"></validation>
 			</div>
         </div>
+        <div class="row mb-3">
+            <displayname asp-for="MainFormFile" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	        <div class="col-10">
+	            <input asp-for="MainFormFile" class="form-control mainfile" type="file" />
+                <span class="text-danger mainfilemessage"></span>
+	        </div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="OtherFormFiles" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+            <div class="col-10">
+                <input asp-for="OtherFormFiles" class="form-control otherfiles" type="file" multiple />
+            </div>
+        </div>
 
 @* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
         
@@ -76,7 +89,6 @@
 	        </div>
         </div>
        
-
         <hr />  
         <div class="row mb-3">
 			<div class="offset-2 col-10">
@@ -92,5 +104,15 @@
 
 @section Scripts {
     <partial name="_N4CdateTimePicker" />
+    <script>
+        $(function () {
+            $('button[type="submit"]').click(function (event) {
+                if ($('.otherfiles').val() && !$('.mainfile').val()) {
+                    event.preventDefault();
+                    $('.mainfilemessage').text('@Html.Raw(mainFileMessage)');
+                }
+            });
+        });
+    </script>
     <partial name="_N4Cselect2" />
 }

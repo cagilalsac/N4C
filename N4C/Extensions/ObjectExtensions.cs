@@ -16,18 +16,18 @@ namespace N4C.Extensions
             return instance is null ? typeof(T).GetProperties().ToList() : instance.GetType().GetProperties().ToList();
         }
 
-        public static Property GetProperty<T>(string propertyName, bool includeIgnored = true, T instance = default) where T : class, new()
+        public static Property GetProperty<T>(string propertyName, bool includeExcelIgnored = true, T instance = default) where T : class, new()
         {
             var displayName = string.Empty;
-            bool ignoreAttribute = false;
+            bool excelIgnoreAttribute = false;
             var propertyInfo = GetPropertyInfo(propertyName, instance);
             if (propertyInfo is not null)
             {
                 var customAttributes = propertyInfo.GetCustomAttributes().ToList();
                 if (customAttributes is not null)
                 {
-                    ignoreAttribute = customAttributes.Any(customAttribute => customAttribute.GetType() == typeof(Attributes.IgnoreAttribute));
-                    if (!ignoreAttribute)
+                    excelIgnoreAttribute = customAttributes.Any(customAttribute => customAttribute.GetType() == typeof(Attributes.ExcelIgnoreAttribute));
+                    if (!excelIgnoreAttribute)
                     {
                         foreach (var customAttribute in customAttributes)
                         {
@@ -45,7 +45,7 @@ namespace N4C.Extensions
                     }
                 }
             }
-            if (propertyInfo is null || (ignoreAttribute && !includeIgnored))
+            if (propertyInfo is null || (excelIgnoreAttribute && !includeExcelIgnored))
                 return null;
             return new Property(propertyInfo.Name, instance is not null ? propertyInfo.GetValue(instance) : null, displayName);
         }
@@ -56,7 +56,7 @@ namespace N4C.Extensions
             return GetProperty<T>(memberExpression.Member.Name);
         }
 
-        public static List<Property> GetProperties<T>(bool includeIgnored = false) where T : class, new()
+        public static List<Property> GetProperties<T>(bool includeExcelIgnored = false) where T : class, new()
         {
             List<Property> properties = null;
             Property property;
@@ -66,7 +66,7 @@ namespace N4C.Extensions
                 properties = new List<Property>();
                 foreach (var propertyInfoItem in propertyInfoList)
                 {
-                    property = GetProperty<T>(propertyInfoItem.Name, includeIgnored);
+                    property = GetProperty<T>(propertyInfoItem.Name, includeExcelIgnored);
                     if (property is not null)
                         properties.Add(property);
                         

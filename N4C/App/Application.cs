@@ -17,7 +17,7 @@ namespace N4C.App
         public string Successful { get; private set; }
         public string Exception { get; private set; }
 
-        protected string RecordNotFound { get; private set; }
+        protected string NotFound { get; set; }
 
         private string _culture;
         public string Culture
@@ -31,15 +31,17 @@ namespace N4C.App
                 Failed = _culture == Cultures.TR ? "İşlem gerçekleştirilemedi!" : "Operation failed!";
                 Successful = _culture == Cultures.TR ? "İşlem başarıyla gerçekleştirildi." : "Operation successful.";
                 Exception = _culture == Cultures.TR ? "İşlem sırasında hata meydana geldi!" : "An exception occurred during the operation!";
-                RecordNotFound = _culture == Cultures.TR ? "Kayıt bulunamadı!" : "Record not found!";
+                NotFound = _culture == Cultures.TR ? "Kayıt bulunamadı!" : "Record not found!";
             }
         }
 
         protected HttpService HttpService { get; }
+        protected ILogger<Application> Logger { get; }
 
-        public Application(HttpService httpService)
+        public Application(HttpService httpService, ILogger<Application> logger)
         {
             HttpService = httpService;
+            Logger = logger;
             Culture = HttpService.GetCookie(nameof(Culture)) ?? Settings.Culture;
         }
 
@@ -63,8 +65,8 @@ namespace N4C.App
         public Result Error(HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest)
         {
             return new Result(httpStatusCode,
-                httpStatusCode == HttpStatusCode.InternalServerError ? $"{Exception}" :
-                httpStatusCode == HttpStatusCode.NotFound ? $"{RecordNotFound}" : $"{Failed}");
+                httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
+                httpStatusCode == HttpStatusCode.NotFound ? NotFound : Failed);
         }
 
         public Result Error(string message)
@@ -91,8 +93,8 @@ namespace N4C.App
         public Result<TData> Error<TData>(TData data, HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest)
         {
             return new Result<TData>(httpStatusCode, data,
-                httpStatusCode == HttpStatusCode.InternalServerError ? $"{Exception}" :
-                httpStatusCode == HttpStatusCode.NotFound ? $"{RecordNotFound}" : $"{Failed}");
+                httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
+                httpStatusCode == HttpStatusCode.NotFound ? NotFound : Failed);
         }
 
         public Result<TData> Error<TData>(TData data, string message)
@@ -103,22 +105,37 @@ namespace N4C.App
                 message += "!";
             return new Result<TData>(HttpStatusCode.BadRequest, data, message);
         }
+
+        public Result<TData> Error<TData>(TData data, HttpStatusCode httpStatusCode, string message)
+        {
+            if (!message.StartsWith(Failed))
+                message = $"{Failed} {message}";
+            if (!message.EndsWith("!"))
+                message += "!";
+            return new Result<TData>(httpStatusCode, data,
+                httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
+                httpStatusCode == HttpStatusCode.NotFound ? NotFound : message);
+        }
     }
 
     public abstract class Application<TEntity, TRequest, TResponse> : Application, IDisposable
         where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
-        private PropertyInfo EntityGuidProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(Entity.Guid));
-        private PropertyInfo EntityDeletedProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.Deleted));
-        private PropertyInfo EntityCreateDateProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.CreateDate));
-        private PropertyInfo EntityCreatedByProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.CreatedBy));
-        private PropertyInfo EntityUpdateDateProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.UpdateDate));
-        private PropertyInfo EntityUpdatedByProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.UpdatedBy));
+        private PropertyInfo GuidProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(Entity.Guid));
+        private PropertyInfo DeletedProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.Deleted));
+        private PropertyInfo CreateDateProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.CreateDate));
+        private PropertyInfo CreatedByProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.CreatedBy));
+        private PropertyInfo UpdateDateProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.UpdateDate));
+        private PropertyInfo UpdatedByProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.UpdatedBy));
+        private PropertyInfo MainFileProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IFile.MainFile));
+        private PropertyInfo OtherFilesProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IFile.OtherFiles));
 
-        private bool HasGuid => EntityGuidProperty is not null;
-        private bool HasDeleted => EntityDeletedProperty is not null;
-        private bool HasModified => EntityCreateDateProperty is not null && EntityCreatedByProperty is not null &&
-            EntityUpdateDateProperty is not null && EntityUpdatedByProperty is not null;
+        protected bool HasFile => MainFileProperty is not null && OtherFilesProperty is not null;
+
+        private bool HasGuid => GuidProperty is not null;
+        private bool HasDeleted => DeletedProperty is not null;
+        private bool HasModified => CreateDateProperty is not null && CreatedByProperty is not null &&
+            UpdateDateProperty is not null && UpdatedByProperty is not null;
 
         private bool RelationalEntitiesFound { get; set; }
         private List<string> UniqueProperties { get; set; }
@@ -147,14 +164,13 @@ namespace N4C.App
             }
         }
 
+        protected FileService FileService { get; set; }
+
         private readonly IDb _db;
 
-        protected ILogger<Application> Logger { get; }
-
-        protected Application(IDb db, HttpService httpService, ILogger<Application> logger) : base(httpService)
+        protected Application(IDb db, HttpService httpService, ILogger<Application> logger) : base(httpService, logger)
         {
             _db = db;
-            Logger = logger;
             UniqueProperties = ["Name", "UserName", "Title"];
             MapperProfile = new MapperProfile();
             Collation = "Turkish_CI_AS";
@@ -191,7 +207,7 @@ namespace N4C.App
                 mapperProfile.Invoke(MapperProfile);
             var query = _db.Set<TEntity>().AsNoTracking();
             if (HasDeleted)
-                query = query.Where(entity => EF.Property<bool>(entity, EntityDeletedProperty.Name) == false);
+                query = query.Where(entity => EF.Property<bool>(entity, DeletedProperty.Name) == false);
             return query;
         }
 
@@ -208,24 +224,35 @@ namespace N4C.App
             }
         }
 
-        public async Task<Result<List<TResponse>>> List(CancellationToken cancellationToken = default)
+        public async Task<Result<List<TResponse>>> GetList(CancellationToken cancellationToken = default)
         {
             List<TResponse> list = null;
             try
             {
                 list = await Data().ProjectTo<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
                 if (list.Count > 0)
+                {
+                    if (HasFile)
+                    {
+                        FileService = new FileService(HttpService, Logger);
+                        foreach (var item in list)
+                        {
+                            if (item is IFileResponse)
+                                FileService.UpdateOtherFiles((item as IFileResponse).OtherFiles);
+                        }
+                    }
                     return Success(list, $"{list.Count} {RecordsFound}");
+                }
                 return Error(list, HttpStatusCode.NotFound);
             }
             catch (Exception exception)
             {
-                Logger.LogError($"ApplicationException: {GetType().Name}.List(): {exception.Message}");
+                Logger.LogError($"ApplicationException: {GetType().Name}.GetList(): {exception.Message}");
                 return Error(list, HttpStatusCode.InternalServerError);
             }
         }
 
-        public async Task<Result<TResponse>> Item(int id, CancellationToken cancellationToken = default)
+        public async Task<Result<TResponse>> GetItem(int id, CancellationToken cancellationToken = default)
         {
             TResponse item = null;
             try
@@ -233,11 +260,16 @@ namespace N4C.App
                 item = await Data().ProjectTo<TEntity, TResponse>(MapperProfile).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 if (item is null)
                     return Error(item, HttpStatusCode.NotFound);
+                if (HasFile && item is IFileResponse)
+                {
+                    FileService = new FileService(HttpService, Logger);
+                    FileService.UpdateOtherFiles((item as IFileResponse).OtherFiles);
+                }
                 return Success(item, $"1 {RecordsFound}");
             }
             catch (Exception exception)
             {
-                Logger.LogError($"ApplicationException: {GetType().Name}.Item(Id = {id}): {exception.Message}");
+                Logger.LogError($"ApplicationException: {GetType().Name}.GetItem(Id = {id}): {exception.Message}");
                 return Error(item, HttpStatusCode.InternalServerError);
             }
         }
@@ -307,6 +339,9 @@ namespace N4C.App
             try
             {
                 var entity = request.Map<TRequest, TEntity>(MapperProfile).Trim();
+                var fileResult = CreateFiles(request, entity);
+                if (!fileResult.Success)
+                    return fileResult;
                 if (HasGuid)
                 {
                     entity.Guid = Guid.NewGuid().ToString();
@@ -345,6 +380,9 @@ namespace N4C.App
                 if (entity is null)
                     return Error(request, HttpStatusCode.NotFound);
                 entity = request.Map(MapperProfile, entity).Trim();
+                var fileResult = UpdateFiles(request, entity);
+                if (!fileResult.Success)
+                    return fileResult;
                 if (HasModified)
                 {
                     (entity as IModified).UpdateDate = DateTime.Now;
@@ -395,6 +433,9 @@ namespace N4C.App
                 }
                 else
                 {
+                    var fileResult = DeleteFiles(request, entity);
+                    if (!fileResult.Success)
+                        return fileResult;
                     _db.Set<TEntity>().Remove(entity);
                 }
                 if (save)
@@ -423,20 +464,16 @@ namespace N4C.App
                     {
                         case EntityState.Modified:
                             if (HasGuid)
-                            {
-                                entityEntry.Property(EntityGuidProperty.Name).IsModified = false;
-                            }
+                                entityEntry.Property(GuidProperty.Name).IsModified = false;
                             if (HasModified)
                             {
-                                entityEntry.Property(EntityCreateDateProperty.Name).IsModified = false;
-                                entityEntry.Property(EntityCreatedByProperty.Name).IsModified = false;
+                                entityEntry.Property(CreateDateProperty.Name).IsModified = false;
+                                entityEntry.Property(CreatedByProperty.Name).IsModified = false;
                             }
                             break;
                         case EntityState.Deleted:
                             if (HasGuid && HasDeleted)
-                            {
-                                entityEntry.Property(EntityGuidProperty.Name).IsModified = false;
-                            }
+                                entityEntry.Property(GuidProperty.Name).IsModified = false;
                             break;
                     }
                 }
@@ -448,6 +485,163 @@ namespace N4C.App
                 Logger.LogError($"ApplicationException: {GetType().Name}.Save(): {exception.Message}");
                 return Error(HttpStatusCode.InternalServerError);
             }
+        }
+
+        protected Result<TRequest> CreateFiles(TRequest request, TEntity entity)
+        {
+            if (HasFile && request is IFileRequest)
+            {
+                FileService = new FileService(HttpService, Logger);
+                var fileRequest = request as IFileRequest;
+                var validationResult = FileService.ValidateOtherFiles(fileRequest?.OtherFormFiles);
+                if (validationResult.Success)
+                {
+                    var mainFileResult = FileService.Create(fileRequest.MainFormFile);
+                    if (mainFileResult.Success)
+                    {
+                        var fileEntity = entity as IFile;
+                        fileEntity.MainFile = mainFileResult.Data.MainFile;
+                        var otherFilesResult = FileService.Create(fileRequest.OtherFormFiles);
+                        if (otherFilesResult.Success)
+                            fileEntity.OtherFiles = FileService.GetOtherFiles(otherFilesResult.Data, 1);
+                        else
+                            return Error(request, otherFilesResult.HttpStatusCode, otherFilesResult.Message);
+                    }
+                    else
+                    {
+                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                    }
+                }
+            }
+            return Success(request);
+        }
+
+        protected Result<TRequest> UpdateFiles(TRequest request, TEntity entity = null)
+        {
+            if (HasFile)
+            {
+                FileService = new FileService(HttpService, Logger);
+                if (entity is null)
+                    entity = _db.Set<TEntity>().Find(request.Id);
+                if (entity is null)
+                {
+                    return Error(request, NotFound);
+                }
+                else
+                {
+                    var fileRequest = request as IFileRequest;
+                    var fileEntity = entity as IFile;
+                    var validationResult = FileService.ValidateOtherFiles(fileRequest?.OtherFormFiles, fileEntity.OtherFiles);
+                    if (validationResult.Success)
+                    {
+                        var mainFileResult = FileService.Update(fileRequest.MainFormFile, fileEntity.MainFile);
+                        if (mainFileResult.Success)
+                        {
+                            fileEntity.MainFile = mainFileResult.Data.MainFile;
+                            var orderInitialValue = 1;
+                            if (fileEntity.OtherFiles is not null && fileEntity.OtherFiles.Any())
+                            {
+                                var lastOtherFile = fileEntity.OtherFiles.Order().Last();
+                                orderInitialValue = FileService.GetFileOrder(lastOtherFile) + 1;
+                            }
+                            var otherFilesResult = FileService.Create(fileRequest.OtherFormFiles);
+                            if (otherFilesResult.Success)
+                            {
+                                if (otherFilesResult.Data is not null && otherFilesResult.Data.Any())
+                                    fileEntity.OtherFiles = FileService.GetOtherFiles(otherFilesResult.Data, orderInitialValue);
+                            }
+                            else
+                            {
+                                return Error(request, otherFilesResult.HttpStatusCode, otherFilesResult.Message);
+                            }
+                        }
+                        else
+                        {
+                            return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                        }
+                    }
+                }
+            }
+            return Success(request);
+        }
+
+        protected Result<TRequest> DeleteFiles(TRequest request, TEntity entity, string filePath = null)
+        {
+            Result<FileResponse> mainFileResult;
+            Result<List<FileResponse>> otherFilesResult;
+            if (HasFile)
+            {
+                FileService = new FileService(HttpService, Logger);
+                var fileEntity = entity as IFile;
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    mainFileResult = FileService.Delete(fileEntity.MainFile);
+                    if (!mainFileResult.Success)
+                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                    fileEntity.MainFile = null;
+                    otherFilesResult = FileService.Delete(fileEntity.OtherFiles);
+                    if (!otherFilesResult.Success)
+                        return Error(request, otherFilesResult.HttpStatusCode, otherFilesResult.Message);
+                    fileEntity.OtherFiles = null;
+                }
+                else if (filePath == fileEntity.MainFile)
+                {
+                    mainFileResult = FileService.Delete(fileEntity.MainFile);
+                    if (!mainFileResult.Success)
+                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                    fileEntity.MainFile = null;
+                }
+                else
+                {
+                    mainFileResult = FileService.Delete(filePath);
+                    if (!mainFileResult.Success)
+                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                    filePath = fileEntity.OtherFiles.SingleOrDefault(otherFile =>
+                        $"/{FileService.GetFileFolder(otherFile)}/{FileService.GetFileName(otherFile)}" == filePath);
+                    if (!string.IsNullOrWhiteSpace(filePath))
+                    {
+                        fileEntity.OtherFiles.Remove(filePath);
+                        if (!fileEntity.OtherFiles.Any())
+                            fileEntity.OtherFiles = null;
+                    }
+                }
+                _db.Set<TEntity>().Update(entity);
+            }
+            return Success(request);
+        }
+
+        public async Task<Result<TRequest>> DeleteFiles(int id, string filePath = null, CancellationToken cancellationToken = default)
+        {
+            var request = new TRequest() { Id = id };
+            var entity = _db.Set<TEntity>().Find(request.Id);
+            if (entity is null)
+            {
+                return Error(request, NotFound);
+            }
+            else
+            {
+                var deleteResult = DeleteFiles(request, entity, filePath);
+                if (!deleteResult.Success)
+                    return Error(request, deleteResult.HttpStatusCode, deleteResult.Message);
+                var saveResult = await Save(cancellationToken);
+                if (!saveResult.Success)
+                    return Error(request, saveResult.HttpStatusCode, saveResult.Message);
+            }
+            return Success(request);
+        }
+
+        public async Task GetExcel()
+        {
+            FileService = new FileService(HttpService, Logger);
+            var result = await GetList();
+            if (result.Success)
+                FileService.GetExcel(result.Data);
+        }
+
+        public Result<FileResponse> GetFile(string filePath)
+        {
+            FileService = new FileService(HttpService, Logger);
+            return FileService.GetFile(filePath);
         }
 
         public void Dispose()

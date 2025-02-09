@@ -54,7 +54,8 @@ namespace APP.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
+                    b.Property<int?>("CategoryId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreateDate")
@@ -72,10 +73,16 @@ namespace APP.Migrations
                     b.Property<string>("Guid")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("MainFile")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("OtherFiles")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("StockAmount")
                         .HasColumnType("int");

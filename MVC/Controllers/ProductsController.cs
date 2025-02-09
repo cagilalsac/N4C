@@ -43,10 +43,10 @@ namespace MVC.Controllers
         {
             // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
             
-            ViewBag.CategoryId = new SelectList(_categoryService.List().Result.Data, "Id", "Name");
+            ViewBag.CategoryId = new SelectList(_categoryService.GetList().Result.Data, "Id", "Name");
 
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-            ViewBag.StoreIds = new MultiSelectList(_StoreService.List().Result.Data, "Id", "Name");
+            ViewBag.StoreIds = new MultiSelectList(_StoreService.GetList().Result.Data, "Id", "Name");
 
             SetViewData(_productService.Culture, message, httpStatusCode, _productService.Title, pageOrder);
         }
@@ -56,7 +56,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Index(PageOrder pageOrder)
         {
             // Get collection logic:
-            var result = pageOrder is null ? await _productService.List() : await _productService.List(pageOrder);
+            var result = pageOrder is null ? await _productService.GetList() : await _productService.GetList(pageOrder);
             
             SetViewData(result.Message, result.HttpStatusCode, pageOrder);
             return View(result);
@@ -66,7 +66,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Details(int id)
         {
             // Get item logic:
-            var result = await _productService.Item(id);
+            var result = await _productService.GetItem(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result);
@@ -75,7 +75,7 @@ namespace MVC.Controllers
         // GET: Products/Create
         public IActionResult Create()
         {
-            var result = _productService.ItemForCreate();
+            var result = _productService.GetItemForCreate();
             SetViewData();
             return View(result.Data);
         }
@@ -104,7 +104,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             // Get item to edit logic:
-            var result = await _productService.ItemForEdit(id);
+            var result = await _productService.GetItemForEdit(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result.Data);
@@ -134,7 +134,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             // Get item to delete logic:
-            var result = await _productService.ItemForDelete(id);
+            var result = await _productService.GetItemForDelete(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result);
@@ -159,6 +159,29 @@ namespace MVC.Controllers
 
             SetTempData(result.Message, result.HttpStatusCode);             
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> DeleteFile(int id, string path = null)
+        {
+            // Delete file logic:
+            var result = await _productService.DeleteFiles(id, path);
+
+            SetTempData(result.Message, result.HttpStatusCode); 
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        public async Task ExportToExcel()
+        {
+            await _productService.GetExcel();
+        }
+
+        public IActionResult Download(string path)
+        {
+            var result = _productService.GetFile(path);
+            if (result.Success)
+                return File(result.Data.Stream, result.Data.ContentType, result.Data.Name);
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View("_N4Cmessage");
         }
     }
 

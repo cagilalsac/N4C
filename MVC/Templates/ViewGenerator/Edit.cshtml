@@ -70,7 +70,7 @@
 	    @:@@Html.AntiForgeryToken()
 foreach (PropertyMetadata property in Model.ModelMetadata.Properties)
 {
-    if (property.PropertyName != "Guid" && property.PropertyName != "Deleted" && property.PropertyName != "CreateDate" && property.PropertyName != "CreatedBy" && property.PropertyName != "UpdateDate" && property.PropertyName != "UpdatedBy" && property.PropertyName != "OtherFilePaths")
+    if (property.PropertyName != "Guid" && property.PropertyName != "Deleted" && property.PropertyName != "CreateDate" && property.PropertyName != "CreatedBy" && property.PropertyName != "UpdateDate" && property.PropertyName != "UpdatedBy" && property.PropertyName != "OtherFiles")
     {
     if (property.IsPrimaryKey)
     {
@@ -128,14 +128,14 @@ foreach (PropertyMetadata property in Model.ModelMetadata.Properties)
 	        @:</div>
         @:</div>
         }
-        else if (property.PropertyName == "MainFilePath")
+        else if (property.PropertyName == "MainFile")
         {
             mainFileFound = true;
         @:<div class="row mb-3">
             @:<displayname asp-for="MainFormFile" asp-culture="@@culture" class="col-2 col-form-label fw-bold"></displayname>
             @:<div class="col-10">
                 @:<input asp-for="MainFormFile" class="form-control mainfile" type="file" />
-                @:<input asp-for="MainFormFile" type="hidden" class="mainfilehidden" />
+                @:<input asp-for="MainFile" type="hidden" class="mainfilehidden" />
                 <span class="text-danger mainfilemessage"></span>
             @:</div>
         @:</div>
@@ -170,7 +170,6 @@ foreach (PropertyMetadata property in Model.ModelMetadata.Properties)
 	        @:</div>
         @:</div>
         @:*@@
-@:
         @:<hr />
         @:<div class="row mb-3">
 	        @:<div class="offset-2 col-10">

@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using N4C.App.Services;
 using N4C.Domain;
-using System.Net;
 
 namespace N4C.App.Features
 {
@@ -36,8 +35,8 @@ namespace N4C.App.Features
                     break;
                 default:
                     if (request.Id <= 0)
-                        return await List(cancellationToken);
-                    var responseResult = await Item(request.Id, cancellationToken);
+                        return await GetList(cancellationToken);
+                    var responseResult = await GetItem(request.Id, cancellationToken);
                     if (responseResult.Success)
                     {
                         list = [responseResult.Data];
@@ -50,9 +49,7 @@ namespace N4C.App.Features
                 list = [new TResponse() { Id = request.Id }];
                 return Success(list, requestResult.Message);
             }
-            if (requestResult.HttpStatusCode == HttpStatusCode.BadRequest)
-                return Error(list, requestResult.Message);
-            return Error(list, requestResult.HttpStatusCode);
+            return Error(list, requestResult.HttpStatusCode, requestResult.Message);
         }
     }
 

@@ -26,7 +26,7 @@ namespace N4C.Controllers
         public virtual async Task<IActionResult> Get()
         {
             // Get collection logic:
-            var result = await Service.List();
+            var result = await Service.GetList();
 
             return ActionResult(result);
         }
@@ -35,7 +35,7 @@ namespace N4C.Controllers
         public virtual async Task<IActionResult> Get(int id)
         {
             // Get item logic:
-            var result = await Service.Item(id);
+            var result = await Service.GetItem(id);
 
             return ActionResult(result);
         }

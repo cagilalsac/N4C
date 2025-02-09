@@ -69,7 +69,7 @@ namespace N4C.App.Services
             FalseHtml = falseHtml;
         }
 
-        public async Task<Result<List<TResponse>>> List(PageOrder pageOrder, CancellationToken cancellationToken = default)
+        public async Task<Result<List<TResponse>>> GetList(PageOrder pageOrder, CancellationToken cancellationToken = default)
         {
             List<TResponse> list = null;
             try
@@ -94,26 +94,37 @@ namespace N4C.App.Services
                     if (Settings.SessionExpirationInMinutes > 0)
                         HttpService.SetSession(nameof(PageOrder), pageOrder);
                     if (pageOrder.TotalRecordsCount > 0)
+                    {
+                        if (HasFile)
+                        {
+                            FileService = new FileService(HttpService, Logger);
+                            foreach (var item in list)
+                            {
+                                if (item is IFileResponse)
+                                    FileService.UpdateOtherFiles((item as IFileResponse).OtherFiles);
+                            }
+                        }
                         return Success(list, $"{pageOrder.TotalRecordsCount} {RecordsFound}");
+                    }
                     return Error(list, HttpStatusCode.NotFound);
                 }
                 pageOrder.PageNumber = 0;
-                return await List(cancellationToken);
+                return await GetList(cancellationToken);
             }
             catch (Exception exception)
             {
-                Logger.LogError($"ServiceException: {GetType().Name}.List(PageNumber = {pageOrder.PageNumber}, RecordsPerPageCount = {pageOrder.RecordsPerPageCount}, " +
+                Logger.LogError($"ServiceException: {GetType().Name}.GetList(PageNumber = {pageOrder.PageNumber}, RecordsPerPageCount = {pageOrder.RecordsPerPageCount}, " +
                     $"OrderExpression = {pageOrder.OrderExpression}): {exception.Message}");
                 return Error(list, HttpStatusCode.InternalServerError);
             }
         }
 
-        public Result<TRequest> ItemForCreate()
+        public Result<TRequest> GetItemForCreate()
         {
             return Success(new TRequest());
         }
 
-        public async Task<Result<TRequest>> ItemForEdit(int id, CancellationToken cancellationToken = default)
+        public async Task<Result<TRequest>> GetItemForEdit(int id, CancellationToken cancellationToken = default)
         {
             TRequest item = null;
             try
@@ -125,21 +136,21 @@ namespace N4C.App.Services
             }
             catch (Exception exception)
             {
-                Logger.LogError($"ServiceException: {GetType().Name}.ItemForEdit(Id = {id}): {exception.Message}");
+                Logger.LogError($"ServiceException: {GetType().Name}.GetItemForEdit(Id = {id}): {exception.Message}");
                 return Error(item, HttpStatusCode.InternalServerError);
             }
         }
 
-        public async Task<Result<TResponse>> ItemForDelete(int id, CancellationToken cancellationToken = default)
+        public async Task<Result<TResponse>> GetItemForDelete(int id, CancellationToken cancellationToken = default)
         {
             TResponse item = null;
             try
             {
-                return await Item(id, cancellationToken);
+                return await GetItem(id, cancellationToken);
             }
             catch (Exception exception)
             {
-                Logger.LogError($"ServiceException: {GetType().Name}.ItemForDelete(Id = {id}): {exception.Message}");
+                Logger.LogError($"ServiceException: {GetType().Name}.GetItemForDelete(Id = {id}): {exception.Message}");
                 return Error(item, HttpStatusCode.InternalServerError);
             }
         }

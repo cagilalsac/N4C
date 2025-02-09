@@ -70,7 +70,7 @@
             @:<div class="col-2 text-end">
             @:@@if (isAuthenticated)
             @:{
-                @:<a asp-action="Export">@@export</a>
+                @:<a asp-action="ExportToExcel">@@export</a>
                 @:@@:&nbsp;|&nbsp;
                 @:<a asp-action="Create">@@create</a>
             @:}
@@ -90,15 +90,15 @@
 
                 foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
                 {
-                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFilePaths")
+                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
                     {
                     if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
                         && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
                     {
-                    if (item.Name == "MainFilePath")
+                    if (item.Name == "MainFile")
                     {
                     <th>
-                        @@Html.DisplayNameFor(model => model.Data.First().MainFilePath, culture)
+                        @@Html.DisplayNameFor(model => model.Data.First().MainFile, culture)
                     </th>
                     }
                     else
@@ -124,22 +124,22 @@
 				@:<tr>
 				foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
 				{
-                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFilePaths")
+                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
                     {
 					if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
 						&& property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
 					{
-                    if (item.Name == "MainFilePath")
+                    if (item.Name == "MainFile")
                     {
                     <td style="width:10%;">
                     @{
-                        @:@@if (string.IsNullOrWhiteSpace(item.MainFilePath))
+                        @:@@if (string.IsNullOrWhiteSpace(item.MainFile))
                         @:{
                             @:<span><i class="bx bx-image" style="font-size:x-large;"></i></span>
                         @:}
                         @:else
                         @:{
-                            @:<a asp-action="Download" asp-route-path="@@item.MainFilePath"><img src="@@item.MainFilePath" class="img-thumbnail" /></a>
+                            @:<a asp-action="Download" asp-route-path="@@item.MainFile"><img src="@@item.MainFile" class="img-thumbnail" /></a>
                         @:}
                     }
                     </td>   

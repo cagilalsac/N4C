@@ -57,6 +57,8 @@ namespace APP.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MainFile = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OtherFiles = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Guid = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>

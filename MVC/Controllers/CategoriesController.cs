@@ -41,7 +41,7 @@ namespace MVC.Controllers
             // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
 
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-            //ViewBag.{Entity}Ids = new MultiSelectList(_{Entity}Service.List().Result.Data, "Id", "Name");
+            //ViewBag.{Entity}Ids = new MultiSelectList(_{Entity}Service.GetList().Result.Data, "Id", "Name");
 
             SetViewData(_categoryService.Culture, message, httpStatusCode, _categoryService.Title, pageOrder);
         }
@@ -51,7 +51,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Index(PageOrder pageOrder)
         {
             // Get collection logic:
-            var result = pageOrder is null ? await _categoryService.List() : await _categoryService.List(pageOrder);
+            var result = pageOrder is null ? await _categoryService.GetList() : await _categoryService.GetList(pageOrder);
             
             SetViewData(result.Message, result.HttpStatusCode, pageOrder);
             return View(result);
@@ -61,7 +61,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Details(int id)
         {
             // Get item logic:
-            var result = await _categoryService.Item(id);
+            var result = await _categoryService.GetItem(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result);
@@ -70,7 +70,7 @@ namespace MVC.Controllers
         // GET: Categories/Create
         public IActionResult Create()
         {
-            var result = _categoryService.ItemForCreate();
+            var result = _categoryService.GetItemForCreate();
             SetViewData();
             return View(result.Data);
         }
@@ -99,7 +99,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             // Get item to edit logic:
-            var result = await _categoryService.ItemForEdit(id);
+            var result = await _categoryService.GetItemForEdit(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result.Data);
@@ -129,7 +129,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             // Get item to delete logic:
-            var result = await _categoryService.ItemForDelete(id);
+            var result = await _categoryService.GetItemForDelete(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result);
@@ -154,6 +154,29 @@ namespace MVC.Controllers
 
             SetTempData(result.Message, result.HttpStatusCode);             
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> DeleteFile(int id, string path = null)
+        {
+            // Delete file logic:
+            var result = await _categoryService.DeleteFiles(id, path);
+
+            SetTempData(result.Message, result.HttpStatusCode); 
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        public async Task ExportToExcel()
+        {
+            await _categoryService.GetExcel();
+        }
+
+        public IActionResult Download(string path)
+        {
+            var result = _categoryService.GetFile(path);
+            if (result.Success)
+                return File(result.Data.Stream, result.Data.ContentType, result.Data.Name);
+            SetViewData(result.Message, result.HttpStatusCode);
+            return View("_N4Cmessage");
         }
     }
 
