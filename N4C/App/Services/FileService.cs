@@ -135,7 +135,7 @@ namespace N4C.App.Services
             return otherFiles;
         }
 
-        public void UpdateOtherFiles(List<string> filePaths)
+        public void GetOtherFiles(List<string> filePaths)
         {
             if (filePaths is not null && filePaths.Any())
             {
@@ -175,12 +175,18 @@ namespace N4C.App.Services
                         {
                             formFile.CopyTo(fileStream);
                         }
-                        fileResponse = new FileResponse(GetFilePath(filePath));
+                        fileResponse = new FileResponse()
+                        {
+                            MainFile = GetFilePath(filePath)
+                        };
                         return Success(fileResponse, FilesCreated);
                     }
                     return Error(fileResponse, result.Message);
                 }
-                fileResponse = new FileResponse(GetFilePath(filePath));
+                fileResponse = new FileResponse()
+                {
+                    MainFile = GetFilePath(filePath)
+                };
                 return Success(fileResponse);
             }
             catch (Exception exception)
@@ -209,13 +215,19 @@ namespace N4C.App.Services
                             {
                                 formFile.CopyTo(fileStream);
                             }
-                            fileResponse = new FileResponse(GetFilePath(filePath));
+                            fileResponse = new FileResponse()
+                            {
+                                MainFile = GetFilePath(filePath)
+                            };
                             return Success(fileResponse, FilesUpdated);
                         }
                     }
                     return Error(fileResponse, result.Message);
                 }
-                fileResponse = new FileResponse(GetFilePath(filePath));
+                fileResponse = new FileResponse()
+                {
+                    MainFile = GetFilePath(filePath)
+                };
                 return Success(fileResponse);
             }
             catch (Exception exception)
@@ -236,11 +248,17 @@ namespace N4C.App.Services
                     if (File.Exists(currentFilePath))
                     {
                         File.Delete(currentFilePath);
-                        fileResponse = new FileResponse(GetFilePath(currentFilePath));
+                        fileResponse = new FileResponse()
+                        {
+                            MainFile = GetFilePath(currentFilePath)
+                        };
                         return Success(fileResponse, FilesDeleted);
                     }
                 }
-                fileResponse = new FileResponse(GetFilePath(currentFilePath));
+                fileResponse = new FileResponse()
+                {
+                    MainFile = GetFilePath(currentFilePath)
+                };
                 return Success(fileResponse);
             }
             catch (Exception exception)
@@ -347,9 +365,12 @@ namespace N4C.App.Services
             {
                 if (string.IsNullOrWhiteSpace(filePath))
                     return Error(fileResponse, NotFound);
-                fileResponse = new FileResponse(new FileStream(GetFilePath(filePath, true), FileMode.Open),
-                    useOctetStreamContentType ? "application/octet-stream" : GetContentType(filePath),
-                    GetFileName(filePath));
+                fileResponse = new FileResponse()
+                {
+                    FileStream = new FileStream(GetFilePath(filePath, true), FileMode.Open),
+                    FileContentType = useOctetStreamContentType ? "application/octet-stream" : GetContentType(filePath),
+                    FileName = GetFileName(filePath)
+                };
                 return Success(fileResponse);
             }
             catch (Exception exception)

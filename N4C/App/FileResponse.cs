@@ -1,30 +1,23 @@
-﻿using N4C.Domain;
+﻿using N4C.Attributes;
+using System.Text.Json.Serialization;
 
 namespace N4C.App
 {
-    public interface IFileResponse : IFile
+    public class FileResponse : Response
     {
-    }
+        [JsonIgnore, ExcelIgnore]
+        public Stream FileStream { get; set; }
 
-    public class FileResponse : IFileResponse
-    {
-        public Stream Stream { get; }
-        public string ContentType { get; }
-        public string Name { get; }
-        public string MainFile { get; set; }
-        public List<string> OtherFiles { get; set; }
+        [JsonIgnore, ExcelIgnore]
+        public string FileContentType { get; set; }
 
-        public FileResponse(Stream stream, string contentType, string name)
-        {
-            Stream = stream;
-            ContentType = contentType;
-            Name = name;
-        }
+        [JsonIgnore, ExcelIgnore]
+        public string FileName { get; set; }
 
-        public FileResponse(string mainFile, List<string> otherFiles = default)
-        {
-            MainFile = mainFile;
-            OtherFiles = otherFiles;
-        }
+        [ExcelIgnore, DisplayName("Ana Dosya")]
+        public virtual string MainFile { get; set; }
+
+        [ExcelIgnore, DisplayName("Diğer Dosyalar")]
+        public virtual List<string> OtherFiles { get; set; }
     }
 }

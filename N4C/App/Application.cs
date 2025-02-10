@@ -127,8 +127,8 @@ namespace N4C.App
         private PropertyInfo CreatedByProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.CreatedBy));
         private PropertyInfo UpdateDateProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.UpdateDate));
         private PropertyInfo UpdatedByProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.UpdatedBy));
-        private PropertyInfo MainFileProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IFile.MainFile));
-        private PropertyInfo OtherFilesProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IFile.OtherFiles));
+        private PropertyInfo MainFileProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(FileEntity.MainFile));
+        private PropertyInfo OtherFilesProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(FileEntity.OtherFiles));
 
         protected bool HasFile => MainFileProperty is not null && OtherFilesProperty is not null;
 
@@ -237,8 +237,8 @@ namespace N4C.App
                         FileService = new FileService(HttpService, Logger);
                         foreach (var item in list)
                         {
-                            if (item is IFileResponse)
-                                FileService.UpdateOtherFiles((item as IFileResponse).OtherFiles);
+                            if (item is FileResponse)
+                                FileService.GetOtherFiles((item as FileResponse).OtherFiles);
                         }
                     }
                     return Success(list, $"{list.Count} {RecordsFound}");
@@ -260,10 +260,10 @@ namespace N4C.App
                 item = await Data().ProjectTo<TEntity, TResponse>(MapperProfile).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 if (item is null)
                     return Error(item, HttpStatusCode.NotFound);
-                if (HasFile && item is IFileResponse)
+                if (HasFile && item is FileResponse)
                 {
                     FileService = new FileService(HttpService, Logger);
-                    FileService.UpdateOtherFiles((item as IFileResponse).OtherFiles);
+                    FileService.GetOtherFiles((item as FileResponse).OtherFiles);
                 }
                 return Success(item, $"1 {RecordsFound}");
             }
@@ -489,17 +489,17 @@ namespace N4C.App
 
         protected Result<TRequest> CreateFiles(TRequest request, TEntity entity)
         {
-            if (HasFile && request is IFileRequest)
+            if (HasFile && request is FileRequest)
             {
                 FileService = new FileService(HttpService, Logger);
-                var fileRequest = request as IFileRequest;
+                var fileRequest = request as FileRequest;
                 var validationResult = FileService.ValidateOtherFiles(fileRequest?.OtherFormFiles);
                 if (validationResult.Success)
                 {
                     var mainFileResult = FileService.Create(fileRequest.MainFormFile);
                     if (mainFileResult.Success)
                     {
-                        var fileEntity = entity as IFile;
+                        var fileEntity = entity as FileEntity;
                         fileEntity.MainFile = mainFileResult.Data.MainFile;
                         var otherFilesResult = FileService.Create(fileRequest.OtherFormFiles);
                         if (otherFilesResult.Success)
@@ -529,8 +529,8 @@ namespace N4C.App
                 }
                 else
                 {
-                    var fileRequest = request as IFileRequest;
-                    var fileEntity = entity as IFile;
+                    var fileRequest = request as FileRequest;
+                    var fileEntity = entity as FileEntity;
                     var validationResult = FileService.ValidateOtherFiles(fileRequest?.OtherFormFiles, fileEntity.OtherFiles);
                     if (validationResult.Success)
                     {
@@ -572,7 +572,7 @@ namespace N4C.App
             if (HasFile)
             {
                 FileService = new FileService(HttpService, Logger);
-                var fileEntity = entity as IFile;
+                var fileEntity = entity as FileEntity;
                 if (string.IsNullOrWhiteSpace(filePath))
                 {
                     mainFileResult = FileService.Delete(fileEntity.MainFile);

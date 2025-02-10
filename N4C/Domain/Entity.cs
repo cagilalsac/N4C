@@ -1,5 +1,4 @@
 ﻿using N4C.Attributes;
-using System.Text.Json.Serialization;
 
 namespace N4C.Domain
 {
@@ -8,7 +7,7 @@ namespace N4C.Domain
         [ExcelIgnore]
         public int Id { get; set; }
 
-        [ExcelIgnore, JsonIgnore]
+        [ExcelIgnore]
         public string Guid { get; set; }
     }
 }

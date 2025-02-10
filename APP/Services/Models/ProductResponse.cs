@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace APP.Services.Models
 {
-    public class ProductResponse : Response, IFileResponse
+    public class ProductResponse : FileResponse
     {
         [DisplayName("Adı")]
         public string Name { get; set; }
@@ -17,6 +17,8 @@ namespace APP.Services.Models
         public string _UnitPrice { get; set; }
 
         [DisplayName("Birim Fiyatı Yazı")]
+        [JsonIgnore]
+        [ExcelIgnore]
         public string _UnitPriceText { get; set; }
 
         public int? StockAmount { get; set; }
@@ -46,15 +48,5 @@ namespace APP.Services.Models
         [DisplayName("Mağazalar")]
         [JsonIgnore]
         public string Stores { get; set; }
-
-        [DisplayName("Ana Dosya")]
-        [JsonIgnore]
-        [ExcelIgnore]
-        public string MainFile { get; set; }
-
-        [DisplayName("Diğer Dosyalar")]
-        [JsonIgnore]
-        [ExcelIgnore]
-        public List<string> OtherFiles { get; set; }
     }
 }

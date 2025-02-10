@@ -135,7 +135,7 @@ foreach (PropertyMetadata property in Model.ModelMetadata.Properties)
             @:<displayname asp-for="MainFormFile" asp-culture="@@culture" class="col-2 col-form-label fw-bold"></displayname>
             @:<div class="col-10">
                 @:<input asp-for="MainFormFile" class="form-control mainfile" type="file" />
-                @:<input asp-for="MainFile" type="hidden" class="mainfilehidden" />
+                @:<input asp-for="_MainFile" type="hidden" class="mainfilehidden" />
                 <span class="text-danger mainfilemessage"></span>
             @:</div>
         @:</div>

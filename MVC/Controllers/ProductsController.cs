@@ -101,10 +101,10 @@ namespace MVC.Controllers
         }
 
         // GET: Products/Edit/5
-        public async Task<IActionResult> Edit(int id)
+        public IActionResult Edit(int id)
         {
             // Get item to edit logic:
-            var result = await _productService.GetItemForEdit(id);
+            var result = _productService.GetItemForEdit(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result.Data);
@@ -131,10 +131,10 @@ namespace MVC.Controllers
         }
 
         // GET: Products/Delete/5
-        public async Task<IActionResult> Delete(int id)
+        public IActionResult Delete(int id)
         {
             // Get item to delete logic:
-            var result = await _productService.GetItemForDelete(id);
+            var result = _productService.GetItemForDelete(id);
 
             SetViewData(result.Message, result.HttpStatusCode);
             return View(result);
@@ -179,7 +179,7 @@ namespace MVC.Controllers
         {
             var result = _productService.GetFile(path);
             if (result.Success)
-                return File(result.Data.Stream, result.Data.ContentType, result.Data.Name);
+                return File(result.Data.FileStream, result.Data.FileContentType, result.Data.FileName);
             SetViewData(result.Message, result.HttpStatusCode);
             return View("_N4Cmessage");
         }

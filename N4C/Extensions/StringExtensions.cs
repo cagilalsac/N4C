@@ -14,6 +14,18 @@
             return result;
         }
 
+        public static string FirstLetterToLower(this string value)
+        {
+            string result = string.Empty;
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                result = value.Substring(0, 1).ToLower();
+                if (value.Length > 1)
+                    result += value.Substring(1);
+            }
+            return result;
+        }
+
         public static string RemoveHtmlTags(this string value, string brTagSeperator = ", ")
         {
             string result = string.Empty;

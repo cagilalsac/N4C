@@ -100,8 +100,8 @@ namespace N4C.App.Services
                             FileService = new FileService(HttpService, Logger);
                             foreach (var item in list)
                             {
-                                if (item is IFileResponse)
-                                    FileService.UpdateOtherFiles((item as IFileResponse).OtherFiles);
+                                if (item is FileResponse)
+                                    FileService.GetOtherFiles((item as FileResponse).OtherFiles);
                             }
                         }
                         return Success(list, $"{pageOrder.TotalRecordsCount} {RecordsFound}");
@@ -124,14 +124,17 @@ namespace N4C.App.Services
             return Success(new TRequest());
         }
 
-        public async Task<Result<TRequest>> GetItemForEdit(int id, CancellationToken cancellationToken = default)
+        public Result<TRequest> GetItemForEdit(int id, CancellationToken cancellationToken = default)
         {
             TRequest item = null;
             try
             {
-                item = await Data().ProjectTo<TEntity, TRequest>(MapperProfile).SingleOrDefaultAsync(request => request.Id == id, cancellationToken);
-                if (item is null)
+                var entity = Data(new TRequest() { Id = id });
+                if (entity is null)
                     return Error(item, HttpStatusCode.NotFound);
+                item = entity.Map<TEntity, TRequest>(MapperProfile);
+                if (HasFile && item is FileRequest)
+                    (item as FileRequest)._MainFile = (entity as FileEntity).MainFile;
                 return Success(item);
             }
             catch (Exception exception)
@@ -141,12 +144,12 @@ namespace N4C.App.Services
             }
         }
 
-        public async Task<Result<TResponse>> GetItemForDelete(int id, CancellationToken cancellationToken = default)
+        public Result<TResponse> GetItemForDelete(int id, CancellationToken cancellationToken = default)
         {
             TResponse item = null;
             try
             {
-                return await GetItem(id, cancellationToken);
+                return GetItem(id, cancellationToken).Result;
             }
             catch (Exception exception)
             {
