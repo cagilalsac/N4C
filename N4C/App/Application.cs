@@ -2,6 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using N4C.App.Services;
+using N4C.App.Services.Files;
+using N4C.App.Services.Files.Models;
+using N4C.Common;
 using N4C.Domain;
 using N4C.Extensions;
 using System.Globalization;
@@ -13,27 +16,13 @@ namespace N4C.App
 {
     public class Application
     {
-        public string Failed { get; private set; }
-        public string Successful { get; private set; }
-        public string Exception { get; private set; }
+        public string Culture { get; private set; }
+
+        protected string Failed { get; private set; }
+        protected string Successful { get; private set; }
+        protected string Exception { get; private set; }
 
         protected string NotFound { get; set; }
-
-        private string _culture;
-        public string Culture
-        {
-            get => _culture;
-            private set
-            {
-                _culture = value;
-                Thread.CurrentThread.CurrentCulture = new CultureInfo(_culture);
-                Thread.CurrentThread.CurrentUICulture = new CultureInfo(_culture);
-                Failed = _culture == Cultures.TR ? "İşlem gerçekleştirilemedi!" : "Operation failed!";
-                Successful = _culture == Cultures.TR ? "İşlem başarıyla gerçekleştirildi." : "Operation successful.";
-                Exception = _culture == Cultures.TR ? "İşlem sırasında hata meydana geldi!" : "An exception occurred during the operation!";
-                NotFound = _culture == Cultures.TR ? "Kayıt bulunamadı!" : "Record not found!";
-            }
-        }
 
         protected HttpService HttpService { get; }
         protected ILogger<Application> Logger { get; }
@@ -42,12 +31,18 @@ namespace N4C.App
         {
             HttpService = httpService;
             Logger = logger;
-            Culture = HttpService.GetCookie(nameof(Culture)) ?? Settings.Culture;
+            SetCulture(HttpService.GetCookie(nameof(Culture)) ?? Settings.Culture);
         }
 
-        protected void SetCulture(string culture)
+        protected virtual void SetCulture(string culture)
         {
             Culture = culture;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo(Culture);
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo(Culture);
+            Failed = Culture == Cultures.TR ? "İşlem gerçekleştirilemedi!" : "Operation failed!";
+            Successful = Culture == Cultures.TR ? "İşlem başarıyla gerçekleştirildi." : "Operation successful.";
+            Exception = Culture == Cultures.TR ? "İşlem sırasında hata meydana geldi!" : "An exception occurred during the operation!";
+            NotFound = Culture == Cultures.TR ? "Kayıt bulunamadı!" : "Record not found!";
         }
 
         public Result Success()
@@ -62,7 +57,7 @@ namespace N4C.App
             return new Result(HttpStatusCode.OK, message);
         }
 
-        public Result Error(HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest)
+        public Result Error(HttpStatusCode httpStatusCode)
         {
             return new Result(httpStatusCode,
                 httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
@@ -90,7 +85,20 @@ namespace N4C.App
             return new Result<TData>(HttpStatusCode.OK, data, message);
         }
 
-        public Result<TData> Error<TData>(TData data, HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest)
+        public Result<TData> Success<TData>(TData data, Result result)
+        {
+            var message = result.Message;
+            if (!string.IsNullOrWhiteSpace(message) && !message.EndsWith("."))
+                message += ".";
+            return new Result<TData>(HttpStatusCode.OK, data, message);
+        }
+
+        public Result<TData> Error<TData>(TData data)
+        {
+            return new Result<TData>(HttpStatusCode.BadRequest, data, Failed);
+        }
+
+        public Result<TData> Error<TData>(TData data, HttpStatusCode httpStatusCode)
         {
             return new Result<TData>(httpStatusCode, data,
                 httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
@@ -106,15 +114,16 @@ namespace N4C.App
             return new Result<TData>(HttpStatusCode.BadRequest, data, message);
         }
 
-        public Result<TData> Error<TData>(TData data, HttpStatusCode httpStatusCode, string message)
+        public Result<TData> Error<TData>(TData data, Result result)
         {
+            var message = result.Message;
             if (!message.StartsWith(Failed))
                 message = $"{Failed} {message}";
             if (!message.EndsWith("!"))
                 message += "!";
-            return new Result<TData>(httpStatusCode, data,
-                httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
-                httpStatusCode == HttpStatusCode.NotFound ? NotFound : message);
+            return new Result<TData>(result.HttpStatusCode, data,
+                result.HttpStatusCode == HttpStatusCode.InternalServerError ? Exception :
+                result.HttpStatusCode == HttpStatusCode.NotFound ? NotFound : message);
         }
     }
 
@@ -122,7 +131,7 @@ namespace N4C.App
         where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
         private PropertyInfo GuidProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(Entity.Guid));
-        private PropertyInfo DeletedProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.Deleted));
+        private PropertyInfo DeletedProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IDeleted.Deleted));
         private PropertyInfo CreateDateProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.CreateDate));
         private PropertyInfo CreatedByProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.CreatedBy));
         private PropertyInfo UpdateDateProperty => ObjectExtensions.GetPropertyInfo<TEntity>(nameof(IModified.UpdateDate));
@@ -150,19 +159,7 @@ namespace N4C.App
         protected string RecordUpdated { get; private set; }
         protected string RecordDeleted { get; private set; }
 
-        private string _title;
-        public string Title
-        {
-            get => _title;
-            private set
-            {
-                _title = value;
-                RecordsFound = Culture == Cultures.TR ? $"{_title.ToLower()} bulundu" : $"{_title.ToLower()} record(s) found";
-                RecordCreated = Culture == Cultures.TR ? $"{_title} başarıyla oluşturuldu" : $"{_title} created successfully";
-                RecordUpdated = Culture == Cultures.TR ? $"{_title} başarıyla güncellendi" : $"{_title} updated successfully";
-                RecordDeleted = Culture == Cultures.TR ? $"{_title} başarıyla silindi" : $"{_title} deleted successfully";
-            }
-        }
+        public string Title { get; private set; }
 
         protected FileService FileService { get; set; }
 
@@ -174,20 +171,29 @@ namespace N4C.App
             UniqueProperties = ["Name", "UserName", "Title"];
             MapperProfile = new MapperProfile();
             Collation = "Turkish_CI_AS";
-            Title = Culture == Cultures.TR ? "Kayıt" : "Record";
+        }
+
+        protected override void SetCulture(string culture)
+        {
+            base.SetCulture(culture);
+            SetTitle(Culture == Cultures.TR ? "Kayıt" : "Record");
             RecordNotSaved = Culture == Cultures.TR ? "Kaydedilmedi" : "Not saved";
             RecordSaved = Culture == Cultures.TR ? "Kaydedildi. Etkilenen satır sayısı:" : "Saved. Number of rows effected:";
             RecordHasRelationalRecords = Culture == Cultures.TR ? "İlişkili kayıtlar bulunmaktadır" : "Relational records found";
         }
 
-        protected void SetCollation(string collation)
-        {
-            Collation = collation;
-        }
-
         protected void SetTitle(string tr, string en = default)
         {
             Title = !string.IsNullOrWhiteSpace(en) && Culture == Cultures.EN ? en : tr;
+            RecordsFound = Culture == Cultures.TR ? $"{Title.ToLower()} bulundu" : $"{Title.ToLower()} record(s) found";
+            RecordCreated = Culture == Cultures.TR ? $"{Title} başarıyla oluşturuldu" : $"{Title} created successfully";
+            RecordUpdated = Culture == Cultures.TR ? $"{Title} başarıyla güncellendi" : $"{Title} updated successfully";
+            RecordDeleted = Culture == Cultures.TR ? $"{Title} başarıyla silindi" : $"{Title} deleted successfully";
+        }
+
+        protected void SetCollation(string collation)
+        {
+            Collation = collation;
         }
 
         protected void SetUniqueProperties(params Expression<Func<TRequest, object>>[] uniqueProperties)
@@ -213,15 +219,7 @@ namespace N4C.App
 
         protected TEntity Data(TRequest request)
         {
-            try
-            {
-                return Data().SingleOrDefault(entity => entity.Id == request.Id) ?? new TEntity();
-            }
-            catch (Exception exception)
-            {
-                Logger.LogError($"ApplicationException: {GetType().Name}.Data(Request.Id = {request.Id}): {exception.Message}");
-                return new TEntity();
-            }
+            return Data().SingleOrDefault(entity => entity.Id == request.Id) ?? new TEntity();
         }
 
         public async Task<Result<List<TResponse>>> GetList(CancellationToken cancellationToken = default)
@@ -229,7 +227,7 @@ namespace N4C.App
             List<TResponse> list = null;
             try
             {
-                list = await Data().ProjectTo<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
+                list = await Data().Map<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
                 if (list.Count > 0)
                 {
                     if (HasFile)
@@ -257,7 +255,7 @@ namespace N4C.App
             TResponse item = null;
             try
             {
-                item = await Data().ProjectTo<TEntity, TResponse>(MapperProfile).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                item = await Data().Map<TEntity, TResponse>(MapperProfile).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 if (item is null)
                     return Error(item, HttpStatusCode.NotFound);
                 if (HasFile && item is FileResponse)
@@ -361,7 +359,7 @@ namespace N4C.App
                         request.Guid = entity.Guid;
                         return Success(request, RecordCreated);
                     }
-                    return Error(request, result.HttpStatusCode);
+                    return Error(request, result);
                 }
                 return Success(request, RecordNotSaved);
             }
@@ -396,7 +394,7 @@ namespace N4C.App
                         var result = await Save(cancellationToken);
                         if (result.Success)
                             return Success(request, RecordUpdated);
-                        return Error(request, result.HttpStatusCode);
+                        return Error(request, result);
                     }
                     catch (DbUpdateConcurrencyException)
                     {
@@ -423,7 +421,7 @@ namespace N4C.App
                     return Error(request, HttpStatusCode.NotFound);
                 if (HasDeleted)
                 {
-                    (entity as IModified).Deleted = true;
+                    (entity as IDeleted).Deleted = true;
                     if (HasModified)
                     {
                         (entity as IModified).UpdateDate = DateTime.Now;
@@ -443,7 +441,7 @@ namespace N4C.App
                     var result = await Save(cancellationToken);
                     if (result.Success)
                         return Success(request, RecordDeleted);
-                    return Error(request, result.HttpStatusCode);
+                    return Error(request, result);
                 }
                 return Success(request, RecordNotSaved);
             }
@@ -505,11 +503,11 @@ namespace N4C.App
                         if (otherFilesResult.Success)
                             fileEntity.OtherFiles = FileService.GetOtherFiles(otherFilesResult.Data, 1);
                         else
-                            return Error(request, otherFilesResult.HttpStatusCode, otherFilesResult.Message);
+                            return Error(request, otherFilesResult);
                     }
                     else
                     {
-                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                        return Error(request, mainFileResult);
                     }
                 }
             }
@@ -525,7 +523,7 @@ namespace N4C.App
                     entity = _db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                 {
-                    return Error(request, NotFound);
+                    return Error(request, HttpStatusCode.NotFound);
                 }
                 else
                 {
@@ -552,12 +550,12 @@ namespace N4C.App
                             }
                             else
                             {
-                                return Error(request, otherFilesResult.HttpStatusCode, otherFilesResult.Message);
+                                return Error(request, otherFilesResult);
                             }
                         }
                         else
                         {
-                            return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                            return Error(request, mainFileResult);
                         }
                     }
                 }
@@ -577,25 +575,25 @@ namespace N4C.App
                 {
                     mainFileResult = FileService.Delete(fileEntity.MainFile);
                     if (!mainFileResult.Success)
-                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                        return Error(request, mainFileResult);
                     fileEntity.MainFile = null;
                     otherFilesResult = FileService.Delete(fileEntity.OtherFiles);
                     if (!otherFilesResult.Success)
-                        return Error(request, otherFilesResult.HttpStatusCode, otherFilesResult.Message);
+                        return Error(request, otherFilesResult);
                     fileEntity.OtherFiles = null;
                 }
                 else if (filePath == fileEntity.MainFile)
                 {
                     mainFileResult = FileService.Delete(fileEntity.MainFile);
                     if (!mainFileResult.Success)
-                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                        return Error(request, mainFileResult);
                     fileEntity.MainFile = null;
                 }
                 else
                 {
                     mainFileResult = FileService.Delete(filePath);
                     if (!mainFileResult.Success)
-                        return Error(request, mainFileResult.HttpStatusCode, mainFileResult.Message);
+                        return Error(request, mainFileResult);
                     filePath = fileEntity.OtherFiles.SingleOrDefault(otherFile =>
                         $"/{FileService.GetFileFolder(otherFile)}/{FileService.GetFileName(otherFile)}" == filePath);
                     if (!string.IsNullOrWhiteSpace(filePath))
@@ -616,16 +614,16 @@ namespace N4C.App
             var entity = _db.Set<TEntity>().Find(request.Id);
             if (entity is null)
             {
-                return Error(request, NotFound);
+                return Error(request, HttpStatusCode.NotFound);
             }
             else
             {
                 var deleteResult = DeleteFiles(request, entity, filePath);
                 if (!deleteResult.Success)
-                    return Error(request, deleteResult.HttpStatusCode, deleteResult.Message);
+                    return Error(request, deleteResult);
                 var saveResult = await Save(cancellationToken);
                 if (!saveResult.Success)
-                    return Error(request, saveResult.HttpStatusCode, saveResult.Message);
+                    return Error(request, saveResult);
             }
             return Success(request);
         }

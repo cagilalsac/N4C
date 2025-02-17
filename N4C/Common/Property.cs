@@ -1,4 +1,4 @@
-﻿namespace N4C
+﻿namespace N4C.Common
 {
     public class Property
     {

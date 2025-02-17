@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using N4C.App.Services.Files.Models;
 using N4C.Extensions;
 using OfficeOpenXml;
 using System.Net;
 
-namespace N4C.App.Services
+namespace N4C.App.Services.Files
 {
     public class FileService : Application
     {
@@ -181,7 +182,7 @@ namespace N4C.App.Services
                         };
                         return Success(fileResponse, FilesCreated);
                     }
-                    return Error(fileResponse, result.Message);
+                    return Error(fileResponse, result);
                 }
                 fileResponse = new FileResponse()
                 {
@@ -222,7 +223,7 @@ namespace N4C.App.Services
                             return Success(fileResponse, FilesUpdated);
                         }
                     }
-                    return Error(fileResponse, result.Message);
+                    return Error(fileResponse, result);
                 }
                 fileResponse = new FileResponse()
                 {
@@ -305,11 +306,11 @@ namespace N4C.App.Services
                         fileResponseList.Add(result.Data);
                     }
                     if (!result.Success)
-                        return Error(fileResponseList, result.HttpStatusCode, result.Message);
+                        return Error(fileResponseList, result);
                 }
                 else
                 {
-                    return Error(fileResponseList, validationResult.Message);
+                    return Error(fileResponseList, validationResult);
                 }
             }
             return Success(fileResponseList, FilesCreated);
@@ -331,7 +332,7 @@ namespace N4C.App.Services
                     fileResponseList.Add(result.Data);
                 }
                 if (!result.Success)
-                    return Error(fileResponseList, result.HttpStatusCode);
+                    return Error(fileResponseList, result);
             }
             return Success(fileResponseList, FilesDeleted);
         }
@@ -364,7 +365,7 @@ namespace N4C.App.Services
             try
             {
                 if (string.IsNullOrWhiteSpace(filePath))
-                    return Error(fileResponse, NotFound);
+                    return Error(fileResponse, HttpStatusCode.NotFound);
                 fileResponse = new FileResponse()
                 {
                     FileStream = new FileStream(GetFilePath(filePath, true), FileMode.Open),

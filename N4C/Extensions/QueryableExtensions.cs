@@ -26,7 +26,7 @@ namespace N4C.Extensions
             return query;
         }
 
-        public static IQueryable<TDestination> ProjectTo<TEntity, TDestination>(this IQueryable<TEntity> query, MapperProfile mapperProfile = default) 
+        public static IQueryable<TDestination> Map<TEntity, TDestination>(this IQueryable<TEntity> query, MapperProfile mapperProfile = default) 
             where TEntity : Entity, new() where TDestination : class, new()
         {
             var mapperConfigurationExpression = new MapperConfigurationExpression();

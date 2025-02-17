@@ -6,16 +6,16 @@ namespace N4C.App
     {
         public string Culture { get; }
         public string Message { get; }
-        public string Title { get; } = string.Empty;
+        public string Title { get; }
         public PageOrder PageOrder { get; }
         public HttpStatusCode HttpStatusCode { get; }
 
-        public View(string culture, string message = default, HttpStatusCode httpStatusCode = HttpStatusCode.OK, string title = default, PageOrder pageOrder = default)
+        public View(string culture, string title = default, string message = default, HttpStatusCode httpStatusCode = HttpStatusCode.OK, PageOrder pageOrder = default)
         {
             Culture = culture;
+            Title = string.IsNullOrWhiteSpace(title) ? string.Empty : title;
             Message = string.IsNullOrWhiteSpace(message) ? string.Empty : message;
             HttpStatusCode = httpStatusCode;
-            Title = string.IsNullOrWhiteSpace(title) ? string.Empty : title;
             PageOrder = pageOrder is not null && pageOrder.PageNumber != 0 ? pageOrder : null;
         }
     }

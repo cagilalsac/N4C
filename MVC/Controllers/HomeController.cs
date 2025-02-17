@@ -28,13 +28,13 @@ public class HomeController : MvcController
 
     public IActionResult Error()
     {
-        SetViewData(_app.Culture, _app.Failed, HttpStatusCode.BadRequest);
+        SetViewData(_app.Culture, _app.Error(HttpStatusCode.BadRequest));
         return View("_N4Cmessage");
     }
 
 	public IActionResult Exception()
 	{
-		SetViewData(_app.Culture, _app.Exception, HttpStatusCode.InternalServerError);
+		SetViewData(_app.Culture, _app.Error(HttpStatusCode.InternalServerError));
 		return View("_N4Cexception");
 	}
 }

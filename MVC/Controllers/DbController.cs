@@ -3,7 +3,9 @@
 using APP.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using N4C.App;
 using N4C.Controllers;
+using N4C.Domain.Users;
 using System.Globalization;
 using System.Net;
 
@@ -24,15 +26,15 @@ namespace MVC.Controllers
         {
             if (pin == PIN)
             {
-                if (_db.Stores.Any() || _db.Products.Any() || _db.Categories.Any() /*|| _db.Roles.Any() || _db.Users.Any()*/)
+                if (_db.Stores.Any() || _db.Products.Any() || _db.Categories.Any() || _db.Roles.Any() || _db.Users.Any())
                 {
                     _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Stores', RESEED, 0)");
                     _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Products', RESEED, 0)");
                     _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('ProductStores', RESEED, 0)");
                     _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Categories', RESEED, 0)");
-                    //_db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Roles', RESEED, 0)");
-                    //_db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Users', RESEED, 0)");
-                    //_db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('UserRoles', RESEED, 0)");
+                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Roles', RESEED, 0)");
+                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Users', RESEED, 0)");
+                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('UserRoles', RESEED, 0)");
                 }
 
                 _db.ProductStores.RemoveRange(_db.ProductStores.ToList());
@@ -74,13 +76,15 @@ namespace MVC.Controllers
                 {
                     Name = "Computer",
                     Description = "Laptops, desktops and computer peripherals",
-                    _Products = new List<Product>()
+                    Products = new List<Product>()
                     {
                         new Product()
                         {
                             Name = "Laptop",
                             UnitPrice = 3000.5m,
                             StockAmount = 10,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id
@@ -91,6 +95,8 @@ namespace MVC.Controllers
                             Name = "Mouse",
                             UnitPrice = 20.5M,
                             StockAmount = null,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
@@ -102,6 +108,8 @@ namespace MVC.Controllers
                             Name = "Keyboard",
                             UnitPrice = 40,
                             StockAmount = 45,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
@@ -114,6 +122,8 @@ namespace MVC.Controllers
                             Name = "Monitor",
                             UnitPrice = 2500,
                             StockAmount = 20,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id,
@@ -126,13 +136,15 @@ namespace MVC.Controllers
                 {
                     Name = "Home Theater System",
                     Description = null,
-                    _Products = new List<Product>()
+                    Products = new List<Product>()
                     {
                         new Product()
                         {
                             Name = "Speaker",
                             UnitPrice = 2500,
                             StockAmount = 70,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id
@@ -143,6 +155,8 @@ namespace MVC.Controllers
                             Name = "Receiver",
                             UnitPrice = 5000,
                             StockAmount = 30,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
@@ -153,7 +167,9 @@ namespace MVC.Controllers
                         {
                             Name = "Equalizer",
                             UnitPrice = 1000,
-                            StockAmount = 40
+                            StockAmount = 40,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                         }
                     }
                 });
@@ -161,13 +177,15 @@ namespace MVC.Controllers
                 {
                     Name = "Phone",
                     Description = "IOS and Android Phones",
-                    _Products = new List<Product>()
+                    Products = new List<Product>()
                     {
                         new Product()
                         {
                             Name = "iPhone",
                             UnitPrice = 10000,
                             StockAmount = 20,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id,
@@ -181,13 +199,15 @@ namespace MVC.Controllers
                 _db.Categories.Add(new Category()
                 {
                     Name = "Food",
-                    _Products = new List<Product>()
+                    Products = new List<Product>()
                     {
                         new Product()
                         {
                             Name = "Apple",
                             UnitPrice = 10.5m,
                             StockAmount = 500,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             ExpirationDate = new DateTime(2024, 12, 31),
                             StoreIds = new List<int>()
                             {
@@ -200,6 +220,8 @@ namespace MVC.Controllers
                             UnitPrice = 2.5M,
                             StockAmount = 125,
                             ExpirationDate = DateTime.Parse("09/18/2025", new CultureInfo("en-US")),
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             StoreIds = new List<int>()
                             {
                                 _db.Stores.SingleOrDefault(s => s.Name == "Migros").Id
@@ -211,13 +233,15 @@ namespace MVC.Controllers
                 {
                     Name = "Medicine",
                     Description = "Antibiotics, Vitamins, Pain Killers, etc.",
-                    _Products = new List<Product>()
+                    Products = new List<Product>()
                     {
                         new Product()
                         {
                             Name = "Antibiotic",
                             UnitPrice = 35,
                             StockAmount = 5,
+                            CreateDate = DateTime.Now,
+                            CreatedBy = "systemadmin",
                             ExpirationDate = DateTime.Parse("19.05.2027", new CultureInfo("tr-TR")),
                             StoreIds = new List<int>()
                             {
@@ -232,55 +256,67 @@ namespace MVC.Controllers
                     Description = "Operating Systems, Antivirus Software, Office Software and Video Games"
                 });
 
-                //_db.UserRoles.RemoveRange(_db.UserRoles.ToList());
-                //_db.Roles.RemoveRange(_db.Roles.ToList());
-                //_db.Users.RemoveRange(_db.Users.ToList());
+                _db.UserRoles.RemoveRange(_db.UserRoles.ToList());
+                _db.Roles.RemoveRange(_db.Roles.ToList());
+                _db.Users.RemoveRange(_db.Users.ToList());
 
-                //_db.Roles.Add(new Role()
-                //{
-                //    Name = Roles.SystemAdmin.ToString(),
-                //});
-                //_db.Roles.Add(new Role()
-                //{
-                //    Name = Roles.Admin.ToString(),
-                //});
-                //_db.Roles.Add(new Role()
-                //{
-                //    Name = Roles.User.ToString(),
-                //});
+                _db.Roles.Add(new Role()
+                {
+                    Name = Roles.SystemAdmin.ToString(),
+                    CreateDate = DateTime.Now,
+                    CreatedBy = "systemadmin"
+                });
+                _db.Roles.Add(new Role()
+                {
+                    Name = Roles.Admin.ToString(),
+                    CreateDate = DateTime.Now,
+                    CreatedBy = "systemadmin"
+                });
+                _db.Roles.Add(new Role()
+                {
+                    Name = Roles.User.ToString(),
+                    CreateDate = DateTime.Now,
+                    CreatedBy = "systemadmin"
+                });
 
-                //_db.SaveChanges();
+                _db.SaveChanges();
 
-                //_db.Users.Add(new User()
-                //{
-                //    UserName = "systemadmin",
-                //    Password = "systemadmin",
-                //    IsActive = true,
-                //    Roles = new List<int>()
-                //    {
-                //        _db.Roles.SingleOrDefault(r => r.Name == Roles.SystemAdmin.ToString()).Id
-                //    }
-                //});
-                //_db.Users.Add(new User()
-                //{
-                //    UserName = "admin",
-                //    Password = "admin",
-                //    IsActive = true,
-                //    Roles = new List<int>()
-                //    {
-                //        _db.Roles.SingleOrDefault(r => r.Name == Roles.Admin.ToString()).Id
-                //    }
-                //});
-                //_db.Users.Add(new User()
-                //{
-                //    UserName = "user",
-                //    Password = "user",
-                //    IsActive = true,
-                //    Roles = new List<int>()
-                //    {
-                //        _db.Roles.SingleOrDefault(r => r.Name == Roles.User.ToString()).Id
-                //    }
-                //});
+                _db.Users.Add(new User()
+                {
+                    UserName = "systemadmin",
+                    Password = "systemadmin",
+                    Active = true,
+                    CreateDate = DateTime.Now,
+                    CreatedBy = "systemadmin",
+                    RoleIds = new List<int>()
+                    {
+                        _db.Roles.SingleOrDefault(r => r.Name == Roles.SystemAdmin.ToString()).Id
+                    }
+                });
+                _db.Users.Add(new User()
+                {
+                    UserName = "admin",
+                    Password = "admin",
+                    Active = true,
+                    CreateDate = DateTime.Now,
+                    CreatedBy = "systemadmin",
+                    RoleIds = new List<int>()
+                    {
+                        _db.Roles.SingleOrDefault(r => r.Name == Roles.Admin.ToString()).Id
+                    }
+                });
+                _db.Users.Add(new User()
+                {
+                    UserName = "user",
+                    Password = "user",
+                    Active = true,
+                    CreateDate = DateTime.Now,
+                    CreatedBy = "systemadmin",
+                    RoleIds = new List<int>()
+                    {
+                        _db.Roles.SingleOrDefault(r => r.Name == Roles.User.ToString()).Id
+                    }
+                });
 
                 _db.SaveChanges();
 
@@ -290,11 +326,11 @@ namespace MVC.Controllers
                     System.IO.File.Delete(file);
                 }
 
-                SetTempData("Database seed successful.");
+                SetTempData(new Result(HttpStatusCode.OK, "Database seed successful."));
             }
             else
             {
-                SetTempData("Invalid pin!", HttpStatusCode.BadRequest);
+                SetTempData(new Result(HttpStatusCode.BadRequest, "Invalid pin!"));
             }
 
             return RedirectToAction("Index", "Products");

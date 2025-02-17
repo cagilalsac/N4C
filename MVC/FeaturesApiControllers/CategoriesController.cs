@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using N4C.App;
-using N4C.App.Features;
 using APP.Features.Categories;
+using N4C.App.Features;
 
 // Generated from N4C Template.
 
@@ -42,7 +42,7 @@ namespace MVC.FeaturesApiControllers
         public async Task<IActionResult> Get(int id)
         {
             // Get item logic:
-            var result = await _mediator.Send(new CategoryQueryRequest() { Id = id });
+            var result = await _mediator.Send(new CategoryQueryRequest());
             
             return ActionResult(result);
         }

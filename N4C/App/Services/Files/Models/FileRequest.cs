@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using N4C.Attributes;
 
-namespace N4C.App
+namespace N4C.App.Services.Files.Models
 {
     public abstract class FileRequest : Request
     {
@@ -11,6 +11,7 @@ namespace N4C.App
         [DisplayName("Diğer Dosyalar", "Other Files")]
         public virtual List<IFormFile> OtherFormFiles { get; set; }
 
-        public string _MainFile { get; set; }
+        [Obsolete("For only getting the main file path in MVC edit operation. Use MainFormFile to post file data.")]
+        public string MainFile { get; set; }
     }
 }

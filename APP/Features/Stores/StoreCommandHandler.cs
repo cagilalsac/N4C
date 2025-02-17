@@ -1,7 +1,6 @@
 ﻿using APP.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using N4C;
 using N4C.App;
 using N4C.App.Features;
 using N4C.App.Services;
@@ -27,12 +26,12 @@ namespace APP.Features.Stores
 
         protected override IQueryable<Store> Data(Action<MapperProfile> mapperProfile = null)
         {
-            return base.Data(mapperProfile).Include(c => c._ProductStores);
+            return base.Data(mapperProfile).Include(c => c.ProductStores);
         }
 
         public override Task<Result<StoreCommandRequest>> Delete(StoreCommandRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            Delete(Data(request)._ProductStores);
+            Delete(Data(request).ProductStores);
             return base.Delete(request, save, cancellationToken);
         }
     }

@@ -90,7 +90,7 @@ namespace @Model.ControllerNamespace
         private readonly @serviceAbstractType @(_serviceAbstractName);
 @foreach (var relatedProperty in relatedProperties.Keys)
 {
-        @:private readonly Service<@relatedProperty.Substring(1), @(relatedProperty.Substring(1) + "Request"), @(relatedProperty.Substring(1) + "Response")> _@(relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service");
+        @:private readonly Service<@relatedProperty, @(relatedProperty + "Request"), @(relatedProperty + "Response")> _@(relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service");
 }
 
         /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
@@ -99,7 +99,7 @@ namespace @Model.ControllerNamespace
         public @(Model.ControllerName + "(" + serviceAbstractType + " " + serviceAbstractName)
 @foreach (var relatedProperty in relatedProperties.Keys)
 {
-            @:@(", Service<" + relatedProperty.Substring(1) + ", " + relatedProperty.Substring(1) + "Request, " + relatedProperty.Substring(1) + "Response> " + relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service")
+            @:@(", Service<" + relatedProperty + ", " + relatedProperty + "Request, " + relatedProperty + "Response> " + relatedProperty.Substring(1, 1).ToLower() + relatedProperty.Substring(2) + "Service")
 }
 
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
@@ -116,7 +116,7 @@ namespace @Model.ControllerNamespace
             //_{Entity}Service = {Entity}Service;
         }
 
-        void SetViewData(string message = default, HttpStatusCode httpStatusCode = HttpStatusCode.OK, PageOrder pageOrder = default)
+        void SetViewData(Result result, PageOrder pageOrder = default)
         {
 @{
             @:// Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
@@ -133,7 +133,7 @@ namespace @Model.ControllerNamespace
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
             //ViewBag.{Entity}Ids = new MultiSelectList(_{Entity}Service.GetList().Result.Data, "Id", "Name");
 
-            SetViewData(@(_serviceAbstractName).Culture, message, httpStatusCode, @(_serviceAbstractName).Title, pageOrder);
+            SetViewData(@(_serviceAbstractName).Culture, result, @(_serviceAbstractName).Title, pageOrder);
         }
 
         // GET: @routePrefix
@@ -143,7 +143,7 @@ namespace @Model.ControllerNamespace
             // Get collection logic:
             var result = pageOrder is null ? await @(_serviceAbstractName).GetList() : await @(_serviceAbstractName).GetList(pageOrder);
             
-            SetViewData(result.Message, result.HttpStatusCode, pageOrder);
+            SetViewData(result, pageOrder);
             return View(result);
         }
 
@@ -153,15 +153,16 @@ namespace @Model.ControllerNamespace
             // Get item logic:
             var result = await @(_serviceAbstractName).GetItem(id);
 
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(result);
         }
 
         // GET: @routePrefix/Create
         public IActionResult Create()
         {
+            // Get item for create logic:
             var result = @(_serviceAbstractName).GetItemForCreate();
-            SetViewData();
+            SetViewData(result);
             return View(result.Data);
         }
 
@@ -179,21 +180,21 @@ namespace @Model.ControllerNamespace
                 @:if (result.Success)
 }  
                 {
-                    SetTempData(result.Message);
+                    SetTempData(result);
                     return RedirectToAction(nameof(Details), new { id = result.Data.Id });
                 }
             }
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(@requestVariable);
         }
 
         // GET: @routePrefix/Edit/5
         public IActionResult Edit(@primaryKeyShortTypeName id)
         {
-            // Get item to edit logic:
+            // Get item for edit logic:
             var result = @(_serviceAbstractName).GetItemForEdit(id);
 
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(result.Data);
         }
 
@@ -211,21 +212,21 @@ namespace @Model.ControllerNamespace
                 @:if (result.Success)
 }  
                 {
-                    SetTempData(result.Message);
+                    SetTempData(result);
                     return RedirectToAction(nameof(Details), new { id = result.Data.Id });
                 }
             }
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(@requestVariable);
         }
 
         // GET: @routePrefix/Delete/5
         public IActionResult Delete(@primaryKeyShortTypeName id)
         {
-            // Get item to delete logic:
+            // Get item for delete logic:
             var result = @(_serviceAbstractName).GetItemForDelete(id);
 
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(result);
         }
 
@@ -236,7 +237,7 @@ namespace @Model.ControllerNamespace
             // Delete item logic:
             var result = await @(_serviceAbstractName).Delete(@requestVariable);
 
-            SetTempData(result.Message, result.HttpStatusCode);         
+            SetTempData(result);         
             return RedirectToAction(nameof(Index));
         }
 
@@ -246,7 +247,7 @@ namespace @Model.ControllerNamespace
             // Delete item logic:
             var result = await @(_serviceAbstractName).Delete(@requestVariable);
 
-            SetTempData(result.Message, result.HttpStatusCode);             
+            SetTempData(result);             
             return RedirectToAction(nameof(Index));
         }
 
@@ -255,7 +256,7 @@ namespace @Model.ControllerNamespace
             // Delete file logic:
             var result = await @("_" + serviceAbstractName).DeleteFiles(id, path);
 
-            SetTempData(result.Message, result.HttpStatusCode); 
+            SetTempData(result); 
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -269,7 +270,7 @@ namespace @Model.ControllerNamespace
             var result = @("_" + serviceAbstractName).GetFile(path);
             if (result.Success)
                 return File(result.Data.Stream, result.Data.ContentType, result.Data.Name);
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View("_N4Cmessage");
         }
     }

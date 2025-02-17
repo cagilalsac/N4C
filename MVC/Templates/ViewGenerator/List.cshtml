@@ -5,7 +5,6 @@
 @{
 @:@@using N4C.App
 @:@@using N4C.Extensions
-@:@@using N4C
     var entity = Model.ViewDataTypeName.Split('.')[Model.ViewDataTypeName.Split('.').Length - 1];
     var viewModel = "@model Result<List<" + entity + "Response>>";
 }
@@ -223,13 +222,13 @@
             property.TypeName.Equals(typeof(double).FullName) || property.TypeName.Equals(typeof(double?).FullName) ||
             property.TypeName.Equals(typeof(float).FullName) || property.TypeName.Equals(typeof(float?).FullName))
         {
-            return "_" + property.PropertyName;
+            return property.PropertyName + "S";
         }
         return property.PropertyName;
     }
 
     string GetValueExpression(INavigationMetadata navigation)
     {
-        return navigation.AssociationPropertyName.Substring(1);
+        return navigation.AssociationPropertyName;
     }
 }

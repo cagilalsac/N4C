@@ -1,4 +1,4 @@
-﻿using N4C.App;
+﻿using N4C.App.Services.Files.Models;
 using N4C.Attributes;
 using System.Text.Json.Serialization;
 
@@ -9,31 +9,33 @@ namespace APP.Services.Models
         [DisplayName("Adı")]
         public string Name { get; set; }
 
+        [DisplayName("Birim Fiyatı")]
         public decimal? UnitPrice { get; set; }
 
         [DisplayName("Birim Fiyatı")]
         [JsonIgnore]
         [ExcelIgnore]
-        public string _UnitPrice { get; set; }
+        public string UnitPriceS { get; set; }
 
         [DisplayName("Birim Fiyatı Yazı")]
         [JsonIgnore]
         [ExcelIgnore]
-        public string _UnitPriceText { get; set; }
+        public string UnitPriceText { get; set; }
 
+        [DisplayName("Stok Miktarı")]
         public int? StockAmount { get; set; }
 
         [DisplayName("Stok Miktarı")]
         [JsonIgnore]
         [ExcelIgnore]
-        public string _StockAmount { get; set; }
+        public string StockAmountS { get; set; }
 
         [ExcelIgnore]
         public DateTime? ExpirationDate { get; set; }
 
         [DisplayName("Son Kullanma Tarihi")]
         [JsonIgnore]
-        public string _ExpirationDate { get; set; }
+        public string ExpirationDateS { get; set; }
 
         [ExcelIgnore]
         public int? CategoryId { get; set; }

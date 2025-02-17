@@ -1,4 +1,4 @@
-﻿using N4C.App;
+﻿using N4C.App.Services.Files.Models;
 using N4C.Attributes;
 
 namespace APP.Services.Models

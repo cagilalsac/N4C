@@ -1,6 +1,5 @@
 ﻿@using N4C.App
 @using N4C.Extensions
-@using N4C
 
 @model Result<StoreResponse>
 
@@ -35,10 +34,10 @@
     </div>
     <div class="row mb-3">
         <div class="col-2 fw-bold">
-            @Html.DisplayNameFor(model => model.Data._Virtual, culture)
+            @Html.DisplayNameFor(model => model.Data.VirtualS, culture)
         </div>
         <div class="col-10">
-            @Html.Raw(Model.Data._Virtual)
+            @Html.Raw(Model.Data.VirtualS)
         </div>
     </div>
     <hr />

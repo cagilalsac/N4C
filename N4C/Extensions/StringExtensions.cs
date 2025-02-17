@@ -1,4 +1,6 @@
-﻿namespace N4C.Extensions
+﻿using N4C.App;
+
+namespace N4C.Extensions
 {
     public static class StringExtensions
     {
@@ -118,7 +120,7 @@
                         result = propertyName.SeperateUpperCaseCharacters();
                 }
             }
-            return result.TrimStart('_');
+            return result.TrimEnd('S');
         }
 
         public static string GetErrorMessage(this string value, string propertyName, string culture)

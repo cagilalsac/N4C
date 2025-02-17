@@ -32,4 +32,11 @@
     <Folder Include="wwwroot\files\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Views\Shared\_N4Croles.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

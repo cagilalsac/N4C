@@ -1,4 +1,6 @@
-﻿namespace N4C.Extensions
+﻿using N4C.App;
+
+namespace N4C.Extensions
 {
     public static class DecimalExtensions
     {

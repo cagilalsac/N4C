@@ -1,6 +1,5 @@
 ﻿@using N4C.App
 @using N4C.Extensions
-@using N4C
 
 @model Result<List<ProductResponse>>
 
@@ -56,13 +55,13 @@
                         @Html.DisplayNameFor(model => model.Data.First().Name, culture)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Data.First()._UnitPrice, culture)
+                        @Html.DisplayNameFor(model => model.Data.First().UnitPriceS, culture)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Data.First().StockAmount, culture)
+                        @Html.DisplayNameFor(model => model.Data.First().StockAmountS, culture)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Data.First()._ExpirationDate, culture)
+                        @Html.DisplayNameFor(model => model.Data.First().ExpirationDateS, culture)
                     </th>
                     <th>
                         @Html.DisplayNameFor(model => model.Data.First().Category, culture)
@@ -80,13 +79,13 @@
 						@Html.Raw(item.Name)
 					</td>
 					<td>
-						@Html.Raw(item._UnitPrice)
+						@Html.Raw(item.UnitPriceS)
 					</td>
 					<td>
-						@Html.Raw(item.StockAmount)
+						@Html.Raw(item.StockAmountS)
 					</td>
 					<td>
-						@Html.Raw(item._ExpirationDate)
+						@Html.Raw(item.ExpirationDateS)
 					</td>
 					<td>
 						@Html.Raw(item.Category)

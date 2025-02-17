@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace APP.Domain
 {
-    public class Product : FileEntity, IModified
+    public class Product : FileEntity, IDeleted, IModified
     {
         [Required]
         [StringLength(150)]
@@ -20,15 +20,15 @@ namespace APP.Domain
         [Required]
         public int? CategoryId { get; set; }
 
-        public Category _Category { get; set; }
+        public Category Category { get; set; }
 
-        public List<ProductStore> _ProductStores { get; private set; } = new List<ProductStore>();
+        public List<ProductStore> ProductStores { get; private set; } = new List<ProductStore>();
 
         [NotMapped]
         public List<int> StoreIds
         {
-            get => _ProductStores?.Select(ps => ps.StoreId).ToList();
-            set => _ProductStores = value?.Select(v => new ProductStore() { StoreId = v }).ToList();
+            get => ProductStores?.Select(ps => ps.StoreId).ToList();
+            set => ProductStores = value?.Select(v => new ProductStore() { StoreId = v }).ToList();
         }
 
         public bool Deleted { get; set; }

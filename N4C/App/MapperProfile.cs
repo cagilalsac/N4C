@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 
-namespace N4C
+namespace N4C.App
 {
     public class MapperProfile : Profile
     {

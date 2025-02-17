@@ -11,6 +11,6 @@ namespace APP.Domain
 
         public bool Virtual { get; set; }
 
-        public List<ProductStore> _ProductStores { get; private set; } = new List<ProductStore>();
+        public List<ProductStore> ProductStores { get; private set; } = new List<ProductStore>();
     }
 }

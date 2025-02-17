@@ -15,10 +15,10 @@ namespace APP.Services.Models
         [DisplayName("Sanal")]
         [JsonIgnore]
         [ExcelIgnore]
-        public string _Virtual { get; set; }
+        public string VirtualS { get; set; }
 
         [JsonIgnore]
-        public string _IsVirtual { get; set; }
+        public string IsVirtual { get; set; }
 
         [DisplayName("Ürün Sayısı")]
         [JsonIgnore]

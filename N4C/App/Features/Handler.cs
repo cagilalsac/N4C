@@ -40,16 +40,16 @@ namespace N4C.App.Features
                     if (responseResult.Success)
                     {
                         list = [responseResult.Data];
-                        return Success(list, responseResult.Message);
+                        return Success(list, responseResult);
                     }
-                    return Error(list, responseResult.HttpStatusCode);
+                    return Error(list, responseResult);
             }
             if (requestResult.Success)
             {
                 list = [new TResponse() { Id = request.Id }];
-                return Success(list, requestResult.Message);
+                return Success(list, requestResult);
             }
-            return Error(list, requestResult.HttpStatusCode, requestResult.Message);
+            return Error(list, requestResult);
         }
     }
 

@@ -8,8 +8,8 @@ namespace APP.Domain
 
         public int StoreId { get; set; }
 
-        public Product _Product { get; set; }
+        public Product Product { get; set; }
 
-        public Store _Store { get; set; }
+        public Store Store { get; set; }
     }
 }

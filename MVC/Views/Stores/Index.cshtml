@@ -1,6 +1,5 @@
 ﻿@using N4C.App
 @using N4C.Extensions
-@using N4C
 
 @model Result<List<StoreResponse>>
 
@@ -56,7 +55,7 @@
                         @Html.DisplayNameFor(model => model.Data.First().Name, culture)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Data.First()._Virtual, culture)
+                        @Html.DisplayNameFor(model => model.Data.First().VirtualS, culture)
                     </th>
                     <th>
                         @Html.DisplayNameFor(model => model.Data.First().ProductsCount, culture)
@@ -71,7 +70,7 @@
 						@Html.Raw(item.Name)
 					</td>
 					<td>
-						@Html.Raw(item._Virtual)
+						@Html.Raw(item.VirtualS)
 					</td>
                     <td>
 						@Html.Raw(item.ProductsCount)

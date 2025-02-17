@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using N4C.App.Services;
+using N4C.App.Services.Users;
+using N4C.App.Services.Users.Models;
+using N4C.Domain.Users;
 
 namespace N4C.App
 {
@@ -16,6 +19,7 @@ namespace N4C.App
             // Inversion of Control for Services:
             builder.Services.AddScoped<HttpService>();
             builder.Services.AddScoped<Application>();
+            builder.Services.AddScoped<Service<Role, RoleRequest, RoleResponse>, RoleService>();
 
             // MediatR:
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())

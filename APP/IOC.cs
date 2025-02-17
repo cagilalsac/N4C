@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using N4C;
 using N4C.App;
 using N4C.App.Services;
 using N4C.Domain;
@@ -25,7 +24,7 @@ namespace APP
             builder.Services.AddScoped<Service<Product, ProductRequest, ProductResponse>, ProductService>();
 
             // AppSettings:
-            var appSettings = new AppSettings(builder.Configuration, 20, Cultures.EN);
+            var appSettings = new AppSettings(builder.Configuration, 20, Cultures.TR);
             appSettings.Bind();
 
             // N4C:

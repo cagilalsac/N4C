@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using N4C;
 using N4C.App;
 using N4C.App.Features;
 using N4C.App.Services;
@@ -39,7 +38,7 @@ namespace APP.Features.Products
 
         protected override IQueryable<Product> Data(Action<MapperProfile> mapperProfile = null)
         {
-            return base.Data(mapperProfile).Include(p => p._ProductStores);
+            return base.Data(mapperProfile).Include(p => p.ProductStores);
         }
 
         public override Result<ProductCommandRequest> Validate(ProductCommandRequest request, ModelStateDictionary modelState = null, string errorMessagesSeperator = "; ")
@@ -53,13 +52,13 @@ namespace APP.Features.Products
 
         public override Task<Result<ProductCommandRequest>> Update(ProductCommandRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            Update(Data(request)._ProductStores);
+            Update(Data(request).ProductStores);
             return base.Update(request, save, cancellationToken);
         }
 
         public override Task<Result<ProductCommandRequest>> Delete(ProductCommandRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            Delete(Data(request)._ProductStores);
+            Delete(Data(request).ProductStores);
             return base.Delete(request, save, cancellationToken);
         }
     }

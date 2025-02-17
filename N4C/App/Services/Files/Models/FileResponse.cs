@@ -1,7 +1,7 @@
 ﻿using N4C.Attributes;
 using System.Text.Json.Serialization;
 
-namespace N4C.App
+namespace N4C.App.Services.Files.Models
 {
     public class FileResponse : Response
     {
@@ -14,10 +14,10 @@ namespace N4C.App
         [JsonIgnore, ExcelIgnore]
         public string FileName { get; set; }
 
-        [ExcelIgnore, DisplayName("Ana Dosya")]
+        [JsonIgnore, ExcelIgnore, DisplayName("Ana Dosya")]
         public virtual string MainFile { get; set; }
 
-        [ExcelIgnore, DisplayName("Diğer Dosyalar")]
+        [JsonIgnore, ExcelIgnore, DisplayName("Diğer Dosyalar")]
         public virtual List<string> OtherFiles { get; set; }
     }
 }

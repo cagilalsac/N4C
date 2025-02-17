@@ -1,5 +1,4 @@
-﻿@using N4C
-@using N4C.App
+﻿@using N4C.App
 
 @* https://alertifyjs.com/ *@
 
@@ -14,20 +13,22 @@
     var message = culture == Cultures.TR ? "Bu kaydı silmek istediğinize emin misiniz?" : "Are you sure you want to delete this record?";
     var yes = culture == Cultures.TR ? "Evet" : "Yes";
     var no = culture == Cultures.TR ? "Hayır" : "No";
+    var deleteMvcAction = (int)MvcActions.DeleteGet;
 }
 
 <script>
-    function deleteRecord(id) {
+    function deleteRecord(id, deleteMvcAction = 0) {
+        var deleteAction = deleteMvcAction == @deleteMvcAction ? 'Index?Request.Id=' + id + '&MvcAction=@deleteMvcAction' : 'DeleteByAlertify/' + id;
         alertify.confirm('@title',
             '@message',
             function () { // OK
             @if (ViewContext.RouteData.Values["Area"] is not null)
             {
-                @:window.location.href = '/@ViewContext.RouteData.Values["Area"]/@ViewContext.RouteData.Values["Controller"].ToString()/DeleteByAlertify/' + id;
+                @:window.location.href = '/@ViewContext.RouteData.Values["Area"]/@ViewContext.RouteData.Values["Controller"].ToString()/' + deleteAction;
             }
             else
             {
-                @:window.location.href = '/@ViewContext.RouteData.Values["Controller"].ToString()/DeleteByAlertify/' + id;
+                @:window.location.href = '/@ViewContext.RouteData.Values["Controller"].ToString()/' + deleteAction;
             }
             },
             function () { // Cancel

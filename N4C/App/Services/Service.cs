@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using N4C.App.Services.Files;
+using N4C.App.Services.Files.Models;
+using N4C.Common;
 using N4C.Domain;
 using N4C.Extensions;
 using System.Linq.Expressions;
@@ -90,7 +93,7 @@ namespace N4C.App.Services
                     pageOrder.OrderExpressions = OrderExpressions;
                     if (pageOrder.OrderExpressions.Any() && string.IsNullOrWhiteSpace(pageOrder.OrderExpression))
                         pageOrder.OrderExpression = pageOrder.OrderExpressions.FirstOrDefault().Key;
-                    list = await Data().OrderBy(pageOrder).Paginate(pageOrder).ProjectTo<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
+                    list = await Data().OrderBy(pageOrder).Paginate(pageOrder).Map<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
                     if (Settings.SessionExpirationInMinutes > 0)
                         HttpService.SetSession(nameof(PageOrder), pageOrder);
                     if (pageOrder.TotalRecordsCount > 0)
@@ -134,7 +137,7 @@ namespace N4C.App.Services
                     return Error(item, HttpStatusCode.NotFound);
                 item = entity.Map<TEntity, TRequest>(MapperProfile);
                 if (HasFile && item is FileRequest)
-                    (item as FileRequest)._MainFile = (entity as FileEntity).MainFile;
+                    (item as FileRequest).MainFile = (entity as FileEntity).MainFile;
                 return Success(item);
             }
             catch (Exception exception)

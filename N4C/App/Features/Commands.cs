@@ -2,7 +2,7 @@
 {
     public enum Commands
     {
-        Create = 1,
+        Create,
         Update,
         Delete
     }

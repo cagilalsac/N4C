@@ -3,7 +3,6 @@ using APP.Services.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using N4C;
 using N4C.App;
 using N4C.App.Services;
 using N4C.Domain;
@@ -25,20 +24,20 @@ namespace APP.Services
         {
             return base.Data(p =>
             {
-                p.CreateMap<Product, ProductResponse>()
-                    .ForMember(d => d._UnitPrice, s => (s.UnitPrice ?? 0).ToString("C2", new CultureInfo("tr-TR")))
-                    .ForMember(d => d._StockAmount, s =>
+                p.Map<Product, ProductResponse>()
+                    .Property(d => d.UnitPriceS, s => (s.UnitPrice ?? 0).ToString("C2", new CultureInfo("tr-TR")))
+                    .Property(d => d.StockAmountS, s =>
                         s.StockAmount.HasValue ?
                         "<span class=" +
                             (s.StockAmount.Value < 10 ? "'badge bg-danger'>"
                             : s.StockAmount.Value < 100 ? "'badge bg-warning'>"
                             : "'badge bg-success'>") + s.StockAmount.Value + "</span>"
                         : string.Empty)
-                    .ForMember(d => d._ExpirationDate, s => s.ExpirationDate.HasValue ? s.ExpirationDate.Value.ToShortDateString() : "")
-                    .ForMember(d => d.Category, s => s._Category.Name)
-                    .ForMember(d => d.Stores, s => string.Join("<br>", s._ProductStores.OrderBy(ps => ps._Store.Name).Select(ps => ps._Store.Name)))
-                    .ForMember(d => d._UnitPriceText, s => (s.UnitPrice ?? 0).ToMoneyString(Cultures.TR, false));
-            }).Include(p => p._ProductStores).ThenInclude(ps => ps._Store).Include(p => p._Category).OrderBy(p => p.Name);
+                    .Property(d => d.ExpirationDateS, s => s.ExpirationDate.HasValue ? s.ExpirationDate.Value.ToShortDateString() : "")
+                    .Property(d => d.Category, s => s.Category.Name)
+                    .Property(d => d.Stores, s => string.Join("<br>", s.ProductStores.OrderBy(ps => ps.Store.Name).Select(ps => ps.Store.Name)))
+                    .Property(d => d.UnitPriceText, s => (s.UnitPrice ?? 0).ToMoneyString(Cultures.TR, false));
+            }).Include(p => p.ProductStores).ThenInclude(ps => ps.Store).Include(p => p.Category).OrderBy(p => p.Name);
         }
 
         public override Result<ProductRequest> Validate(ProductRequest request, ModelStateDictionary modelState = null, string errorMessagesSeperator = "; ")
@@ -52,13 +51,13 @@ namespace APP.Services
 
         public override Task<Result<ProductRequest>> Update(ProductRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            Update(Data(request)._ProductStores);
+            Update(Data(request).ProductStores);
             return base.Update(request, save, cancellationToken);
         }
 
         public override Task<Result<ProductRequest>> Delete(ProductRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            Delete(Data(request)._ProductStores);
+            Delete(Data(request).ProductStores);
             return base.Delete(request, save, cancellationToken);
         }
     }

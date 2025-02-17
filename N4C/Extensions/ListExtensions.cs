@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using N4C.App;
+using System.Data;
 using System.Reflection;
 
 namespace N4C.Extensions

@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using N4C.App;
-using N4C.App.Features;
 using APP.Features.Products;
+using N4C.App.Features;
 
 // Generated from N4C Template.
 

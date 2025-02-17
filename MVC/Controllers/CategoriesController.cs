@@ -1,15 +1,11 @@
 ﻿#nullable disable
 
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Net;
-using N4C.App.Services;
-using N4C.App;
-using N4C.Controllers;
-using APP.Services.Models;
 using APP.Domain;
+using APP.Services.Models;
+using Microsoft.AspNetCore.Mvc;
+using N4C.App;
+using N4C.App.Services;
+using N4C.Controllers;
 
 // Generated from N4C Template.
 
@@ -36,14 +32,14 @@ namespace MVC.Controllers
             //_{Entity}Service = {Entity}Service;
         }
 
-        void SetViewData(string message = default, HttpStatusCode httpStatusCode = HttpStatusCode.OK, PageOrder pageOrder = default)
+        void SetViewData(Result result, PageOrder pageOrder = default)
         {
             // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
 
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
             //ViewBag.{Entity}Ids = new MultiSelectList(_{Entity}Service.GetList().Result.Data, "Id", "Name");
 
-            SetViewData(_categoryService.Culture, message, httpStatusCode, _categoryService.Title, pageOrder);
+            SetViewData(_categoryService.Culture, result, _categoryService.Title, pageOrder);
         }
 
         // GET: Categories
@@ -53,7 +49,7 @@ namespace MVC.Controllers
             // Get collection logic:
             var result = pageOrder is null ? await _categoryService.GetList() : await _categoryService.GetList(pageOrder);
             
-            SetViewData(result.Message, result.HttpStatusCode, pageOrder);
+            SetViewData(result, pageOrder);
             return View(result);
         }
 
@@ -63,7 +59,7 @@ namespace MVC.Controllers
             // Get item logic:
             var result = await _categoryService.GetItem(id);
 
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(result);
         }
 
@@ -71,7 +67,7 @@ namespace MVC.Controllers
         public IActionResult Create()
         {
             var result = _categoryService.GetItemForCreate();
-            SetViewData();
+            SetViewData(result);
             return View(result.Data);
         }
 
@@ -87,11 +83,11 @@ namespace MVC.Controllers
                 
                 if (result.Success)
                 {
-                    SetTempData(result.Message);
+                    SetTempData(result);
                     return RedirectToAction(nameof(Details), new { id = result.Data.Id });
                 }
             }
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(categoryRequest);
         }
 
@@ -101,7 +97,7 @@ namespace MVC.Controllers
             // Get item to edit logic:
             var result = _categoryService.GetItemForEdit(id);
 
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(result.Data);
         }
 
@@ -117,11 +113,11 @@ namespace MVC.Controllers
                 
                 if (result.Success)
                 {
-                    SetTempData(result.Message);
+                    SetTempData(result);
                     return RedirectToAction(nameof(Details), new { id = result.Data.Id });
                 }
             }
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(categoryRequest);
         }
 
@@ -131,7 +127,7 @@ namespace MVC.Controllers
             // Get item to delete logic:
             var result = _categoryService.GetItemForDelete(id);
 
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View(result);
         }
 
@@ -142,7 +138,7 @@ namespace MVC.Controllers
             // Delete item logic:
             var result = await _categoryService.Delete(categoryRequest);
 
-            SetTempData(result.Message, result.HttpStatusCode);         
+            SetTempData(result);         
             return RedirectToAction(nameof(Index));
         }
 
@@ -152,7 +148,7 @@ namespace MVC.Controllers
             // Delete item logic:
             var result = await _categoryService.Delete(categoryRequest);
 
-            SetTempData(result.Message, result.HttpStatusCode);             
+            SetTempData(result);             
             return RedirectToAction(nameof(Index));
         }
 
@@ -161,7 +157,7 @@ namespace MVC.Controllers
             // Delete file logic:
             var result = await _categoryService.DeleteFiles(id, path);
 
-            SetTempData(result.Message, result.HttpStatusCode); 
+            SetTempData(result); 
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -175,7 +171,7 @@ namespace MVC.Controllers
             var result = _categoryService.GetFile(path);
             if (result.Success)
                 return File(result.Data.FileStream, result.Data.FileContentType, result.Data.FileName);
-            SetViewData(result.Message, result.HttpStatusCode);
+            SetViewData(result);
             return View("_N4Cmessage");
         }
     }

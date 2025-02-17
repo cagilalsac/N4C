@@ -1,7 +1,6 @@
 ﻿<!-- Source: /wwwroot/sneat/html/layouts-fluid.html -->
 
 @using APP
-@using N4C
 @using N4C.App
 
 @{
@@ -10,6 +9,7 @@
     var isAuthenticated = User.Identity.IsAuthenticated;
     var isInRoleSystemAdmin = User.IsInRole("SystemAdmin");
     var isInRoleAdmin = User.IsInRole("Admin");
+    isInRoleSystemAdmin = true;
     isInRoleAdmin = true;
 }
 

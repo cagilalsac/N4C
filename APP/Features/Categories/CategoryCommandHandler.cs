@@ -1,7 +1,6 @@
 ﻿using APP.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using N4C;
 using N4C.App;
 using N4C.App.Features;
 using N4C.App.Services;
@@ -28,12 +27,12 @@ namespace APP.Features.Categories
 
         protected override IQueryable<Category> Data(Action<MapperProfile> mapperProfile = null)
         {
-            return base.Data(mapperProfile).Include(c => c._Products);
+            return base.Data(mapperProfile).Include(c => c.Products);
         }
 
         public override Task<Result<CategoryCommandRequest>> Delete(CategoryCommandRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            Validate(Data(request)._Products);
+            Validate(Data(request).Products);
             return base.Delete(request, save, cancellationToken);
         }
     }
