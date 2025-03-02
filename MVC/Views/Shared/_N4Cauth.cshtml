@@ -1,0 +1,89 @@
+﻿@using N4C.App
+@using N4C.App.Services.Auth.Models
+@using N4C.Controllers
+
+@model AuthViewModel
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var login = culture == Cultures.TR ? "Kullanıcı Girişi" : "User Login";
+    var register = culture == Cultures.TR ? "Kullanıcı Kayıt" : "User Register";
+    var submit = culture == Cultures.TR ? "Gönder" : "Submit";
+    var authMvcAction = Model.AuthMvcAction;
+    var title = authMvcAction == (int)AuthMvcActions.RegisterPost ? register : login;
+}
+@{
+    ViewData["Title"] = $"{title}";
+}
+<partial name="_N4Cexception" />
+@if (Model is not null)
+{
+<form asp-action="Index" autocomplete="off" id="form">
+@if (authMvcAction == (int)AuthMvcActions.RegisterPost)
+{
+<div class="@containerDivClass">
+    <input name="AuthMvcAction" type="hidden" value="@authMvcAction" />
+    <partial name="_N4Cmessage" />
+	@Html.AntiForgeryToken()
+    <div class="row mb-3">
+        <displayname asp-for="RegisterRequest.UserName" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="RegisterRequest.UserName" class="form-control" />
+	    </div>
+    </div>
+    <div class="row mb-3">
+        <displayname asp-for="RegisterRequest.Password" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="RegisterRequest.Password" class="form-control password" type="password" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <displayname asp-for="RegisterRequest.ConfirmPassword" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="RegisterRequest.ConfirmPassword" class="form-control password" type="password" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="offset-2 col-10">
+            <partial name="_N4Cpassword" model="true" />
+        </div>
+    </div>
+    <hr />
+    <div class="offset-2 col-10">
+        <button type="submit" class="btn btn-primary">@submit</button>
+    </div>
+</div>
+}
+else
+{
+<div class="@containerDivClass">
+    <input name="AuthMvcAction" type="hidden" value="@authMvcAction" />
+    <partial name="_N4Cmessage" />
+	@Html.AntiForgeryToken()
+    <div class="row mb-3">
+        <displayname asp-for="LoginRequest.UserName" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="LoginRequest.UserName" class="form-control" />
+	    </div>
+    </div>
+    <div class="row mb-3">
+        <displayname asp-for="LoginRequest.Password" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="LoginRequest.Password" class="form-control password" type="password" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="offset-2 col-10">
+            <partial name="_N4Cpassword" model="true" />
+        </div>
+    </div>
+    <hr />
+    <div class="offset-2 col-10">
+        <button type="submit" class="btn btn-primary">@submit</button>
+    </div>
+</div>
+}
+</form>
+}

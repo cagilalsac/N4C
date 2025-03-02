@@ -1,0 +1,173 @@
+﻿@using N4C.App
+@using N4C.Extensions
+
+@model Result<ProductResponse>
+
+@* Generated from N4C Template. *@
+@* ProductResponse namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var title = view?.Title;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var details = culture == Cultures.TR ? "Detayı" : "Details";
+    var edit = culture == Cultures.TR ? "Düzenle" : "Edit";
+    var delete = culture == Cultures.TR ? "Sil" : "Delete";
+    var backToList = culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    var deleteFile = culture == Cultures.TR ? "Dosya Sil" : "Delete File";
+    var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
+    var mainFileMessage = culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
+    var isAuthenticated = User.Identity.IsAuthenticated;
+}
+@{
+    ViewData["Title"] = $"{title} {details}";
+}
+<partial name="_N4Cexception" />
+@if (Model is not null && Model.Data is not null)
+{
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" />
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Name, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Name)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.UnitPriceS, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.UnitPriceS)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.UnitPriceText, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.UnitPriceText)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.StockAmountS, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.StockAmountS)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.ExpirationDateS, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.ExpirationDateS)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Category, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Category)
+        </div>
+    </div>
+    <hr />
+    <div style="@filesStyle">
+        <div class="row mb-3">
+            <div class="col-2 fw-bold">
+                @Html.DisplayNameFor(model => model.Data.MainFile, culture)
+            </div>
+            @if (string.IsNullOrWhiteSpace(Model.Data.MainFile))
+            {
+            <div class="col-4">
+                <span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
+            </div>
+            }
+            else
+            {
+            <div class="col-4">
+                <span class="text-danger mainfilemessage"></span>
+                <br />
+                <a asp-action="Download" asp-route-path="@Model.Data.MainFile"><img src="@Model.Data.MainFile" class="img-fluid" /></a>
+            </div>
+            <div class="col-6 text-end pe-12">
+                <a asp-action="DeleteFile" asp-route-id="@Model.Data.Id" asp-route-path="@Model.Data.MainFile" class="deletemainfile">@deleteFile</a>
+            </div>
+            }
+        </div>
+        <hr />
+        <div class="row mb-3">
+            <div class="col-2 fw-bold">
+                @Html.DisplayNameFor(model => model.Data.OtherFiles, culture)
+            </div>
+            <div class="col-10">
+            @if (Model.Data.OtherFiles is not null && Model.Data.OtherFiles.Any())
+            {
+            foreach (var otherFile in Model.Data.OtherFiles)
+            {
+                <div class="row">
+                    <div class="col-4">
+                        <a asp-action="Download" asp-route-path="@otherFile"><img src="@otherFile" class="img-fluid" /></a>
+                        <input type="hidden" value="@otherFile" class="otherfiles" />
+                    </div>
+                    <div class="col-8 text-end pe-12">
+                        <a asp-action="DeleteFile" asp-route-id="@Model.Data.Id" asp-route-path="@otherFile">@deleteFile</a>
+                    </div>
+                </div>
+                <hr />
+            }
+            }
+            else
+            {
+                <span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
+            }
+            </div>
+        </div> 
+    </div>
+
+@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
+    
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            <b>@Html.DisplayNameFor(model => model.Data.Stores, culture)</b>
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Stores)
+        </div>
+    </div>
+   
+    <hr /> 
+@if (isAuthenticated)
+{
+    <a asp-action="Edit" asp-route-id="@Model.Data.Id">@edit</a>@:&nbsp;|&nbsp;
+    <a asp-action="Delete" asp-route-id="@Model.Data.Id">@delete</a>@:&nbsp;|&nbsp;
+}
+    <a asp-action="Index" asp-route-session="true">@backToList</a>
+</div>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('.deletemainfile').click(function (event) {
+                var preventEvent = false;
+                if ($('.mainfile').val() != '') {
+                    $('.otherfiles').each(function () {
+                        if ($(this).val() != '') {
+                            preventEvent = true;
+                        }
+                    });
+                }
+                if (preventEvent) {
+                    event.preventDefault();
+                    $('.mainfilemessage').text('@Html.Raw(mainFileMessage)');
+                }
+            });
+        });
+    </script>
+}

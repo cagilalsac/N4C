@@ -1,0 +1,76 @@
+﻿@using N4C.App
+@using N4C.Extensions
+
+@model Result<ProductResponse>
+
+@* Generated from N4C Template. *@
+@* ProductResponse namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var title = view?.Title;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var delete = culture == Cultures.TR ? "Sil" : "Delete";
+    var question = culture == Cultures.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
+    var save = culture == Cultures.TR ? "Evet" : "Yes";
+    var backToList = culture == Cultures.TR ? "Hayır" : "No";
+}
+@{
+    ViewData["Title"] = $"{title} {delete}";
+}
+<partial name="_N4Cexception" />
+@if (Model is not null && Model.Data is not null)
+{
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" />
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Name, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Name)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.UnitPriceS, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.UnitPriceS)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.StockAmountS, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.StockAmountS)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.ExpirationDateS, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.ExpirationDateS)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Category, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Category)
+        </div>
+    </div>
+    <hr />
+    <h5 class="text-danger">@question</h5>
+    <form asp-action="Delete">
+	    @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Data.Id" />
+        <button type="submit" class="btn btn-danger">@save</button>&nbsp;&nbsp;
+        <a asp-action="Index" asp-route-session="true" class="btn btn-outline-danger">@backToList</a>
+    </form>
+</div>
+}
