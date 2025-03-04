@@ -341,7 +341,8 @@ namespace N4C.App.Services.Files
         {
             try
             {
-                var fileName = Culture == Cultures.TR ? "Rapor.xlsx" : "Report.xlsx";
+                var dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss").Replace("-", "").Replace(":", "").Replace(" ", "_");
+                var fileName = Culture == Cultures.TR ? $"Rapor_{dateTime}.xlsx" : $"Report_{dateTime}.xlsx";
                 var worksheet = Culture == Cultures.TR ? "Sayfa1" : "Sheet1";
                 var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 ExcelPackage.LicenseContext = ExcelLicenseCommercial ? LicenseContext.Commercial : LicenseContext.NonCommercial;
