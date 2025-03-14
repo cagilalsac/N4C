@@ -1,0 +1,208 @@
+﻿@using N4C.App
+@using N4C.Controllers
+@using N4C.Domain.Users
+@using N4C.Extensions
+@using N4C.App.Services.Users.Models
+
+@model RoleViewModel
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var list = culture == Cultures.TR ? "Listesi" : "List";
+    var details = culture == Cultures.TR ? "Detay" : "Details";
+    var create = culture == Cultures.TR ? "Yeni" : "Create";
+    var edit = culture == Cultures.TR ? "Düzenle" : "Edit";
+    var delete = culture == Cultures.TR ? "Sil" : "Delete";
+    var save = culture == Cultures.TR ? "Kaydet" : "Save";
+    var clear = culture == Cultures.TR ? "Temizle" : "Clear";
+    var backToList = culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    var mvcAction = Model.MvcAction;
+    var title = mvcAction == (int)MvcActions.Details ? $"{view?.Title} {details}" :
+        mvcAction == (int)MvcActions.CreatePost ? $"{view?.Title} {create}" :
+        mvcAction == (int)MvcActions.EditPost ? $"{view?.Title} {edit}" :
+        $"{view?.Title} {list}";
+    var isAuthenticated = User.Identity.IsAuthenticated;
+}
+@{
+    ViewData["Title"] = $"{title}";
+}
+<partial name="_N4Cexception" />
+@if (Model is not null)
+{
+<form asp-action="Index" autocomplete="off" id="form">
+@if (mvcAction == (int)MvcActions.Index)
+{
+    <div class="@containerDivClass">
+        <div class="row">
+            <div class="col-10">
+                <partial name="_N4Cmessage" />
+            </div>
+            <div class="col-2 text-end">
+            @if (isAuthenticated)
+            {
+                <a asp-action="Index" asp-route-MvcAction="@((int)MvcActions.CreateGet)">@create</a>
+            }
+            </div>
+        </div>
+        @if (Model.Data.Any())
+        {
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-secondary">
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().Name, culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().UsersCount, culture)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+		        @foreach (var item in Model.Data) {
+				<tr>
+					<td>
+						@Html.Raw(item.Name)
+					</td>
+                    <td>
+                        @Html.Raw(item.UsersCount)
+                    </td>
+					<td class="text-end w-25">
+                    @if (isAuthenticated)
+                    {
+                        if (item.Id != (int)SystemRoles.SystemAdmin)
+                        {
+                            <a asp-action="Index" asp-route-Request.Id="@item.Id" asp-route-MvcAction="@((int)MvcActions.EditGet)">@edit</a>
+                            @:&nbsp;|&nbsp;
+                            <a href="#" onclick="deleteRecord(@item.Id, @((int)MvcActions.DeleteGet));">@delete</a>
+                            @:&nbsp;|&nbsp;
+                        }
+						<a asp-action="Index" asp-route-Request.Id="@item.Id" asp-route-MvcAction="@((int)MvcActions.Details)">@details</a>
+                    }
+					</td>
+				</tr>
+		        }
+            </tbody>
+        </table>
+        }
+    </div>
+}
+else if (mvcAction == (int)MvcActions.Details)
+{
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" />
+    @if (Model.Data.Any())
+    {
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().Name, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().Name)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().Users, culture)
+        </div>
+        <div class="col-10">
+            @foreach (var user in Model.Data.First().Users)
+            {
+                @Html.Raw(user.ActiveS + " " + user.UserName + "<br>")
+            }
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().CreateDate, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().CreateDate)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().CreatedBy, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().CreatedBy)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().UpdateDate, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().UpdateDate)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().UpdatedBy, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().UpdatedBy)
+        </div>
+    </div>
+    <hr />
+    <a asp-action="Index" asp-route-MvcAction="@((int)MvcActions.Index)">@backToList</a>
+    }
+</div>
+}
+else if (mvcAction == (int)MvcActions.CreatePost)
+{
+<div class="@containerDivClass">
+    <input name="MvcAction" type="hidden" value="@mvcAction" />
+    <partial name="_N4Cmessage" />
+	@Html.AntiForgeryToken()
+    <div class="row mb-3">
+        <displayname asp-for="Request.Name" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="Request.Name" class="form-control" />
+	    </div>
+    </div>
+    <hr />
+    <div class="row mb-3">
+	    <div class="offset-2 col-10">
+            <button type="submit" class="btn btn-primary">@save</button>
+		    &nbsp;&nbsp;
+            <button type="reset" class="btn btn-outline-primary">@clear</button>
+            &nbsp;&nbsp;
+		    <a asp-action="Index" asp-route-MvcAction="@((int)MvcActions.Index)">@backToList</a>
+	    </div>
+    </div>
+</div>
+}
+else if (mvcAction == (int)MvcActions.EditPost)
+{
+<div class="@containerDivClass">
+    <input name="MvcAction" type="hidden" value="@mvcAction" />
+    <input asp-for="Request.Id" type="hidden" />
+    <partial name="_N4Cmessage" />
+	@Html.AntiForgeryToken()
+    <div class="row mb-3">
+        <displayname asp-for="Request.Name" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="Request.Name" class="form-control" />
+	    </div>
+    </div>
+    <hr />
+    <div class="row mb-3">
+	    <div class="offset-2 col-10">
+            <button type="submit" class="btn btn-primary">@save</button>
+		    &nbsp;&nbsp;
+            <button type="reset" class="btn btn-outline-primary">@clear</button>
+            &nbsp;&nbsp;
+		    <a asp-action="Index" asp-route-MvcAction="@((int)MvcActions.Index)">@backToList</a>
+	    </div>
+    </div>
+</div>
+}
+</form>
+}
+
+@section Scripts {
+    <partial name="_N4Calertify" />
+}
