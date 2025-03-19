@@ -1,11 +1,9 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using N4C.App.Services.Auth.Models;
 using N4C.App.Services.Users;
 using N4C.App.Services.Users.Models;
 using N4C.Domain.Users;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace N4C.App.Services.Auth
 {
@@ -15,14 +13,14 @@ namespace N4C.App.Services.Auth
 
         protected Service<User, UserRequest, UserResponse> UserService { get; }
 
-        public AuthService(HttpService httpService, Service<User, UserRequest, UserResponse> userService) 
+        public AuthService(HttpService httpService, LogService logService, Service<User, UserRequest, UserResponse> userService) : base(logService)
         {
             HttpService = httpService;
             UserService = userService;
             SetCulture(HttpService.Culture);
         }
 
-        protected virtual List<Claim> GetClaims(UserResponse userResponse)
+        protected List<Claim> GetClaims(UserResponse userResponse)
         {
             var claims = new List<Claim>()
             {
@@ -41,7 +39,7 @@ namespace N4C.App.Services.Auth
             var validationResult = Validate(loginRequest.ModelState);
             if (!validationResult.Success)
                 return validationResult;
-            var result = await (UserService as UserService).GetItem(loginRequest.UserName, loginRequest.Password);
+            var result = await (UserService as UserService).GetItem(loginRequest);
             if (result.Success)
                 await HttpService.SignInAsync(GetClaims(result.Data));
             return result;
@@ -68,32 +66,22 @@ namespace N4C.App.Services.Auth
             });
         }
 
-        protected virtual JwtResponse GetJwt(UserResponse userResponse)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Settings.JwtSecurityKey));
-            var signingCredentials = new SigningCredentials(securityKey, Settings.JwtSecurityAlgorithm);
-            var expiration = DateTime.Now.AddDays(Settings.JwtExpirationInDays);
-            var jwtSecurityToken = new JwtSecurityToken(Settings.JwtIssuer, Settings.JwtAudience, GetClaims(userResponse),
-                DateTime.Now, expiration, signingCredentials);
-            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-            var token = jwtSecurityTokenHandler.WriteToken(jwtSecurityToken);
-            return new JwtResponse()
-            {
-                Token = "Bearer " + token,
-                Expiration = expiration
-            };
-        }
-
         public virtual async Task<Result<JwtResponse>> GetJwt(LoginRequest loginRequest)
         {
             JwtResponse jwtResponse = null;
             var validationResult = Validate(loginRequest.ModelState);
             if (!validationResult.Success)
                 return Error(jwtResponse, validationResult);
-            var result = await (UserService as UserService).GetItem(loginRequest.UserName, loginRequest.Password);
+            var result = await (UserService as UserService).GetItem(loginRequest);
             if (result.Success)
             {
-                jwtResponse = GetJwt(result.Data);
+                var expiration = DateTime.Now.AddHours(Settings.JwtExpirationInHours);
+                jwtResponse = new JwtResponse()
+                {
+                    Id = result.Data.Id,
+                    Token = $"{JwtBearerDefaults.AuthenticationScheme} {HttpService.GetJwt(GetClaims(result.Data), expiration)}",
+                    Expiration = expiration
+                };
                 return Success(jwtResponse);
             }
             return Error(jwtResponse, result);

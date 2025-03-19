@@ -11,7 +11,9 @@ namespace N4C.App.Services.Files.Models
         [DisplayName("Diğer Dosyalar", "Other Files")]
         public virtual List<IFormFile> OtherFormFiles { get; set; }
 
-        [Obsolete("For only getting the main file path in MVC edit operation. Use MainFormFile to post file data with MVC.")]
+        /// <summary>
+        /// For only getting the main file path in MVC edit operation. Use MainFormFile to post file data with MVC.
+        /// </summary>
         public string MainFile { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using N4C.App.Services.Auth.Models;
 
 namespace N4C.Controllers.Auth.API
 {
+    [Route("api")]
     public class AuthController : ApiController
     {
         private readonly AuthService _authService;
@@ -14,7 +15,7 @@ namespace N4C.Controllers.Auth.API
         }
 
         [HttpPost("[action]")]
-        public async Task<IActionResult> Token(LoginRequest loginRequest)
+        public async Task<IActionResult> Jwt(LoginRequest loginRequest)
         {
             loginRequest.Set(ModelState);
 

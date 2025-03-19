@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using N4C.App.Services.Auth.Models;
 using N4C.App.Services.Files;
 using N4C.App.Services.Users.Models;
 using N4C.Domain;
@@ -100,12 +101,12 @@ namespace N4C.App.Services.Users
             return result;
         }
 
-        public async Task<Result<UserResponse>> GetItem(string userName, string password, CancellationToken cancellationToken = default)
+        public async Task<Result<UserResponse>> GetItem(LoginRequest loginRequest, CancellationToken cancellationToken = default)
         {
             UserResponse response = null;
             try
             {
-                var user = await Query().SingleOrDefaultAsync(u => u.UserName == userName && u.Password == password && u.Active, cancellationToken);
+                var user = await Query().SingleOrDefaultAsync(u => u.UserName == loginRequest.UserName && u.Password == loginRequest.Password && u.Active, cancellationToken);
                 if (user is null)
                     return Error(response, NotFound);
                 response = user.Map<User, UserResponse>(MapperProfile);
@@ -113,7 +114,7 @@ namespace N4C.App.Services.Users
             }
             catch (Exception exception)
             {
-                LogService.LogError($"UserServiceException: {GetType().Name}.GetItem(UserName = {userName}): {exception.Message}");
+                LogService.LogError($"UserServiceException: {GetType().Name}.GetItem(UserName = {loginRequest.UserName}): {exception.Message}");
                 return Error(response, HttpStatusCode.InternalServerError);
             }
         }

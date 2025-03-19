@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using N4C.App;
 using N4C.App.Services;
 using N4C.App.Services.Files;
-using N4C.Domain;
 using N4C.Extensions;
 using System.Globalization;
 
@@ -12,7 +11,7 @@ namespace APP.Services
 {
     public class ProductService : Service<Product, ProductRequest, ProductResponse>
     {
-        public ProductService(IDb db, HttpService httpService, FileService fileService, LogService logService) : base(db, httpService, fileService, logService)
+        public ProductService(IAppDb db, HttpService httpService, FileService fileService, LogService logService) : base(db, httpService, fileService, logService)
         {
             SetPageOrder(true);
             SetOrderExpressions(p => p.Name, p => p.UnitPrice, p => p.StockAmount, p => p.ExpirationDate);

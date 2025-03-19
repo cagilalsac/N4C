@@ -37,11 +37,8 @@ namespace N4C.App.Services
         protected string RecordNotSaved { get; private set; }
         protected string RecordSaved { get; private set; }
         protected string RecordHasRelationalRecords { get; private set; }
-        protected string RecordCreated { get; private set; }
-        protected string RecordUpdated { get; private set; }
-        protected string RecordDeleted { get; private set; }
         protected MapperProfile MapperProfile { get; private set; } = new MapperProfile();
-        protected string RecordsFound { get; private set; }
+        
         protected string TrueHtml { get; private set; }
         protected string FalseHtml { get; private set; }
 
@@ -51,17 +48,14 @@ namespace N4C.App.Services
 
         protected HttpService HttpService { get; }
         protected FileService FileService { get; }
-        protected LogService LogService { get; }
 
-        protected Service(IDb db, HttpService httpService, FileService fileService, LogService logService)
+        protected Service(IDb db, HttpService httpService, FileService fileService, LogService logService) : base(logService)
         {
             _db = db;
             HttpService = httpService;
             FileService = fileService;
-            LogService = logService;
             SetCulture(HttpService.Culture);
             FileService.SetCulture(Culture);
-            LogService.SetCulture(Culture);
             SetCollation("Turkish_CI_AS");
             SetRecordsPerPageCounts(5, 10, 25, 50, 100);
             SetTrueHtml("<i class='bx bx-check fs-3'></i>");
@@ -88,10 +82,11 @@ namespace N4C.App.Services
                 if (!string.IsNullOrWhiteSpace(en))
                     Title = en;
             }
-            RecordsFound = Culture == Cultures.TR ? $"{Title.ToLower()} bulundu" : $"{Title.ToLower()} record(s) found";
-            RecordCreated = Culture == Cultures.TR ? $"{Title} başarıyla oluşturuldu" : $"{Title} created successfully";
-            RecordUpdated = Culture == Cultures.TR ? $"{Title} başarıyla güncellendi" : $"{Title} updated successfully";
-            RecordDeleted = Culture == Cultures.TR ? $"{Title} başarıyla silindi" : $"{Title} deleted successfully";
+            NotFound = Culture == Cultures.TR ? $"{Title} bulunamadı" : $"{Title} record(s) not found";
+            Found = Culture == Cultures.TR ? $"{Title.ToLower()} bulundu" : $"{Title.ToLower()} record(s) found";
+            Created = Culture == Cultures.TR ? $"{Title} başarıyla oluşturuldu" : $"{Title} created successfully";
+            Updated = Culture == Cultures.TR ? $"{Title} başarıyla güncellendi" : $"{Title} updated successfully";
+            Deleted = Culture == Cultures.TR ? $"{Title} başarıyla silindi" : $"{Title} deleted successfully";
         }
 
         protected void SetCollation(string collation)
@@ -101,12 +96,10 @@ namespace N4C.App.Services
 
         protected void SetUniqueProperties(params Expression<Func<TRequest, object>>[] uniqueProperties)
         {
-            Property property;
+            UniqueProperties.Clear();
             foreach (var uniqueProperty in uniqueProperties)
             {
-                property = uniqueProperty.GetProperty();
-                if (!UniqueProperties.Contains(property.Name))
-                    UniqueProperties.Add(property.Name);
+                UniqueProperties.Add(uniqueProperty.GetProperty().Name);
             }
         }
 
@@ -143,10 +136,11 @@ namespace N4C.App.Services
             Property property;
             var entityPropertyList = ObjectExtensions.GetProperties<TEntity>();
             var descValue = Culture == Cultures.TR ? "Azalan" : "Descending";
+            OrderExpressions.Clear();
             foreach (var entityProperty in entityProperties)
             {
                 property = entityProperty.GetProperty();
-                if (entityPropertyList.Any(entityPropertyItem => entityPropertyItem.Name == property.Name) && !OrderExpressions.ContainsKey(property.Name))
+                if (entityPropertyList.Any(entityPropertyItem => entityPropertyItem.Name == property.Name))
                 {
                     OrderExpressions.Add(property.Name, property.DisplayName.GetDisplayName(property.Name, Culture));
                     OrderExpressions.Add($"{property.Name}{"DESC"}", $"{property.DisplayName.GetDisplayName(property.Name, Culture)} {descValue}");
@@ -197,13 +191,40 @@ namespace N4C.App.Services
                                 FileService.GetOtherFiles((item as FileResponse).OtherFiles);
                         }
                     }
-                    return Success(list, $"{list.Count} {RecordsFound}");
+                    return Success(list, $"{list.Count} {Found}");
                 }
                 return Error(list, HttpStatusCode.NotFound);
             }
             catch (Exception exception)
             {
                 LogService.LogError($"ServiceException: {GetType().Name}.GetList(): {exception.Message}");
+                return Error(list, HttpStatusCode.InternalServerError);
+            }
+        }
+
+        public virtual async Task<Result<List<TResponse>>> GetList(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            List<TResponse> list = null;
+            try
+            {
+                list = await Query().Where(predicate).Map<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
+                if (list.Count > 0)
+                {
+                    if (HasFile)
+                    {
+                        foreach (var item in list)
+                        {
+                            if (item is FileResponse)
+                                FileService.GetOtherFiles((item as FileResponse).OtherFiles);
+                        }
+                    }
+                    return Success(list, $"{list.Count} {Found}", HttpStatusCode.PartialContent);
+                }
+                return Error(list, HttpStatusCode.NotFound);
+            }
+            catch (Exception exception)
+            {
+                LogService.LogError($"ServiceException: {GetType().Name}.GetList(predicate): {exception.Message}");
                 return Error(list, HttpStatusCode.InternalServerError);
             }
         }
@@ -242,7 +263,7 @@ namespace N4C.App.Services
                                     FileService.GetOtherFiles((item as FileResponse).OtherFiles);
                             }
                         }
-                        return Success(list, $"{pageOrder.TotalRecordsCount} {RecordsFound}");
+                        return Success(list, $"{pageOrder.TotalRecordsCount} {Found}");
                     }
                     return Error(list, HttpStatusCode.NotFound);
                 }
@@ -251,8 +272,7 @@ namespace N4C.App.Services
             }
             catch (Exception exception)
             {
-                LogService.LogError($"ServiceException: {GetType().Name}.GetList(PageNumber = {pageOrder.PageNumber}, RecordsPerPageCount = {pageOrder.RecordsPerPageCount}, " +
-                    $"OrderExpression = {pageOrder.OrderExpression}): {exception.Message}");
+                LogService.LogError($"ServiceException: {GetType().Name}.GetList(pageOrder): {exception.Message}");
                 return Error(list, HttpStatusCode.InternalServerError);
             }
         }
@@ -269,7 +289,7 @@ namespace N4C.App.Services
                 {
                     FileService.GetOtherFiles((item as FileResponse).OtherFiles);
                 }
-                return Success(item, $"1 {RecordsFound}");
+                return Success(item, $"1 {Found}", HttpStatusCode.PartialContent);
             }
             catch (Exception exception)
             {
@@ -306,7 +326,7 @@ namespace N4C.App.Services
             }
             catch (Exception exception)
             {
-                LogService.LogError($"ServiceException: {GetType().Name}.Validate(Request.Id = {request.Id}): {exception.Message}");
+                LogService.LogError($"ServiceException: {GetType().Name}.Validate(Id = {request.Id}): {exception.Message}");
                 return Error(request, HttpStatusCode.InternalServerError);
             }
         }
@@ -355,7 +375,7 @@ namespace N4C.App.Services
                 if (HasModified)
                 {
                     (entity as IModified).CreateDate = DateTime.Now;
-                    (entity as IModified).CreatedBy = HttpService.UserName;
+                    (entity as IModified).CreatedBy = HttpService.GetUserName();
                 }
                 _db.Set<TEntity>().Add(entity);
                 if (save)
@@ -365,7 +385,7 @@ namespace N4C.App.Services
                     {
                         request.Id = entity.Id;
                         request.Guid = entity.Guid;
-                        return Success(request, RecordCreated);
+                        return Success(request, Created, HttpStatusCode.Created);
                     }
                     return Error(request, result);
                 }
@@ -373,7 +393,7 @@ namespace N4C.App.Services
             }
             catch (Exception exception)
             {
-                LogService.LogError($"ServiceException: {GetType().Name}.Create(Request.Id = {request.Id}): {exception.Message}");
+                LogService.LogError($"ServiceException: {GetType().Name}.Create(): {exception.Message}");
                 return Error(request, HttpStatusCode.InternalServerError);
             }
         }
@@ -435,7 +455,7 @@ namespace N4C.App.Services
                 if (HasModified)
                 {
                     (entity as IModified).UpdateDate = DateTime.Now;
-                    (entity as IModified).UpdatedBy = HttpService.UserName;
+                    (entity as IModified).UpdatedBy = HttpService.GetUserName();
                 }
                 _db.Set<TEntity>().Update(entity);
                 if (save)
@@ -444,7 +464,7 @@ namespace N4C.App.Services
                     {
                         var result = await Save(cancellationToken);
                         if (result.Success)
-                            return Success(request, RecordUpdated);
+                            return Success(request, Updated, HttpStatusCode.NoContent);
                         return Error(request, result);
                     }
                     catch (DbUpdateConcurrencyException)
@@ -456,7 +476,7 @@ namespace N4C.App.Services
             }
             catch (Exception exception)
             {
-                LogService.LogError($"ServiceException: {GetType().Name}.Update(Request.Id = {request.Id}): {exception.Message}");
+                LogService.LogError($"ServiceException: {GetType().Name}.Update(Id = {request.Id}): {exception.Message}");
                 return Error(request, HttpStatusCode.InternalServerError);
             }
         }
@@ -490,7 +510,7 @@ namespace N4C.App.Services
                     if (HasModified)
                     {
                         (entity as IModified).UpdateDate = DateTime.Now;
-                        (entity as IModified).UpdatedBy = HttpService.UserName;
+                        (entity as IModified).UpdatedBy = HttpService.GetUserName();
                     }
                     _db.Set<TEntity>().Update(entity);
                 }
@@ -505,14 +525,14 @@ namespace N4C.App.Services
                 {
                     var result = await Save(cancellationToken);
                     if (result.Success)
-                        return Success(request, RecordDeleted);
+                        return Success(request, Deleted, HttpStatusCode.NoContent);
                     return Error(request, result);
                 }
                 return Success(request, RecordNotSaved);
             }
             catch (Exception exception)
             {
-                LogService.LogError($"ServiceException: {GetType().Name}.Delete(Request.Id = {request.Id}): {exception.Message}");
+                LogService.LogError($"ServiceException: {GetType().Name}.Delete(Id = {request.Id}): {exception.Message}");
                 return Error(request, HttpStatusCode.InternalServerError);
             }
         }

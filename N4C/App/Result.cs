@@ -7,6 +7,7 @@ namespace N4C.App
         public HttpStatusCode HttpStatusCode { get; }
         public string Message { get; }
         public bool Success { get; }
+        public string Type { get; }
     }
 
     public interface IResult<out TData>
@@ -19,6 +20,7 @@ namespace N4C.App
         public HttpStatusCode HttpStatusCode { get; }
         public string Message { get; }
         public bool Success => ((int)HttpStatusCode).ToString().StartsWith("2");
+        public string Type => typeof(Result).ToString();
 
         public Result(HttpStatusCode httpStatusCode, string message = default)
         {

@@ -1,21 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using N4C.Domain;
-using N4C.Domain.Users;
 
 namespace APP.Domain
 {
-    public class Db : DbContext, IDb, IUserDb
+    public interface IAppDb : IDb
+    {
+    }
+
+    public class AppDb : DbContext, IAppDb
     {
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<ProductStore> ProductStores { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
-        public DbSet<UserRole> UserRoles { get; set; }
 
-        public Db(DbContextOptions<Db> options) : base(options)
+        public AppDb(DbContextOptions<AppDb> options) : base(options)
         {
         }
 
@@ -27,13 +27,13 @@ namespace APP.Domain
         }
     }
 
-    public class DbFactory : IDesignTimeDbContextFactory<Db>
+    public class AppDbFactory : IDesignTimeDbContextFactory<AppDb>
     {
-        public Db CreateDbContext(string[] args)
+        public AppDb CreateDbContext(string[] args)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<Db>();
+            var optionsBuilder = new DbContextOptionsBuilder<AppDb>();
             optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=N4C;Trusted_Connection=True;MultipleActiveResultSets=true");
-            return new Db(optionsBuilder.Options);
+            return new AppDb(optionsBuilder.Options);
         }
     }
 }

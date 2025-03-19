@@ -13,9 +13,9 @@ namespace N4C.App
         public static bool Development { get; internal set; }
 
         public static int SessionExpirationInMinutes { get; private set; }
-        public static int AuthCookieExpirationInMinutes { get; private set; }
+        public static double AuthCookieExpirationInHours { get; private set; }
 
-        public static double JwtExpirationInDays { get; private set; }
+        public static double JwtExpirationInHours { get; private set; }
         public static string JwtAudience { get; private set; }
         public static string JwtIssuer { get; private set; }
         public static string JwtSecurityKey { get; private set; }
@@ -25,25 +25,25 @@ namespace N4C.App
 
         private readonly IConfiguration _configuration;
 
-        protected Settings(IConfiguration configuration, string culture, double jwtExpirationInDays, 
+        protected Settings(IConfiguration configuration, string culture, double jwtExpirationInHours, 
             string jwtAudience, string jwtIssuer, string jwtSecurityKey, string jwtSecurityAlgorithm)
         {
             _configuration = configuration;
             Culture = culture;
-            JwtExpirationInDays = jwtExpirationInDays;
+            JwtExpirationInHours = jwtExpirationInHours;
             JwtAudience = jwtAudience;
             JwtIssuer = jwtIssuer;
             JwtSecurityKey = string.IsNullOrWhiteSpace(jwtSecurityKey) ? "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf" : jwtSecurityKey;
             JwtSecurityAlgorithm = string.IsNullOrWhiteSpace(jwtSecurityAlgorithm) ? SecurityAlgorithms.HmacSha256Signature : jwtSecurityAlgorithm;
         }
 
-        protected Settings(IConfiguration configuration, string culture, int sessionExpirationInMinutes, int authCookieExpirationInMinutes,
-            double jwtExpirationInDays = 1, string jwtAudience = "https://n4c.com", string jwtIssuer = "https://n4c.com", 
+        protected Settings(IConfiguration configuration, string culture, int sessionExpirationInMinutes, double authCookieExpirationInHours,
+            double jwtExpirationInHours, string jwtAudience = "https://n4c.com", string jwtIssuer = "https://n4c.com", 
             string jwtSecurityKey = default, string jwtSecurityAlgorithm = default)
-            : this(configuration, culture, jwtExpirationInDays, jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
+            : this(configuration, culture, jwtExpirationInHours, jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
         {
             SessionExpirationInMinutes = sessionExpirationInMinutes;
-            AuthCookieExpirationInMinutes = authCookieExpirationInMinutes;
+            AuthCookieExpirationInHours = authCookieExpirationInHours;
         }
 
         public void Bind() => _configuration.GetSection(AppSettingsSection).Bind(this);

@@ -13,32 +13,25 @@ namespace MVC.API
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ProductsController : ApiController
     {
-        // Mediator injection:
         private readonly IMediator _mediator;
 
-        public ProductsController (IMediator mediator)
+        public ProductsController(IMediator mediator)
         {
             _mediator = mediator;
         }
 
         // GET: Products
-        [AllowAnonymous, HttpGet]
+        [HttpGet, AllowAnonymous]
         public async Task<IActionResult> Get()
         {
-            // Get collection logic:
-            var result = await _mediator.Send(new ProductQueryRequest());
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new ProductQueryRequest()));
         }
 
         // GET: Products/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            // Get item logic:
-            var result = await _mediator.Send(new ProductQueryRequest() { Id = id });
-            
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new ProductQueryRequest() { Id = id }), id);
         }
 
 		// POST: Products
@@ -46,11 +39,7 @@ namespace MVC.API
         public async Task<IActionResult> Post(ProductCreateRequest request)
         {
             request.Set(ModelState);
-
-            // Insert item logic:
-            var result = await _mediator.Send(request);
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(request), request.Id);
         }
 
         // PUT: Products
@@ -58,21 +47,26 @@ namespace MVC.API
         public async Task<IActionResult> Put(ProductUpdateRequest request)
         {
             request.Set(ModelState);
-
-            // Update item logic:
-            var result = await _mediator.Send(request);
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(request), request.Id);
         }
 
         // DELETE: Products/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            // Delete item logic:
-            var result = await _mediator.Send(new ProductDeleteRequest() { Id = id });
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new ProductDeleteRequest() { Id = id }), id);
         }
-	}
+
+
+
+        #region For HTTP Requests from the HttpController
+        // GET: Products/GetList
+        [HttpGet("[action]"), AllowAnonymous]
+        public async Task<IActionResult> GetList() => ActionResult(await _mediator.Send(new ProductQueryRequest()));
+
+        // GET: Products/GetItem
+        [HttpGet("[action]/{id}")]
+        public async Task<IActionResult> GetItem(int id) => ActionResult(await _mediator.Send(new ProductQueryRequest() { Id = id }), id);
+        #endregion
+    }
 }

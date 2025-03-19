@@ -38,7 +38,6 @@ namespace @Model.ControllerNamespace
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class @Model.ControllerName : ApiController
     {
-        // Mediator injection:
         private readonly IMediator _mediator;
 
         public @(Model.ControllerName + "(IMediator mediator)")
@@ -50,20 +49,14 @@ namespace @Model.ControllerNamespace
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            // Get collection logic:
-            var result = await _mediator.Send(new @(queryRequestType + "()"));
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new @(queryRequestType + "()")));
         }
 
         // GET: @routePrefix/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(@primaryKeyShortTypeName id)
         {
-            // Get item logic:
-            var result = await _mediator.Send(new @(queryRequestType + "() { Id = id }"));
-            
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new @(queryRequestType + "()") { Id = id }), id);
         }
 
 		// POST: @routePrefix
@@ -71,11 +64,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Post(@createRequestType request)
         {
             request.Set(ModelState);
-
-            // Insert item logic:
-            var result = await _mediator.Send(request);
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(request), request.Id);
         }
 
         // PUT: @routePrefix
@@ -83,21 +72,14 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Put(@updateRequestType request)
         {
             request.Set(ModelState);
-
-            // Update item logic:
-            var result = await _mediator.Send(request);
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(request), request.Id);
         }
 
         // DELETE: @routePrefix/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(@primaryKeyShortTypeName id)
         {
-            // Delete item logic:
-            var result = await _mediator.Send(new @(deleteRequestType + "() { Id = id }"));
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new @(deleteRequestType + "()") { Id = id }), id);
         }
 	}
 }

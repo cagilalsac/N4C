@@ -1,6 +1,5 @@
 using APP;
 using Microsoft.OpenApi.Models;
-using N4C.App;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +37,7 @@ builder.Services.AddSwaggerGen(config => {
     });
 });
 
-builder.ConfigureApp(Cultures.EN);
+builder.ConfigureApp();
 
 var app = builder.Build();
 
@@ -57,7 +56,9 @@ else
 {
     // Swagger:
     app.UseSwagger();
-    app.UseSwaggerUI(options => options.DefaultModelsExpandDepth(-1));
+
+    //app.UseSwaggerUI(options => options.DefaultModelsExpandDepth(-1));
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

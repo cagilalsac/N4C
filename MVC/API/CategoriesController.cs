@@ -13,10 +13,9 @@ namespace MVC.API
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
     public class CategoriesController : ApiController
     {
-        // Mediator injection:
         private readonly IMediator _mediator;
 
-        public CategoriesController (IMediator mediator)
+        public CategoriesController(IMediator mediator)
         {
             _mediator = mediator;
         }
@@ -25,20 +24,14 @@ namespace MVC.API
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            // Get collection logic:
-            var result = await _mediator.Send(new CategoryQueryRequest());
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new CategoryQueryRequest()));
         }
 
         // GET: Categories/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            // Get item logic:
-            var result = await _mediator.Send(new CategoryQueryRequest() { Id = id });
-            
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new CategoryQueryRequest() { Id = id }), id);
         }
 
 		// POST: Categories
@@ -46,11 +39,7 @@ namespace MVC.API
         public async Task<IActionResult> Post(CategoryCreateRequest request)
         {
             request.Set(ModelState);
-
-            // Insert item logic:
-            var result = await _mediator.Send(request);
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(request), request.Id);
         }
 
         // PUT: Categories
@@ -58,21 +47,14 @@ namespace MVC.API
         public async Task<IActionResult> Put(CategoryUpdateRequest request)
         {
             request.Set(ModelState);
-
-            // Update item logic:
-            var result = await _mediator.Send(request);
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(request), request.Id);
         }
 
         // DELETE: Categories/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            // Delete item logic:
-            var result = await _mediator.Send(new CategoryDeleteRequest() { Id = id });
-
-            return ActionResult(result);
+            return ActionResult(await _mediator.Send(new CategoryDeleteRequest() { Id = id }), id);
         }
 	}
 }

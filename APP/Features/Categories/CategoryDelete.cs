@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using N4C.App;
 using N4C.App.Services;
 using N4C.App.Services.Files;
-using N4C.Domain;
 
 namespace APP.Features.Categories
 {
@@ -13,7 +12,7 @@ namespace APP.Features.Categories
 
     public class CategoryDeleteHandler : Handler<Category, CategoryDeleteRequest>
     {
-        public CategoryDeleteHandler(IDb db, HttpService httpService, FileService fileService, LogService logService) : base(db, httpService, fileService, logService)
+        public CategoryDeleteHandler(IAppDb db, HttpService httpService, FileService fileService, LogService logService) : base(db, httpService, fileService, logService)
         {
         }
 

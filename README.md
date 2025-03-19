@@ -20,3 +20,4 @@
 - MVC Account Management with users and roles.
 - MVC Authentication using cookie and API Authentication using JWT.
 - Customized scaffolding for API and MVC controllers with MVC views.
+- Http Service methods for consuming RESTful APIs.

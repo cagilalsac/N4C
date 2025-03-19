@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +11,7 @@ using N4C.App.Services.Auth;
 using N4C.App.Services.Files;
 using N4C.App.Services.Users;
 using N4C.App.Services.Users.Models;
+using N4C.Domain;
 using N4C.Domain.Users;
 
 namespace N4C.App
@@ -17,8 +20,14 @@ namespace N4C.App
     {
         public static void ConfigureN4C(this WebApplicationBuilder builder)
         {
+            // Inversion of Control for DbContext:
+            builder.Services.AddDbContext<IDb, Db>(options => options.UseSqlServer(builder.Configuration.GetConnectionString(nameof(Db))));
+
             // Inversion of Control for HttpContext:
             builder.Services.AddHttpContextAccessor();
+
+            // Inversion of Control for HttpClient:
+            builder.Services.AddHttpClient();
 
             // Inversion of Control for Services:
             builder.Services.AddScoped<HttpService>();
@@ -57,7 +66,7 @@ namespace N4C.App
                     config.LoginPath = "/Auth";
                     config.AccessDeniedPath = "/Auth";
                     config.SlidingExpiration = true;
-                    config.ExpireTimeSpan = TimeSpan.FromMinutes(Settings.AuthCookieExpirationInMinutes);
+                    config.ExpireTimeSpan = TimeSpan.FromHours(Settings.AuthCookieExpirationInHours);
                 })
                 .AddJwtBearer(config =>
                 {

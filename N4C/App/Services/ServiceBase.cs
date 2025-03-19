@@ -14,6 +14,17 @@ namespace N4C.App.Services
         protected string Exception { get; private set; } = "An exception occurred during the operation!";
 
         protected string NotFound { get; set; } = "Record not found!";
+        protected string Found { get; set; } = "record(s) found.";
+        protected string Created { get; set; } = "Record created successfully.";
+        protected string Updated { get; set; } = "Record updated successfully.";
+        protected string Deleted { get; set; } = "Record deleted successfully.";
+
+        protected LogService LogService { get; }
+
+        protected Service(LogService logService)
+        {
+            LogService = logService;
+        }
 
         internal virtual void SetCulture(string culture)
         {
@@ -24,6 +35,10 @@ namespace N4C.App.Services
             Successful = Culture == Cultures.TR ? "İşlem başarıyla gerçekleştirildi." : "Operation successful.";
             Exception = Culture == Cultures.TR ? "İşlem sırasında hata meydana geldi!" : "An exception occurred during the operation!";
             NotFound = Culture == Cultures.TR ? "Kayıt bulunamadı!" : "Record not found!";
+            Found = Culture == Cultures.TR ? "bulundu." : "record(s) found.";
+            Created = Culture == Cultures.TR ? "Kayıt başarıyla oluşturuldu." : "Record created successfully.";
+            Updated = Culture == Cultures.TR ? "Kayıt başarıyla güncellendi." : "Record updated successfully.";
+            Deleted = Culture == Cultures.TR ? "Kayıt başarıyla silindi." : "Record deleted successfully.";
         }
 
         public Result Success()
@@ -45,13 +60,15 @@ namespace N4C.App.Services
                 httpStatusCode == HttpStatusCode.NotFound ? NotFound : Failed);
         }
 
-        public Result Error(string message)
+        public Result Error(string message, HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest)
         {
             if (!message.StartsWith(Failed))
                 message = $"{Failed};{message}";
             if (!message.EndsWith("!"))
                 message += "!";
-            return new Result(HttpStatusCode.BadRequest, message);
+            return new Result(httpStatusCode,
+                httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
+                httpStatusCode == HttpStatusCode.NotFound ? NotFound : message);
         }
 
         protected Result<TData> Success<TData>(TData data)
@@ -59,11 +76,11 @@ namespace N4C.App.Services
             return new Result<TData>(HttpStatusCode.OK, data);
         }
 
-        protected Result<TData> Success<TData>(TData data, string message)
+        protected Result<TData> Success<TData>(TData data, string message, HttpStatusCode httpStatusCode = HttpStatusCode.OK)
         {
             if (!message.EndsWith("."))
                 message += ".";
-            return new Result<TData>(HttpStatusCode.OK, data, message);
+            return new Result<TData>(httpStatusCode, data, message);
         }
 
         protected Result<TData> Success<TData>(TData data, Result result)
@@ -71,7 +88,7 @@ namespace N4C.App.Services
             var message = result.Message;
             if (!string.IsNullOrWhiteSpace(message) && !message.EndsWith("."))
                 message += ".";
-            return new Result<TData>(HttpStatusCode.OK, data, message);
+            return new Result<TData>(result.HttpStatusCode, data, message);
         }
 
         protected Result<TData> Error<TData>(TData data)
@@ -86,13 +103,15 @@ namespace N4C.App.Services
                 httpStatusCode == HttpStatusCode.NotFound ? NotFound : Failed);
         }
 
-        protected Result<TData> Error<TData>(TData data, string message)
+        protected Result<TData> Error<TData>(TData data, string message, HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest)
         {
             if (!message.StartsWith(Failed))
                 message = $"{Failed};{message}";
             if (!message.EndsWith("!"))
                 message += "!";
-            return new Result<TData>(HttpStatusCode.BadRequest, data, message);
+            return new Result<TData>(httpStatusCode, data,
+                httpStatusCode == HttpStatusCode.InternalServerError ? Exception :
+                httpStatusCode == HttpStatusCode.NotFound ? NotFound : message);
         }
 
         protected Result<TData> Error<TData>(TData data, Result result)

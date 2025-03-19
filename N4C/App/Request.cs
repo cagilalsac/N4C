@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace N4C.App
 {
-    public abstract class Request : Entity
+    public class Request : Entity
     {
         [JsonIgnore]
         public ModelStateDictionary ModelState { get; private set; } = new ModelStateDictionary();
@@ -31,10 +31,17 @@ namespace N4C.App
 
     public abstract class CreateRequest : CommandRequest
     {
+        [JsonIgnore]
+        public override int Id { get => base.Id; set => base.Id = value; }
+
+        [JsonIgnore]
+        public override string Guid { get => base.Guid; set => base.Guid = value; }
     }
 
     public abstract class UpdateRequest : CommandRequest
     {
+        [JsonIgnore]
+        public override string Guid { get => base.Guid; set => base.Guid = value; }
     }
 
     public abstract class DeleteRequest : CommandRequest

@@ -13,28 +13,19 @@ namespace N4C.App.Services.Files
         protected byte MaximumOtherFilesCount { get; private set; }
         protected List<string> FileExtensions { get; private set; }
         protected bool ExcelLicenseCommercial { get; private set; }
-        protected string FilesCreated { get; private set; }
-        protected string FilesUpdated { get; private set; }
-        protected string FilesDeleted { get; private set; }
 
         protected Dictionary<string, string> FileMimeTypes { get; }
 
         protected HttpService HttpService { get; }
-        protected LogService LogService { get; }
 
-        public FileService(HttpService httpService, LogService logService)
+        public FileService(HttpService httpService, LogService logService) : base(logService)
         {
             HttpService = httpService;
-            LogService = logService;
             SetCulture(HttpService.Culture);
-            NotFound = Culture == Cultures.TR ? "Dosya bulunamadı!" : "File not found!";
             FilesFolder = "files";
             FileMaximumSizeInMb = 5;
             MaximumOtherFilesCount = 25;
             FileExtensions = [".jpg", ".jpeg", ".png"];
-            FilesCreated = Culture == Cultures.TR ? "Dosyalar başarıyla oluşturuldu" : "Files created successfully";
-            FilesUpdated = Culture == Cultures.TR ? "Dosyalar başarıyla güncellendi" : "Files updated successfully";
-            FilesDeleted = Culture == Cultures.TR ? "Dosyalar başarıyla silindi" : "Files deleted successfully";
             FileMimeTypes = new Dictionary<string, string>()
             {
                 { ".txt", "text/plain" },
@@ -55,9 +46,10 @@ namespace N4C.App.Services.Files
         {
             base.SetCulture(culture);
             NotFound = Culture == Cultures.TR ? "Dosya bulunamadı!" : "File not found!";
-            FilesCreated = Culture == Cultures.TR ? "Dosyalar başarıyla oluşturuldu" : "Files created successfully";
-            FilesUpdated = Culture == Cultures.TR ? "Dosyalar başarıyla güncellendi" : "Files updated successfully";
-            FilesDeleted = Culture == Cultures.TR ? "Dosyalar başarıyla silindi" : "Files deleted successfully";
+            Found = Culture == Cultures.TR ? "dosya bulundu." : "file(s) found.";
+            Created = Culture == Cultures.TR ? "Dosyalar başarıyla oluşturuldu" : "Files created successfully";
+            Updated = Culture == Cultures.TR ? "Dosyalar başarıyla güncellendi" : "Files updated successfully";
+            Deleted = Culture == Cultures.TR ? "Dosyalar başarıyla silindi" : "Files deleted successfully";
         }
 
         protected void SetFilesFolder(string folder)
@@ -194,7 +186,7 @@ namespace N4C.App.Services.Files
                         {
                             MainFile = GetFilePath(filePath)
                         };
-                        return Success(fileResponse, FilesCreated);
+                        return Success(fileResponse, Created);
                     }
                     return Error(fileResponse, result);
                 }
@@ -206,7 +198,7 @@ namespace N4C.App.Services.Files
             }
             catch (Exception exception)
             {
-                LogService.LogError($"FileServiceException: {GetType().Name}.Create(Path = {fileResponse?.MainFile}): {exception.Message}");
+                LogService.LogError($"FileServiceException: {GetType().Name}.CreateFile(): {exception.Message}");
                 return Error(fileResponse, HttpStatusCode.InternalServerError);
             }
         }
@@ -234,7 +226,7 @@ namespace N4C.App.Services.Files
                             {
                                 MainFile = GetFilePath(filePath)
                             };
-                            return Success(fileResponse, FilesUpdated);
+                            return Success(fileResponse, Updated);
                         }
                     }
                     return Error(fileResponse, result);
@@ -247,7 +239,7 @@ namespace N4C.App.Services.Files
             }
             catch (Exception exception)
             {
-                LogService.LogError($"FileServiceException: {GetType().Name}.Update(Path = {currentFilePath}): {exception.Message}");
+                LogService.LogError($"FileServiceException: {GetType().Name}.UpdateFile(Path = {currentFilePath}): {exception.Message}");
                 return Error(fileResponse, HttpStatusCode.InternalServerError);
             }
         }
@@ -267,7 +259,7 @@ namespace N4C.App.Services.Files
                         {
                             MainFile = GetFilePath(currentFilePath)
                         };
-                        return Success(fileResponse, FilesDeleted);
+                        return Success(fileResponse, Deleted);
                     }
                 }
                 fileResponse = new FileResponse()
@@ -278,7 +270,7 @@ namespace N4C.App.Services.Files
             }
             catch (Exception exception)
             {
-                LogService.LogError($"FileServiceException: {GetType().Name}.Delete(Path = {currentFilePath}): {exception.Message}");
+                LogService.LogError($"FileServiceException: {GetType().Name}.DeleteFile(Path = {currentFilePath}): {exception.Message}");
                 return Error(fileResponse, HttpStatusCode.InternalServerError);
             }
         }
@@ -327,7 +319,7 @@ namespace N4C.App.Services.Files
                     return Error(fileResponseList, validationResult);
                 }
             }
-            return Success(fileResponseList, FilesCreated);
+            return Success(fileResponseList, Created);
         }
 
         public virtual Result<List<FileResponse>> DeleteFiles(List<string> currentFilePaths)
@@ -348,7 +340,7 @@ namespace N4C.App.Services.Files
                 if (!result.Success)
                     return Error(fileResponseList, result);
             }
-            return Success(fileResponseList, FilesDeleted);
+            return Success(fileResponseList, Deleted);
         }
 
         public virtual void GetExcel<T>(List<T> list) where T : class, new()

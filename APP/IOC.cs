@@ -13,10 +13,10 @@ namespace APP
 {
     public static class IOC
     {
-        public static void ConfigureApp(this WebApplicationBuilder builder, string culture)
+        public static void ConfigureApp(this WebApplicationBuilder builder)
         {
             // Inversion of Control for DbContext:
-            builder.Services.AddDbContext<IDb, Db>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Db")));
+            builder.Services.AddDbContext<IAppDb, AppDb>(options => options.UseSqlServer(builder.Configuration.GetConnectionString(nameof(Db))));
 
             // Inversion of Control for Services:
             builder.Services.AddScoped<Service<Category, CategoryRequest, CategoryResponse>, CategoryService>();
@@ -24,7 +24,7 @@ namespace APP
             builder.Services.AddScoped<Service<Product, ProductRequest, ProductResponse>, ProductService>();
 
             // AppSettings:
-            var appSettings = new AppSettings(builder.Configuration, culture, 20, 30);
+            var appSettings = new AppSettings(builder.Configuration, Cultures.EN, 20, 1, 24);
             appSettings.Bind();
 
             // N4C:

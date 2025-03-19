@@ -4,14 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using N4C.App;
 using N4C.App.Services;
 using N4C.App.Services.Files;
-using N4C.Domain;
 using N4C.Extensions;
 
 namespace APP.Services
 {
     public class StoreService : Service<Store, StoreRequest, StoreResponse>
     {
-        public StoreService(IDb db, HttpService httpService, FileService fileService, LogService logService) : base(db, httpService, fileService, logService)
+        public StoreService(IAppDb db, HttpService httpService, FileService fileService, LogService logService) : base(db, httpService, fileService, logService)
         {
             SetTitle("Mağaza");
         }

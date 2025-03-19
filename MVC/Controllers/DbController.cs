@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using N4C.App;
 using N4C.Controllers;
+using N4C.Domain;
 using N4C.Domain.Users;
 using System.Globalization;
 using System.Net;
@@ -15,64 +16,66 @@ namespace MVC.Controllers
     {
         const int PIN = 2025;
 
+        private readonly AppDb _appDb;
         private readonly Db _db;
 
-        public DbController(Db db)
+        public DbController(IAppDb appDb, IDb db)
         {
-            _db = db;
+            _appDb = appDb as AppDb;
+            _db = db as Db;
         }
 
         public IActionResult Seed(int pin)
         {
             if (pin == PIN)
             {
-                if (_db.Stores.Any() || _db.Products.Any() || _db.Categories.Any() || _db.Roles.Any() || _db.Users.Any())
+                if (_appDb.Stores.Any() || _appDb.Products.Any() || _appDb.Categories.Any() || _db.Roles.Any() || _db.Users.Any())
                 {
-                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Stores', RESEED, 0)");
-                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Products', RESEED, 0)");
-                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('ProductStores', RESEED, 0)");
-                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Categories', RESEED, 0)");
-                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Roles', RESEED, -1)");
-                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Users', RESEED, 0)");
-                    _db.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('UserRoles', RESEED, 0)");
+                    _appDb.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Stores', RESEED, 0)");
+                    _appDb.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Products', RESEED, 0)");
+                    _appDb.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('ProductStores', RESEED, 0)");
+                    _appDb.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Categories', RESEED, 0)");
+                    _appDb.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Roles', RESEED, -1)");
+                    _appDb.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('Users', RESEED, 0)");
+                    _appDb.Database.ExecuteSqlRaw("dbcc CHECKIDENT ('UserRoles', RESEED, 0)");
                 }
 
-                _db.ProductStores.RemoveRange(_db.ProductStores.ToList());
-                _db.Stores.RemoveRange(_db.Stores.ToList());
-                _db.Products.RemoveRange(_db.Products.ToList());
-                _db.Categories.RemoveRange(_db.Categories.ToList());
+                _appDb.ProductStores.RemoveRange(_appDb.ProductStores.ToList());
+                _appDb.Stores.RemoveRange(_appDb.Stores.ToList());
+                _appDb.Products.RemoveRange(_appDb.Products.ToList());
+                _appDb.Categories.RemoveRange(_appDb.Categories.ToList());
 
-                _db.Stores.Add(new Store()
+                _appDb.Stores.Add(new Store()
                 {
                     Name = "Hepsiburada",
                     Virtual = true
                 });
-                _db.Stores.Add(new Store()
+                _appDb.Stores.Add(new Store()
                 {
                     Name = "Vatan",
                     Virtual = false
                 });
-                _db.Stores.Add(new Store()
+                _appDb.Stores.Add(new Store()
                 {
                     Name = "Migros"
                 });
-                _db.Stores.Add(new Store()
+                _appDb.Stores.Add(new Store()
                 {
                     Name = "Teknosa"
                 });
-                _db.Stores.Add(new Store()
+                _appDb.Stores.Add(new Store()
                 {
                     Name = "İtopya"
                 });
-                _db.Stores.Add(new Store()
+                _appDb.Stores.Add(new Store()
                 {
                     Name = "Sahibinden",
                     Virtual = true
                 });
 
-                _db.SaveChanges();
+                _appDb.SaveChanges();
 
-                _db.Categories.Add(new Category()
+                _appDb.Categories.Add(new Category()
                 {
                     Name = "Computer",
                     Description = "Laptops, desktops and computer peripherals",
@@ -87,7 +90,7 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id
                             }
                         },
                         new Product()
@@ -99,8 +102,8 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "Vatan").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Vatan").Id
                             }
                         },
                         new Product()
@@ -112,9 +115,9 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "İtopya").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "Sahibinden").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "İtopya").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Sahibinden").Id
                             }
                         },
                         new Product()
@@ -126,13 +129,13 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "Vatan").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Vatan").Id
                             }
                         }
                     }
                 });
-                _db.Categories.Add(new Category()
+                _appDb.Categories.Add(new Category()
                 {
                     Name = "Home Theater System",
                     Description = null,
@@ -147,7 +150,7 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id
                             }
                         },
                         new Product()
@@ -159,8 +162,8 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "Sahibinden").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Sahibinden").Id
                             }
                         },
                         new Product()
@@ -173,7 +176,7 @@ namespace MVC.Controllers
                         }
                     }
                 });
-                _db.Categories.Add(new Category()
+                _appDb.Categories.Add(new Category()
                 {
                     Name = "Phone",
                     Description = "IOS and Android Phones",
@@ -188,15 +191,15 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "Vatan").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
-                                _db.Stores.SingleOrDefault(s => s.Name == "Sahibinden").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Teknosa").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Vatan").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Hepsiburada").Id,
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Sahibinden").Id
                             }
                         }
                     }
                 });
-                _db.Categories.Add(new Category()
+                _appDb.Categories.Add(new Category()
                 {
                     Name = "Food",
                     Products = new List<Product>()
@@ -211,7 +214,7 @@ namespace MVC.Controllers
                             ExpirationDate = new DateTime(2024, 12, 31),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Migros").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Migros").Id
                             }
                         },
                         new Product()
@@ -224,12 +227,12 @@ namespace MVC.Controllers
                             CreatedBy = SystemUsers.SystemAdmin.ToString().ToLower(),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Migros").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Migros").Id
                             }
                         }
                     }
                 });
-                _db.Categories.Add(new Category()
+                _appDb.Categories.Add(new Category()
                 {
                     Name = "Medicine",
                     Description = "Antibiotics, Vitamins, Pain Killers, etc.",
@@ -245,16 +248,18 @@ namespace MVC.Controllers
                             ExpirationDate = DateTime.Parse("19.05.2027", new CultureInfo("tr-TR")),
                             StoreIds = new List<int>()
                             {
-                                _db.Stores.SingleOrDefault(s => s.Name == "Migros").Id
+                                _appDb.Stores.SingleOrDefault(s => s.Name == "Migros").Id
                             }
                         }
                     }
                 });
-                _db.Categories.Add(new Category()
+                _appDb.Categories.Add(new Category()
                 {
                     Name = "Software",
                     Description = "Operating Systems, Antivirus Software, Office Software and Video Games"
                 });
+
+                _appDb.SaveChanges();
 
                 _db.UserRoles.RemoveRange(_db.UserRoles.ToList());
                 _db.Roles.RemoveRange(_db.Roles.ToList());
