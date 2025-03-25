@@ -328,7 +328,7 @@ namespace MVC.Controllers
 
                 _db.SaveChanges();
 
-                var files = Directory.GetFiles(Path.Combine("wwwroot", "files"));
+                var files = Directory.GetFiles(Path.Combine("wwwroot", "files")).Where(f => !f.EndsWith("default.png"));
                 foreach (var file in files)
                 {
                     System.IO.File.Delete(file);

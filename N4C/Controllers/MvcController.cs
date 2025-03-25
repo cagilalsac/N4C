@@ -6,6 +6,9 @@ namespace N4C.Controllers
 {
     public abstract class MvcController : Controller
     {
+        protected string ApiUri { get; private set; }
+        protected bool Api => !string.IsNullOrWhiteSpace(ApiUri);
+
         protected void SetViewData(string culture, Result result = default, string title = default, PageOrder pageOrder = default)
         {
             ViewBag.View = new View(culture, title, result is null ? string.Empty : result.Message.Replace(";", "<br>"),
@@ -23,6 +26,11 @@ namespace N4C.Controllers
                 (result.HttpStatusCode == HttpStatusCode.OK || result.HttpStatusCode == HttpStatusCode.PartialContent ||
                 result.HttpStatusCode == HttpStatusCode.Created || result.HttpStatusCode == HttpStatusCode.NoContent ? HttpStatusCode.OK :
                 result.HttpStatusCode));
+        }
+
+        protected void SetApiUri(string apiUri)
+        {
+            ApiUri = apiUri;
         }
     }
 }

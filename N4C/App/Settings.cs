@@ -23,6 +23,8 @@ namespace N4C.App
 
         public static SecurityKey JwtSigningKey => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecurityKey));
 
+        public static string ApiUri { get; set; }
+
         private readonly IConfiguration _configuration;
 
         protected Settings(IConfiguration configuration, string culture, double jwtExpirationInHours, 
@@ -38,12 +40,13 @@ namespace N4C.App
         }
 
         protected Settings(IConfiguration configuration, string culture, int sessionExpirationInMinutes, double authCookieExpirationInHours,
-            double jwtExpirationInHours, string jwtAudience = "https://n4c.com", string jwtIssuer = "https://n4c.com", 
+            double jwtExpirationInHours, string apiUri = default, string jwtAudience = "https://n4c.com", string jwtIssuer = "https://n4c.com", 
             string jwtSecurityKey = default, string jwtSecurityAlgorithm = default)
             : this(configuration, culture, jwtExpirationInHours, jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
         {
             SessionExpirationInMinutes = sessionExpirationInMinutes;
             AuthCookieExpirationInHours = authCookieExpirationInHours;
+            ApiUri = apiUri;
         }
 
         public void Bind() => _configuration.GetSection(AppSettingsSection).Bind(this);

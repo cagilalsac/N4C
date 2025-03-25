@@ -1,6 +1,5 @@
 ﻿using N4C.App;
 using N4C.Attributes;
-using System.Text.Json.Serialization;
 
 namespace APP.Services.Models
 {
@@ -12,15 +11,12 @@ namespace APP.Services.Models
         public bool Virtual { get; set; }
 
         [DisplayName("Sanal")]
-        [JsonIgnore]
         public string VirtualS { get; set; }
 
         [DisplayName("Ürün Sayısı")]
-        [JsonIgnore]
         public int ProductsCount { get; set; }
 
         [DisplayName("Ürünler")]
-        [JsonIgnore]
         public string Products { get; set; }
     }
 }

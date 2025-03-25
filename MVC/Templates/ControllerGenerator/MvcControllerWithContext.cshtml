@@ -140,7 +140,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Index(PageOrder pageOrder)
         {
             // Get collection logic:
-            var result = pageOrder is null ? await @(_serviceAbstractName).GetList() : await @(_serviceAbstractName).GetList(pageOrder);
+            var result = await @(_serviceAbstractName).GetList(pageOrder);
             
             SetViewData(result, pageOrder);
             return View(result);

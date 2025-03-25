@@ -267,7 +267,6 @@ namespace N4C.App.Services
                     }
                     return Error(list, HttpStatusCode.NotFound);
                 }
-                pageOrder.PageNumber = 0;
                 return await GetList(cancellationToken);
             }
             catch (Exception exception)

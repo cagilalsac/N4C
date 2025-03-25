@@ -1,6 +1,7 @@
 ﻿#nullable disable
 
 using APP.Domain;
+using APP.Services;
 using APP.Services.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,16 +22,21 @@ namespace MVC.Controllers
         /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
         //private readonly Service<{Entity}, {Entity}Request, {Entity}Response> _{Entity}Service;
 
-        public StoresController(Service<Store, StoreRequest, StoreResponse> storeService
+        private readonly HttpService _httpService;
 
-            /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-            //, Service<{Entity}, {Entity}Request, {Entity}Response> {Entity}Service
+        public StoresController(Service<Store, StoreRequest, StoreResponse> storeService, HttpService httpService
+
+        /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+        //, Service<{Entity}, {Entity}Request, {Entity}Response> {Entity}Service
         )
         {
             _storeService = storeService;
 
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
             //_{Entity}Service = {Entity}Service;
+
+            _httpService = httpService;
+            SetApiUri($"{Settings.ApiUri}/stores");
         }
 
         void SetViewData(Result result, PageOrder pageOrder = default)
@@ -48,8 +54,8 @@ namespace MVC.Controllers
         public async Task<IActionResult> Index(PageOrder pageOrder)
         {
             // Get collection logic:
-            var result = pageOrder is null ? await _storeService.GetList() : await _storeService.GetList(pageOrder);
-            
+            var result = Api ? (await _httpService.GetList<StoreResponse>(ApiUri)) : (await _storeService.GetList(pageOrder));
+
             SetViewData(result, pageOrder);
             return View(result);
         }

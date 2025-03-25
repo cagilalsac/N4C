@@ -16,7 +16,7 @@ namespace N4C.App
             Title = string.IsNullOrWhiteSpace(title) ? string.Empty : title;
             Message = string.IsNullOrWhiteSpace(message) ? string.Empty : message;
             HttpStatusCode = httpStatusCode;
-            PageOrder = pageOrder is not null && pageOrder.PageNumber != 0 ? pageOrder : null;
+            PageOrder = pageOrder is not null && pageOrder.RecordsPerPageCounts.Any() ? pageOrder : null;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace APP
             builder.Services.AddScoped<Service<Product, ProductRequest, ProductResponse>, ProductService>();
 
             // AppSettings:
-            var appSettings = new AppSettings(builder.Configuration, Cultures.EN, 20, 1, 24);
+            var appSettings = new AppSettings(builder.Configuration, Cultures.EN, 20, 1, 24, "https://localhost:7008/api");
             appSettings.Bind();
 
             // N4C:

@@ -10,10 +10,10 @@ namespace APP
         public static string DescriptionTR { get; set; }
 
         public AppSettings(IConfiguration configuration, string culture, int sessionExpirationInMinutes, double authCookieExpirationInHours, 
-            double jwtExpirationInHours, string jwtAudience = "https://n4c.com", string jwtIssuer = "https://n4c.com", 
+            double jwtExpirationInHours, string apiUri = default, string jwtAudience = "https://n4c.com", string jwtIssuer = "https://n4c.com", 
             string jwtSecurityKey = null, string jwtSecurityAlgorithm = null) 
             : base(configuration, culture, sessionExpirationInMinutes, authCookieExpirationInHours, jwtExpirationInHours, 
-                  jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
+                  apiUri, jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
         {
         }
     }

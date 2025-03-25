@@ -54,7 +54,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Index(PageOrder pageOrder)
         {
             // Get collection logic:
-            var result = pageOrder is null ? await _productService.GetList() : await _productService.GetList(pageOrder);
+            var result = await _productService.GetList(pageOrder);
             
             SetViewData(result, pageOrder);
             return View(result);

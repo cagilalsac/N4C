@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MVC.API.Models;
+using N4C.App;
 using N4C.App.Services;
 using N4C.Controllers;
 
@@ -7,7 +8,7 @@ namespace MVC.API
 {
     public class HttpController : ApiController
     {
-        const string PRODUCTSURI = "https://localhost:7008/api/products";
+        string PRODUCTSURI = $"{Settings.ApiUri}/products";
 
         private readonly HttpService _httpService;
 

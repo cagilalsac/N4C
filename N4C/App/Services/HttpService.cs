@@ -124,7 +124,7 @@ namespace N4C.App.Services
         {
             var token = bearerToken;
             if (string.IsNullOrWhiteSpace(token))
-                token = HttpContextAccessor.HttpContext?.Request?.Headers?.Authorization.FirstOrDefault() ?? string.Empty;
+                token = HttpContextAccessor.HttpContext?.Request?.Headers?.Authorization.FirstOrDefault() ?? GetCookie("JWT") ?? string.Empty;
             if (token.StartsWith(JwtBearerDefaults.AuthenticationScheme))
                 token = token.Remove(0, JwtBearerDefaults.AuthenticationScheme.Length).TrimStart();
             return token;

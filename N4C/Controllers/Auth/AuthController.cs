@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using N4C.App;
+using N4C.App.Services;
 using N4C.App.Services.Auth;
 using N4C.App.Services.Auth.Models;
 
@@ -11,10 +12,13 @@ namespace N4C.Controllers.Auth
     {
         // Service injections:
         private readonly AuthService _authService;
+        private readonly HttpService _httpService;
 
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, HttpService httpService)
         {
             _authService = authService;
+            _httpService = httpService;
+            SetApiUri($"{Settings.ApiUri}/jwt");
         }
 
         void SetViewData(Result result, PageOrder pageOrder = default)
@@ -36,6 +40,8 @@ namespace N4C.Controllers.Auth
                     case AuthMvcActions.LogoutGet:
                         redirectToLogin = true;
                         await _authService.Logout();
+                        if (Api)
+                            _httpService.DeleteCookie("JWT");
                         break;
                     case AuthMvcActions.RegisterGet:
                         viewModel.AuthMvcAction = (int)AuthMvcActions.RegisterPost;
@@ -51,6 +57,12 @@ namespace N4C.Controllers.Auth
                         {
                             redirectToHome = true;
                             SetTempData(result);
+                            if (Api)
+                            {
+                                var jwtResult = await _authService.GetJwt(viewModel.LoginRequest);
+                                if (jwtResult.Success)
+                                    _httpService.SetCookie("JWT", jwtResult.Data.Token);
+                            }
                         }
                         else
                         {
