@@ -24,10 +24,10 @@ namespace MVC.Controllers
 
         private readonly HttpService _httpService;
 
-        public StoresController(Service<Store, StoreRequest, StoreResponse> storeService, HttpService httpService
-
+        public StoresController(Service<Store, StoreRequest, StoreResponse> storeService
         /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
         //, Service<{Entity}, {Entity}Request, {Entity}Response> {Entity}Service
+        , HttpService httpService
         )
         {
             _storeService = storeService;

@@ -44,14 +44,13 @@ namespace N4C.App.Services
 
         public string Title { get; private set; }
 
-        private readonly IDb _db;
-
-        protected HttpService HttpService { get; }
-        protected FileService FileService { get; }
+        private IDb Db { get; }
+        private HttpService HttpService { get; }
+        private FileService FileService { get; }
 
         protected Service(IDb db, HttpService httpService, FileService fileService, LogService logService) : base(logService)
         {
-            _db = db;
+            Db = db;
             HttpService = httpService;
             FileService = fileService;
             SetCulture(HttpService.Culture);
@@ -152,7 +151,7 @@ namespace N4C.App.Services
         {
             if (mapperProfile is not null)
                 mapperProfile.Invoke(MapperProfile);
-            var query = _db.Set<TEntity>().AsNoTracking();
+            var query = Db.Set<TEntity>().AsNoTracking();
             if (HasDeleted)
                 query = query.Where(entity => EF.Property<bool>(entity, DeletedProperty.Name) == false);
             return query;
@@ -339,7 +338,7 @@ namespace N4C.App.Services
         protected void Update<TRelationalEntity>(List<TRelationalEntity> relationalEntities) where TRelationalEntity : Entity, new()
         {
             if (relationalEntities is not null && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
-                _db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
+                Db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
         }
 
         protected void Delete<TRelationalEntity>(List<TRelationalEntity> relationalEntities) where TRelationalEntity : Entity, new()
@@ -347,7 +346,7 @@ namespace N4C.App.Services
             if (relationalEntities is not null && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
             {
                 if (!HasDeleted)
-                    _db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
+                    Db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
             }
         }
 
@@ -376,7 +375,7 @@ namespace N4C.App.Services
                     (entity as IModified).CreateDate = DateTime.Now;
                     (entity as IModified).CreatedBy = HttpService.GetUserName();
                 }
-                _db.Set<TEntity>().Add(entity);
+                Db.Set<TEntity>().Add(entity);
                 if (save)
                 {
                     var result = await Save(cancellationToken);
@@ -444,7 +443,7 @@ namespace N4C.App.Services
                 var validationResult = Validate(request);
                 if (!validationResult.Success)
                     return validationResult;
-                var entity = _db.Set<TEntity>().Find(request.Id);
+                var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return Error(request, HttpStatusCode.NotFound);
                 entity = request.Map(MapperProfile, entity).Trim();
@@ -456,7 +455,7 @@ namespace N4C.App.Services
                     (entity as IModified).UpdateDate = DateTime.Now;
                     (entity as IModified).UpdatedBy = HttpService.GetUserName();
                 }
-                _db.Set<TEntity>().Update(entity);
+                Db.Set<TEntity>().Update(entity);
                 if (save)
                 {
                     try
@@ -500,7 +499,7 @@ namespace N4C.App.Services
             {
                 if (RelationalEntitiesFound)
                     return Error(request, RecordHasRelationalRecords);
-                var entity = _db.Set<TEntity>().Find(request.Id);
+                var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return Error(request, HttpStatusCode.NotFound);
                 if (HasDeleted)
@@ -511,14 +510,14 @@ namespace N4C.App.Services
                         (entity as IModified).UpdateDate = DateTime.Now;
                         (entity as IModified).UpdatedBy = HttpService.GetUserName();
                     }
-                    _db.Set<TEntity>().Update(entity);
+                    Db.Set<TEntity>().Update(entity);
                 }
                 else
                 {
                     var fileResult = DeleteFiles(request, entity);
                     if (!fileResult.Success)
                         return fileResult;
-                    _db.Set<TEntity>().Remove(entity);
+                    Db.Set<TEntity>().Remove(entity);
                 }
                 if (save)
                 {
@@ -540,7 +539,7 @@ namespace N4C.App.Services
         {
             try
             {
-                foreach (var entityEntry in _db.ChangeTracker.Entries<TEntity>())
+                foreach (var entityEntry in Db.ChangeTracker.Entries<TEntity>())
                 {
                     switch (entityEntry.State)
                     {
@@ -559,7 +558,7 @@ namespace N4C.App.Services
                             break;
                     }
                 }
-                var numberOfStateEntries = await _db.SaveChangesAsync(cancellationToken);
+                var numberOfStateEntries = await Db.SaveChangesAsync(cancellationToken);
                 return Success($"{RecordSaved} {numberOfStateEntries}");
             }
             catch (Exception exception)
@@ -602,7 +601,7 @@ namespace N4C.App.Services
             if (HasFile && request is FileRequest)
             {
                 if (entity is null)
-                    entity = _db.Set<TEntity>().Find(request.Id);
+                    entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                 {
                     return Error(request, HttpStatusCode.NotFound);
@@ -684,7 +683,7 @@ namespace N4C.App.Services
                             fileEntity.OtherFiles = null;
                     }
                 }
-                _db.Set<TEntity>().Update(entity);
+                Db.Set<TEntity>().Update(entity);
             }
             return Success(request);
         }
@@ -692,7 +691,7 @@ namespace N4C.App.Services
         public async Task<Result<TRequest>> DeleteFiles(int id, string filePath = null, CancellationToken cancellationToken = default)
         {
             var request = new TRequest() { Id = id };
-            var entity = _db.Set<TEntity>().Find(request.Id);
+            var entity = Db.Set<TEntity>().Find(request.Id);
             if (entity is null)
             {
                 return Error(request, HttpStatusCode.NotFound);
@@ -723,7 +722,7 @@ namespace N4C.App.Services
 
         public void Dispose()
         {
-            _db.Dispose();
+            Db.Dispose();
             GC.SuppressFinalize(this);
         }
     }

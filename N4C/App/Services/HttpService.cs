@@ -16,8 +16,8 @@ namespace N4C.App.Services
 {
     public class HttpService : Service
     {
-        protected IHttpContextAccessor HttpContextAccessor { get; }
-        protected IHttpClientFactory HttpClientFactory { get; }
+        private IHttpContextAccessor HttpContextAccessor { get; }
+        private IHttpClientFactory HttpClientFactory { get; }
 
         public HttpService(IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, LogService logService) : base(logService)
         {

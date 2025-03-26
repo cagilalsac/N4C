@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using N4C.App;
 using N4C.Domain;
+using System.Linq.Expressions;
 
 namespace N4C.Extensions
 {
@@ -35,6 +37,17 @@ namespace N4C.Extensions
                 mapperConfigurationExpression.AddProfile(mapperProfile);
             var mapperConfiguration = new MapperConfiguration(mapperConfigurationExpression);
             return query.ProjectTo<TDestination>(mapperConfiguration);
+        }
+
+        public static IQueryable<TEntity> IncludeAndSplit<TEntity, TProperty>(this IQueryable<TEntity> query, Expression<Func<TEntity, TProperty>> navigationProperty) where TEntity : Entity, new()
+        {
+            return query.Include(navigationProperty).AsSplitQuery();
+        }
+
+        public static IQueryable<TEntity> ThenIncludeAndSplit<TEntity, TPreviousProperty, TProperty>(this IIncludableQueryable<TEntity, IEnumerable<TPreviousProperty>> query, 
+            Expression<Func<TPreviousProperty, TProperty>> navigationProperty) where TEntity : Entity, new()
+        {
+            return query.ThenInclude(navigationProperty).AsSplitQuery();
         }
     }
 }

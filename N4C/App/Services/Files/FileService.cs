@@ -16,7 +16,7 @@ namespace N4C.App.Services.Files
 
         protected Dictionary<string, string> FileMimeTypes { get; }
 
-        protected HttpService HttpService { get; }
+        private HttpService HttpService { get; }
 
         public FileService(HttpService httpService, LogService logService) : base(logService)
         {

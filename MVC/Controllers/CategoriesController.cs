@@ -23,10 +23,10 @@ namespace MVC.Controllers
 
         private readonly HttpService _httpService;
 
-        public CategoriesController(Service<Category, CategoryRequest, CategoryResponse> categoryService, HttpService httpService
-
+        public CategoriesController(Service<Category, CategoryRequest, CategoryResponse> categoryService
         /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
         //, Service<{Entity}, {Entity}Request, {Entity}Response> {Entity}Service
+        , HttpService httpService
         )
         {
             _categoryService = categoryService;

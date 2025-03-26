@@ -4,7 +4,7 @@ namespace N4C.App.Services
 {
     public class LogService
     {
-        protected ILogger<LogService> Logger { get; }
+        private ILogger<LogService> Logger { get; }
 
         public LogService(ILogger<LogService> logger)
         {

@@ -9,9 +9,9 @@ namespace N4C.App.Services.Auth
 {
     public class AuthService : Service
     {
-        protected HttpService HttpService { get; }
+        private HttpService HttpService { get; }
 
-        protected Service<User, UserRequest, UserResponse> UserService { get; }
+        private Service<User, UserRequest, UserResponse> UserService { get; }
 
         public AuthService(HttpService httpService, LogService logService, Service<User, UserRequest, UserResponse> userService) : base(logService)
         {
