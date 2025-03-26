@@ -37,7 +37,7 @@ namespace N4C.App.Services
         protected string RecordNotSaved { get; private set; }
         protected string RecordSaved { get; private set; }
         protected string RecordHasRelationalRecords { get; private set; }
-        protected MapperProfile MapperProfile { get; private set; } = new MapperProfile();
+        protected QueryConfig QueryConfig { get; private set; } = new QueryConfig();
         
         protected string TrueHtml { get; private set; }
         protected string FalseHtml { get; private set; }
@@ -147,11 +147,13 @@ namespace N4C.App.Services
             }
         }
 
-        protected virtual IQueryable<TEntity> Query(Action<MapperProfile> mapperProfile = default)
+        protected virtual IQueryable<TEntity> Query(Action<QueryConfig> config = default)
         {
-            if (mapperProfile is not null)
-                mapperProfile.Invoke(MapperProfile);
-            var query = Db.Set<TEntity>().AsNoTracking();
+            if (config is not null)
+                config.Invoke(QueryConfig);
+            var query = QueryConfig.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
+            if (QueryConfig.SplitQuery)
+                query = query.AsSplitQuery();
             if (HasDeleted)
                 query = query.Where(entity => EF.Property<bool>(entity, DeletedProperty.Name) == false);
             return query;
@@ -159,12 +161,12 @@ namespace N4C.App.Services
 
         protected TEntity Query(int id)
         {
-            return Query().SingleOrDefault(entity => entity.Id == id) ?? new TEntity();
+            return Query().AsSingleQuery().SingleOrDefault(entity => entity.Id == id) ?? new TEntity();
         }
 
         protected TEntity Query(string guid)
         {
-            return Query().SingleOrDefault(entity => entity.Guid == guid) ?? new TEntity();
+            return Query().AsSingleQuery().SingleOrDefault(entity => entity.Guid == guid) ?? new TEntity();
         }
 
         protected TEntity Query(TRequest request)
@@ -179,7 +181,7 @@ namespace N4C.App.Services
             List<TResponse> list = null;
             try
             {
-                list = await Query().Map<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
+                list = await Query().Map<TEntity, TResponse>(QueryConfig).ToListAsync(cancellationToken);
                 if (list.Count > 0)
                 {
                     if (HasFile)
@@ -206,7 +208,7 @@ namespace N4C.App.Services
             List<TResponse> list = null;
             try
             {
-                list = await Query().Where(predicate).Map<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
+                list = await Query().Where(predicate).Map<TEntity, TResponse>(QueryConfig).ToListAsync(cancellationToken);
                 if (list.Count > 0)
                 {
                     if (HasFile)
@@ -249,7 +251,7 @@ namespace N4C.App.Services
                     pageOrder.OrderExpressions = OrderExpressions;
                     if (pageOrder.OrderExpressions.Any() && string.IsNullOrWhiteSpace(pageOrder.OrderExpression))
                         pageOrder.OrderExpression = pageOrder.OrderExpressions.FirstOrDefault().Key;
-                    list = await Query().OrderBy(pageOrder).Paginate(pageOrder).Map<TEntity, TResponse>(MapperProfile).ToListAsync(cancellationToken);
+                    list = await Query().OrderBy(pageOrder).Paginate(pageOrder).Map<TEntity, TResponse>(QueryConfig).ToListAsync(cancellationToken);
                     if (Settings.SessionExpirationInMinutes > 0)
                         HttpService.SetSession(nameof(PageOrder), pageOrder);
                     if (pageOrder.TotalRecordsCount > 0)
@@ -280,7 +282,7 @@ namespace N4C.App.Services
             TResponse item = null;
             try
             {
-                item = await Query().Map<TEntity, TResponse>(MapperProfile).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                item = await Query().Map<TEntity, TResponse>(QueryConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 if (item is null)
                     return Error(item, HttpStatusCode.NotFound);
                 if (HasFile && item is FileResponse)
@@ -362,7 +364,7 @@ namespace N4C.App.Services
                 var validationResult = Validate(request);
                 if (!validationResult.Success)
                     return validationResult;
-                var entity = request.Map<TRequest, TEntity>(MapperProfile).Trim();
+                var entity = request.Map<TRequest, TEntity>(QueryConfig).Trim();
                 var fileResult = CreateFiles(request, entity);
                 if (!fileResult.Success)
                     return fileResult;
@@ -404,7 +406,7 @@ namespace N4C.App.Services
                 var entity = Query(id);
                 if (entity is null)
                     return Error(item, HttpStatusCode.NotFound);
-                item = entity.Map<TEntity, TRequest>(MapperProfile);
+                item = entity.Map<TEntity, TRequest>(QueryConfig);
                 if (HasFile && item is FileRequest)
                     (item as FileRequest).MainFile = (entity as FileEntity).MainFile;
                 return Success(item);
@@ -424,7 +426,7 @@ namespace N4C.App.Services
                 var entity = Query(guid);
                 if (entity is null)
                     return Error(item, HttpStatusCode.NotFound);
-                item = entity.Map<TEntity, TRequest>(MapperProfile);
+                item = entity.Map<TEntity, TRequest>(QueryConfig);
                 if (HasFile && item is FileRequest)
                     (item as FileRequest).MainFile = (entity as FileEntity).MainFile;
                 return Success(item);
@@ -446,7 +448,7 @@ namespace N4C.App.Services
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return Error(request, HttpStatusCode.NotFound);
-                entity = request.Map(MapperProfile, entity).Trim();
+                entity = request.Map(QueryConfig, entity).Trim();
                 var fileResult = UpdateFiles(request, entity);
                 if (!fileResult.Success)
                     return fileResult;

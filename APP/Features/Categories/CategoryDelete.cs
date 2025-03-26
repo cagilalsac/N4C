@@ -16,9 +16,9 @@ namespace APP.Features.Categories
         {
         }
 
-        protected override IQueryable<Category> Query(Action<MapperProfile> mapperProfile = null)
+        protected override IQueryable<Category> Query(Action<QueryConfig> config = null)
         {
-            return base.Query(mapperProfile).Include(c => c.Products);
+            return base.Query(config).Include(c => c.Products);
         }
 
         public override Task<Result<CategoryDeleteRequest>> Delete(CategoryDeleteRequest request, bool save = true, CancellationToken cancellationToken = default)

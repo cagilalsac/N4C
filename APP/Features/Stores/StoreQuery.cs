@@ -26,7 +26,7 @@ namespace APP.Features.Stores
         {
         }
 
-        protected override IQueryable<Store> Query(Action<MapperProfile> mapperProfile = null)
+        protected override IQueryable<Store> Query(Action<QueryConfig> config = null)
         {
             return base.Query(p =>
             {

@@ -14,7 +14,7 @@ namespace APP.Services
             SetTitle("Kategori", "Category");
         }
 
-        protected override IQueryable<Category> Query(Action<MapperProfile> config = default)
+        protected override IQueryable<Category> Query(Action<QueryConfig> config = default)
         {
             return base.Query().Include(c => c.Products).OrderBy(c => c.Name);
         }

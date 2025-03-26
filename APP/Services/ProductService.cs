@@ -18,10 +18,11 @@ namespace APP.Services
             SetTitle("Ürün");
         }
 
-        protected override IQueryable<Product> Query(Action<MapperProfile> mapperProfile = null)
+        protected override IQueryable<Product> Query(Action<QueryConfig> config = null)
         {
             return base.Query(p =>
             {
+                p.SplitQuery = true;
                 p.Map<Product, ProductResponse>()
                     .Property(d => d.UnitPriceS, s => (s.UnitPrice ?? 0).ToString("C2", new CultureInfo("tr-TR")))
                     .Property(d => d.StockAmountS, s =>
@@ -36,7 +37,7 @@ namespace APP.Services
                     .Property(d => d.Stores, s => string.Join("<br>", s.ProductStores.OrderBy(ps => ps.Store.Name).Select(ps => ps.Store.Name)))
                     .Property(d => d.UnitPriceText, s => (s.UnitPrice ?? 0).ToMoneyString(Cultures.TR, false))
                     .Property(d => d.StoresExcel, s => string.Join(", ", s.ProductStores.OrderBy(ps => ps.Store.Name).Select(ps => ps.Store.Name)));
-            }).Include(p => p.ProductStores).ThenInclude(ps => ps.Store).IncludeAndSplit(p => p.Category).OrderBy(p => p.Name);
+            }).Include(p => p.ProductStores).ThenInclude(ps => ps.Store).Include(p => p.Category).OrderBy(p => p.Name);
         }
 
         protected override Result<ProductRequest> Validate(ProductRequest request)

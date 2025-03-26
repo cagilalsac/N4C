@@ -32,9 +32,9 @@ namespace APP.Features.Products
         {
         }
 
-        protected override IQueryable<Product> Query(Action<MapperProfile> mapperProfile = null)
+        protected override IQueryable<Product> Query(Action<QueryConfig> config = null)
         {
-            return base.Query(mapperProfile).Include(p => p.ProductStores);
+            return base.Query(config).Include(p => p.ProductStores);
         }
 
         protected override Result<ProductUpdateRequest> Validate(ProductUpdateRequest request)

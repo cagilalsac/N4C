@@ -14,10 +14,10 @@ namespace N4C.App.Services.Users
             SetTitle("Rol");
         }
 
-        protected override IQueryable<Role> Query(Action<MapperProfile> mapperProfile = null)
+        protected override IQueryable<Role> Query(Action<QueryConfig> config = null)
         {
             var systemAdminRoleId = (int)SystemRoles.SystemAdmin;
-            mapperProfile = r =>
+            config = r =>
                 r.Map<Role, RoleResponse>()
                     .Property(d => d.UsersCount, s => s.UserRoles.Where(ur => !ur.User.Deleted).Count())
                     .Property(d => d.Users, s => s.UserRoles.Where(ur => !ur.User.Deleted)
@@ -30,9 +30,9 @@ namespace N4C.App.Services.Users
                         Active = ur.User.Active,
                         ActiveS = ur.User.Active.ToHtml(TrueHtml, FalseHtml)
                     }).ToList());
-            var systemAdminRoleQuery = base.Query(mapperProfile).Where(r => r.Id == systemAdminRoleId)
+            var systemAdminRoleQuery = base.Query(config).Where(r => r.Id == systemAdminRoleId)
                 .Include(r => r.UserRoles).ThenInclude(ur => ur.User);
-            var otherRolesQuery = base.Query(mapperProfile).Where(r => r.Id != systemAdminRoleId)
+            var otherRolesQuery = base.Query(config).Where(r => r.Id != systemAdminRoleId)
                 .Include(r => r.UserRoles).ThenInclude(ur => ur.User).OrderBy(r => r.Name);
             return systemAdminRoleQuery.Union(otherRolesQuery);
         }

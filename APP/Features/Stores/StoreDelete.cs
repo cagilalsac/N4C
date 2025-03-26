@@ -16,9 +16,9 @@ namespace APP.Features.Stores
         {
         }
 
-        protected override IQueryable<Store> Query(Action<MapperProfile> mapperProfile = null)
+        protected override IQueryable<Store> Query(Action<QueryConfig> config = null)
         {
-            return base.Query(mapperProfile).Include(c => c.ProductStores);
+            return base.Query(config).Include(c => c.ProductStores);
         }
 
         public override Task<Result<StoreDeleteRequest>> Delete(StoreDeleteRequest request, bool save = true, CancellationToken cancellationToken = default)

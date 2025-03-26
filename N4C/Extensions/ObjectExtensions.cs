@@ -77,12 +77,12 @@ namespace N4C.Extensions
             return properties;
         }
 
-        public static TDestination Map<TSource, TDestination>(this TSource source, MapperProfile mapperProfile = default, TDestination destination = default) where TSource : class, new() where TDestination : class, new()
+        public static TDestination Map<TSource, TDestination>(this TSource source, MapConfig config = default, TDestination destination = default) where TSource : class, new() where TDestination : class, new()
         {
             var mapperConfigurationExpression = new MapperConfigurationExpression();
             mapperConfigurationExpression.CreateMap<TSource, TDestination>();
-            if (mapperProfile is not null)
-                mapperConfigurationExpression.AddProfile(mapperProfile);
+            if (config is not null)
+                mapperConfigurationExpression.AddProfile(config);
             var mapperConfiguration = new MapperConfiguration(mapperConfigurationExpression);
             var mapper = new Mapper(mapperConfiguration);
             if (destination is null)

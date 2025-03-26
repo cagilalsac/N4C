@@ -16,10 +16,10 @@ namespace N4C.App.Services.Users
             SetTitle("Kullanıcı");
         }
 
-        protected override IQueryable<User> Query(Action<MapperProfile> mapperProfile = null)
+        protected override IQueryable<User> Query(Action<QueryConfig> config = null)
         {
             var systemAdminUserId = (int)SystemUsers.SystemAdmin;
-            mapperProfile = u =>
+            config = u =>
             {
                 u.Map<User, UserResponse>()
                     .Property(d => d.ActiveS, s => s.Active.ToHtml(TrueHtml, FalseHtml))
@@ -32,9 +32,9 @@ namespace N4C.App.Services.Users
                         Name = ur.Role.Name
                     }).ToList());
             };
-            var systemAdminUserQuery = base.Query(mapperProfile).Where(u => u.Id == systemAdminUserId)
+            var systemAdminUserQuery = base.Query(config).Where(u => u.Id == systemAdminUserId)
                 .Include(u => u.UserRoles).ThenInclude(ur => ur.Role);
-            var otherUsersQuery = base.Query(mapperProfile).Where(u => u.Id != systemAdminUserId)
+            var otherUsersQuery = base.Query(config).Where(u => u.Id != systemAdminUserId)
                 .Include(u => u.UserRoles).ThenInclude(ur => ur.Role).OrderBy(u => u.UserName);
             return systemAdminUserQuery.Union(otherUsersQuery);
         }
@@ -109,7 +109,7 @@ namespace N4C.App.Services.Users
                 var user = await Query().SingleOrDefaultAsync(u => u.UserName == loginRequest.UserName && u.Password == loginRequest.Password && u.Active, cancellationToken);
                 if (user is null)
                     return Error(response, NotFound);
-                response = user.Map<User, UserResponse>(MapperProfile);
+                response = user.Map<User, UserResponse>(QueryConfig);
                 return Success(response);
             }
             catch (Exception exception)
