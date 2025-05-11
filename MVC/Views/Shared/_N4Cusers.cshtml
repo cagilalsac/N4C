@@ -1,0 +1,293 @@
+﻿@using N4C.App
+@using N4C.Controllers
+@using N4C.Domain.Users
+@using N4C.Extensions
+@using N4C.App.Services.Users.Models
+
+@model UserViewModel
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var list = culture == Cultures.TR ? "Listesi" : "List";
+    var details = culture == Cultures.TR ? "Detay" : "Details";
+    var create = culture == Cultures.TR ? "Yeni" : "Create";
+    var edit = culture == Cultures.TR ? "Düzenle" : "Edit";
+    var delete = culture == Cultures.TR ? "Sil" : "Delete";
+    var save = culture == Cultures.TR ? "Kaydet" : "Save";
+    var clear = culture == Cultures.TR ? "Temizle" : "Clear";
+    var backToList = culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    var deactivate = culture == Cultures.TR ? "Etkisizleştir" : "Deactivate";
+    var activate = culture == Cultures.TR ? "Etkinleştir" : "Activate";
+    var mvcAction = Model.MvcAction;
+    var title = mvcAction == (int)MvcActions.Details ? $"{view?.Title} {details}" :
+        mvcAction == (int)MvcActions.CreatePost ? $"{view?.Title} {create}" :
+        mvcAction == (int)MvcActions.EditPost ? $"{view?.Title} {edit}" :
+        $"{view?.Title} {list}";
+    var action = mvcAction == (int)MvcActions.CreatePost ? "Create" : mvcAction == (int)MvcActions.EditPost ? "Edit" : "Index";
+    var isAuthenticated = User.Identity.IsAuthenticated;
+}
+@{
+    ViewData["Title"] = $"{title}";
+}
+<partial name="_N4Cexception" />
+@if (Model is not null)
+{
+<form asp-action="@action" autocomplete="off" id="form">
+@if (mvcAction == (int)MvcActions.Index)
+{
+    <div class="@containerDivClass">
+        <div class="row">
+            <div class="col-10">
+                <partial name="_N4Cmessage" />
+            </div>
+            <div class="col-2 text-end">
+            @if (isAuthenticated)
+            {
+                <a asp-action="Create">@create</a>
+            }
+            </div>
+        </div>
+        @if (Model.Data.Any())
+        {
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-secondary">
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().UserName, culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().Roles, culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().ActiveS, culture)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+		        @foreach (var item in Model.Data) {
+				<tr>
+					<td>
+						@Html.Raw(item.UserName)
+					</td>
+                    <td>
+                        @{
+                            var roles = string.Empty;
+                            foreach (var role in item.Roles)
+                            {
+                                roles += role.Name + ", ";
+                            }
+                        }
+                        @Html.Raw(roles.TrimEnd(',', ' '))
+                    </td>
+                    <td>
+                        @Html.Raw(item.ActiveS)
+                    </td>
+					<td class="text-end w-25">
+                    @if (isAuthenticated)
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Id">@edit</a>
+                        @:&nbsp;|&nbsp;
+                        if (item.Id != (int)SystemUsers.SystemAdmin)
+                        {
+                            <a href="#" onclick="deleteRecord(@item.Id);">@delete</a>
+                            @:&nbsp;|&nbsp;
+                            if (item.Active)
+                            {
+						        <a asp-action="Deactivate" asp-route-id="@item.Id">@deactivate</a>
+                            }
+                            else
+                            {
+                                <a asp-action="Activate" asp-route-guid="@item.Guid">@activate</a>
+                            }
+                            @:&nbsp;|&nbsp;
+                        }
+						<a asp-action="Details" asp-route-Request.Id="@item.Id">@details</a>
+                    }
+					</td>
+				</tr>
+		        }
+            </tbody>
+        </table>
+        }
+    </div>
+}
+else if (mvcAction == (int)MvcActions.Details)
+{
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" />
+    @if (Model.Data.Any())
+    {
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            <displayname asp-for="Data.First().UserName" asp-culture="culture" />
+        </div>
+        <div class="col-10">
+            <input asp-for="Data.First().UserName" class="form-control" readonly />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            <displayname asp-for="Data.First().Password" asp-culture="culture" />
+        </div>
+        <div class="col-10">
+            <input asp-for="Data.First().Password" class="form-control password" readonly />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="offset-2 col-10">
+            <partial name="_N4Cpassword" model="false" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().Roles, culture)
+        </div>
+        <div class="col-10">
+            @{
+                var roles = string.Empty;
+                foreach (var role in Model.Data.First().Roles)
+                {
+                    roles += role.Name + ", ";
+                }
+            }
+            @Html.Raw(roles.TrimEnd(',', ' '))
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().ActiveS, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().ActiveS)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().CreateDate, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().CreateDate)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().CreatedBy, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().CreatedBy)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().UpdateDate, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().UpdateDate)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.First().UpdatedBy, culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.First().UpdatedBy)
+        </div>
+    </div>
+    <hr />
+    <a asp-action="Index">@backToList</a>
+    }
+</div>
+}
+else if (mvcAction == (int)MvcActions.CreatePost)
+{
+<div class="@containerDivClass">
+    <input name="MvcAction" type="hidden" value="@mvcAction" />
+    <partial name="_N4Cmessage" />
+	@Html.AntiForgeryToken()
+    <div class="row mb-3">
+        <displayname asp-for="Request.UserName" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="Request.UserName" class="form-control" />
+	    </div>
+    </div>
+    <div class="row mb-3">
+        <displayname asp-for="Request.Password" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="Request.Password" class="form-control password" type="password" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="offset-2 col-10">
+            <partial name="_N4Cpassword" model="true" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <displayname asp-for="Request.RoleIds" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+		    <select multiple asp-for="Request.RoleIds" class="form-select select2" asp-items="ViewBag.RoleIds"></select>
+	    </div>
+    </div>
+    <hr />
+    <div class="row mb-3">
+	    <div class="offset-2 col-10">
+            <button type="submit" class="btn btn-primary">@save</button>
+		    &nbsp;&nbsp;
+            <button type="reset" class="btn btn-outline-primary">@clear</button>
+            &nbsp;&nbsp;
+		    <a asp-action="Index">@backToList</a>
+	    </div>
+    </div>
+</div>
+}
+else if (mvcAction == (int)MvcActions.EditPost)
+{
+<div class="@containerDivClass">
+    <input name="MvcAction" type="hidden" value="@mvcAction" />
+    <input asp-for="Request.Id" type="hidden" />
+    <partial name="_N4Cmessage" />
+	@Html.AntiForgeryToken()
+    <div class="row mb-3">
+        <displayname asp-for="Request.UserName" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="Request.UserName" class="form-control" />
+	    </div>
+    </div>
+    <div class="row mb-3">
+        <displayname asp-for="Request.Password" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+	        <input asp-for="Request.Password" class="form-control password" />
+	    </div>
+    </div>
+    <div class="row mb-3">
+        <div class="offset-2 col-10">
+            <partial name="_N4Cpassword" model="false" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <displayname asp-for="Request.RoleIds" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	    <div class="col-10">
+		    <select multiple asp-for="Request.RoleIds" class="form-select select2" asp-items="ViewBag.RoleIds"></select>
+	    </div>
+    </div>
+    <hr />
+    <div class="row mb-3">
+	    <div class="offset-2 col-10">
+            <button type="submit" class="btn btn-primary">@save</button>
+		    &nbsp;&nbsp;
+            <button type="reset" class="btn btn-outline-primary">@clear</button>
+            &nbsp;&nbsp;
+		    <a asp-action="Index">@backToList</a>
+	    </div>
+    </div>
+</div>
+}
+</form>
+}
+
+@section Scripts {
+    <partial name="_N4Calertify" />
+    <partial name="_N4Cselect2" />
+}

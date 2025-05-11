@@ -1,0 +1,31 @@
+﻿@using N4C.App
+@using System.Net
+
+@{
+	var view = (View?)ViewBag.View;
+	var message = (string?)TempData["Message"] ?? string.Empty;
+	var httpStatusCode = (int?)TempData["HttpStatusCode"];
+
+	string color;
+}
+
+@if (view is not null && view.HttpStatusCode != HttpStatusCode.InternalServerError)
+{
+	if (view.HttpStatusCode == HttpStatusCode.OK)
+		color = "success";
+	else
+		color = "danger";
+	<p class="text-@color">
+		@Html.Raw(view.Message)
+	</p>
+}
+@if (!string.IsNullOrWhiteSpace(message) && httpStatusCode != (int)HttpStatusCode.InternalServerError)
+{
+	if (httpStatusCode == (int)HttpStatusCode.OK)
+		color = "success";
+	else
+		color = "danger";
+	<p class="text-@color">
+		@Html.Raw(message)
+	</p>
+}

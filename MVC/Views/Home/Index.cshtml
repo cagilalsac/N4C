@@ -1,0 +1,17 @@
+﻿@using APP
+@using N4C.App
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+}
+
+@{
+    ViewData["Title"] = culture == Cultures.TR ? "Ana Sayfa" : "Home";
+}
+
+<div class="text-center">
+    <h1 class="display-4">@AppSettings.Title</h1>
+    <hr />
+    <h3>@(culture == Cultures.TR ? AppSettings.DescriptionTR : AppSettings.DescriptionEN)</h3>
+</div>

@@ -1,0 +1,71 @@
+﻿@using N4C.App
+@using N4C.Extensions
+
+@model CategoryRequest
+
+@* Generated from N4C Template. *@
+@* CategoryRequest namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var view = (View?)ViewBag.View;
+    var culture = view is null ? Cultures.TR : view.Culture;
+    var title = view?.Title;
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var dateTimePickerClass = "datepicker"; // "datetimepicker" can be used for date with time
+    var create = culture == Cultures.TR ? "Yeni" : "Create";
+    var select = culture == Cultures.TR ? "-- Seçiniz --" : "-- Select --";
+    var save = culture == Cultures.TR ? "Kaydet" : "Save";
+    var clear = culture == Cultures.TR ? "Temizle" : "Clear";
+    var backToList = culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    var mainFileMessage = culture == Cultures.TR ? "Ana dosya seçilmelidir!" : "Main file must be selected!";
+}
+@{
+    ViewData["Title"] = $"{create} {title}";
+}
+<partial name="_N4Cexception" />
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" />
+    <form asp-action="Create" autocomplete="off" enctype="multipart/form-data">
+		@Html.AntiForgeryToken()
+        <div class="row mb-3">
+            <displayname asp-for="Name" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+			    <input asp-for="Name" class="form-control" />
+                <validation asp-for="Name" asp-culture="@culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Description" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+			    <inputarea asp-for="Description" class="form-control" />
+                <validation asp-for="Description" asp-culture="@culture" class="text-danger"></validation>
+			</div>
+        </div>
+
+@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
+        @*
+        <div class="row mb-3">
+            <displayname asp-for="{Entity}Ids" asp-culture="@culture" class="col-2 col-form-label fw-bold"></displayname>
+	        <div class="col-10">
+		        <select multiple asp-for="{Entity}Ids" class="form-select select2" asp-items="ViewBag.{Entity}Ids"></select>
+                <validation asp-for="{Entity}Ids" asp-culture="@culture" class="text-danger"></validation>
+	        </div>
+        </div>
+        *@
+
+        <hr />  
+        <div class="row mb-3">
+			<div class="offset-2 col-10">
+                <button type="submit" class="btn btn-primary">@save</button>
+				&nbsp;&nbsp;
+                <button type="reset" class="btn btn-outline-primary">@clear</button>
+				&nbsp;&nbsp;
+				<a asp-action="Index" asp-route-session="true">@backToList</a>
+			</div>
+        </div>
+    </form>
+</div>  
+
+@section Scripts {
+    <partial name="_N4Cselect2" />
+}
