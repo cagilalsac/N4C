@@ -1,0 +1,18 @@
+﻿@using N4C.Models
+
+@model Result
+
+@{
+    ViewData["Title"] = Model.Culture == Cultures.TR ? "Hakkında" : "About";
+}
+
+<div class="text-center">
+    <h3>
+        &copy; @DateTime.Now.Year | @(Model.Culture == Cultures.TR ? "Geliştiren:" : "Developed by:")
+        <a href="https://need4code.com/cagilalsac" target="_blank">
+            @(Model.Culture == Cultures.TR ? "Çağıl Alsaç" : "Cagil Alsac")
+        </a>
+        &nbsp;|&nbsp;
+        <a href="https://github.com/cagilalsac/N4C" target="_blank"><i class="bi bi-github"></i> N4C GitHub</a>
+    </h3>
+</div>

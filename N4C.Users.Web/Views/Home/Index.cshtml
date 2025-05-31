@@ -1,0 +1,17 @@
+﻿@using N4C.Models
+@using N4C.Users.App
+
+@model Result
+
+@{
+    ViewData["Title"] = Model.Culture == Cultures.TR ? "Ana Sayfa" : "Home";
+}
+
+<div class="container-fluid">
+    <partial name="_N4Cmessage" />
+    <div class="text-center">
+        <h3 class="display-4">@AppSettings.Title</h3>
+        <hr />
+        <h5>@(Model.Culture == Cultures.TR ? AppSettings.DescriptionTR : AppSettings.DescriptionEN)</h5>
+    </div>
+</div>

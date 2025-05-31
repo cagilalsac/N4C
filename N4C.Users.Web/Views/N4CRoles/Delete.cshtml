@@ -1,0 +1,40 @@
+﻿@using N4C.Models
+@using N4C.Extensions
+
+@model Result<N4CRoleResponse>
+
+@* Generated from N4C Template. *@
+@* N4CRoleResponse namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
+    var question = Model.Culture == Cultures.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
+    var save = Model.Culture == Cultures.TR ? "Evet" : "Yes";
+    var backToList = Model.Culture == Cultures.TR ? "Hayır" : "No";
+}
+@{
+    ViewData["Title"] = $"{Model.Title} {delete}";
+}
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" model="Model" />
+@if (Model.Data is not null)
+{
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Name, Model.Culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Name)
+        </div>
+    </div>
+    <hr />
+    <h5 class="text-danger">@question</h5>
+    <form asp-action="Delete">
+	    @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Data.Id" />
+        <button type="submit" class="btn btn-danger">@save</button>&nbsp;&nbsp;
+        <a asp-action="Index" asp-route-session="true" class="btn btn-outline-danger">@backToList</a>
+    </form>
+}
+</div>

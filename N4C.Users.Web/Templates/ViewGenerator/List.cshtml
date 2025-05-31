@@ -1,0 +1,209 @@
+﻿@inherits Microsoft.VisualStudio.Web.CodeGeneration.Templating.RazorTemplateBase
+@using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore
+@using System.Collections.Generic
+@using System.Linq
+@{
+@:@@using N4C.Models
+@:@@using N4C.Extensions
+    var entity = Model.ViewDataTypeName.Split('.')[Model.ViewDataTypeName.Split('.').Length - 1];
+    var viewModel = "@model Result<List<" + entity + "Response>>";
+}
+
+@viewModel
+
+@@* Generated from N4C Template. *@@
+@@* @(entity + "Response") namespace using directive should be added to _ViewImports.cshtml. *@@
+
+@{
+@:@@{
+    @:var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    @:var list = Model.Culture == Cultures.TR ? "Listesi" : "List";
+    @:var details = Model.Culture == Cultures.TR ? "Detay" : "Details";
+    @:var create = Model.Culture == Cultures.TR ? "Yeni" : "Create";
+    @:var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
+    @:var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
+    @:var export = Model.Culture == Cultures.TR ? "Excel'e Aktar" : "Export to Excel";
+    @:var isAuthenticated = User.Identity.IsAuthenticated;
+@:}
+    if (Model.IsPartialView)
+    {
+    }
+    else if (Model.IsLayoutPageSelected)
+    {
+@:@@{
+    @:ViewData["Title"] = $"{Model.Title} {list}";
+        if (!string.IsNullOrEmpty(Model.LayoutPageFile))
+        {
+    @:Layout = "@Model.LayoutPageFile";
+        }
+@:}
+    }
+    else
+    {
+@:@@{
+    @:Layout = null;
+@:}
+@:
+@:<!DOCTYPE html>
+@:
+@:<html>
+@:<head>
+    @:<meta name="viewport" content="width=device-width" />
+    @:<title>@@($"{Model.Title} {list}")</title>
+@:</head>
+@:<body>
+    }
+@:<div class="@@containerDivClass">
+    @:<partial name="_N4Cmessage" model="Model" />
+@:@@if (Model.Data is not null)
+@:{
+    @:<form asp-action="@Model.ViewName" autocomplete="off" id="form">
+        @:<div class="row">
+            @:<div class="col-10">
+                
+            @:</div>
+            @:<div class="col-2 text-end pb-3">
+            @:@@if (isAuthenticated)
+            @:{
+                @:<a asp-action="ExportToExcel">@@export</a>
+                @:@@:&nbsp;|&nbsp;
+                @:<a asp-action="Create">@@create</a>
+            @:}
+            @:</div>
+        @:</div>
+        @:@@if (Model.Data.Any())
+        @:{
+        @:<table class="table table-bordered table-striped table-hover">
+            @:<thead class="table-secondary">
+                @:<tr>
+                Dictionary<string, IPropertyMetadata> propertyLookup = ((IModelMetadata)Model.ModelMetadata).Properties.ToDictionary(x => x.PropertyName, x => x);
+                Dictionary<string, INavigationMetadata> navigationLookup = ((IModelMetadata)Model.ModelMetadata).Navigations.ToDictionary(x => x.AssociationPropertyName, x => x);
+
+                foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
+                {
+                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
+                    {
+                    if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
+                        && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
+                    {
+                    if (item.Name == "MainFile")
+                    {
+                    <th>
+                        @@Html.DisplayNameFor(model => model.Data.First().MainFile, Model.Culture)
+                    </th>
+                    }
+                    else
+                    {
+                    <th>
+                        @@Html.DisplayNameFor(model => model.Data.First().@GetValueExpression(property), Model.Culture)
+                    </th>
+                    }
+                    }
+                    else if (navigationLookup.TryGetValue(item.Name, out INavigationMetadata navigation))
+                    {
+                    <th>
+                        @@Html.DisplayNameFor(model => model.Data.First().@GetValueExpression(navigation), Model.Culture)
+                    </th>
+                    }
+                    }
+                }
+                    @:<th></th>
+                @:</tr>
+            @:</thead>
+            @:<tbody>
+		        @:@@foreach (var item in Model.Data) {
+			    @:<tr>
+			    foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
+			    {
+                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
+                    {
+				    if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
+					    && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
+				    {
+                    if (item.Name == "MainFile")
+                    {
+                    <td style="width:10%;">
+                    @{
+                        @:@@if (string.IsNullOrWhiteSpace(item.MainFile))
+                        @:{
+                            @:<span><i class="bx bx-image" style="font-size:x-large;"></i></span>
+                        @:}
+                        @:else
+                        @:{
+                            @:<a asp-action="Download" asp-route-path="@@item.MainFile"><img src="@@item.MainFile" class="img-thumbnail" /></a>
+                        @:}
+                    }
+                    </td>   
+                    }
+                    else
+                    {
+				    <td>
+					    @@Html.Raw(item.@GetValueExpression(property))
+				    </td>
+				    }
+                    }
+				    else if (navigationLookup.TryGetValue(item.Name, out INavigationMetadata navigation))
+				    {
+				    <td>
+					    @@Html.Raw(item.@GetValueExpression(navigation))
+				    </td>
+				    }
+                    }
+			    }
+			    string pkName = GetPrimaryKeyName();
+			    if (pkName != null)
+			    {
+				    @:<td class="text-end w-25">
+                    @:@@if (isAuthenticated)
+                    @:{
+					    @:<a asp-action="Details" asp-route-id="@@item.@pkName">@@details</a>@@:&nbsp;|&nbsp;
+					    @:<a asp-action="Edit" asp-route-id="@@item.@pkName">@@edit</a>@@:&nbsp;|&nbsp;
+                        @:<a href="#" onclick="deleteRecord(@@item.@pkName);">@@delete</a>
+                    @:}
+				    @:</td>
+			    }
+			    @:</tr>
+		        @:}
+            @:</tbody>
+        @:</table>
+        @:}
+    @:</form>
+@:}
+@:</div>
+@:
+@:@@section Scripts {
+    @:<partial name="_N4Calertify" model="Model" />
+@:}
+    if(!Model.IsPartialView && !Model.IsLayoutPageSelected)
+    {
+@:</body>
+@:</html>
+    }
+}
+@functions
+{
+    string GetPrimaryKeyName()
+    {
+        return (Model.ModelMetadata.PrimaryKeys != null && Model.ModelMetadata.PrimaryKeys.Length == 1)
+        ? Model.ModelMetadata.PrimaryKeys[0].PropertyName
+        : null;
+    }
+
+    string GetValueExpression(IPropertyMetadata property)
+    {
+        if (property.TypeName.Equals(typeof(bool).FullName) || property.TypeName.Equals(typeof(bool?).FullName) ||
+            property.TypeName.Equals(typeof(DateTime).FullName) || property.TypeName.Equals(typeof(DateTime?).FullName) ||
+            property.TypeName.Equals(typeof(decimal).FullName) || property.TypeName.Equals(typeof(decimal?).FullName) ||
+            property.TypeName.Equals(typeof(double).FullName) || property.TypeName.Equals(typeof(double?).FullName) ||
+            property.TypeName.Equals(typeof(float).FullName) || property.TypeName.Equals(typeof(float?).FullName))
+        {
+            return property.PropertyName + "S";
+        }
+        return property.PropertyName;
+    }
+
+    string GetValueExpression(INavigationMetadata navigation)
+    {
+        return navigation.AssociationPropertyName;
+    }
+}

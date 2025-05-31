@@ -1,0 +1,245 @@
+﻿@inherits Microsoft.VisualStudio.Web.CodeGeneration.Templating.RazorTemplateBase
+@using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore
+@using System.Collections.Generic
+@using System.Linq
+@{
+@:@@using N4C.Models
+@:@@using N4C.Extensions
+    var entity = Model.ViewDataTypeName.Split('.')[Model.ViewDataTypeName.Split('.').Length - 1];
+    var viewModel = "@model Result<" + entity + "Response>";
+    bool mainFileFound = false;
+}
+
+@viewModel
+
+@@* Generated from N4C Template. *@@
+@@* @(entity + "Response") namespace using directive should be added to _ViewImports.cshtml. *@@
+
+@{
+@:@@{
+    @:var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    @:var details = Model.Culture == Cultures.TR ? "Detayı" : "Details";
+    @:var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
+    @:var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
+    @:var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    @:var deleteFile = Model.Culture == Cultures.TR ? "Dosya Sil" : "Delete File";
+    @:var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
+    @:var mainFileMessage = Model.Culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
+    @:var isAuthenticated = User.Identity.IsAuthenticated;
+@:}
+    if (Model.IsPartialView)
+    {
+    }
+    else if (Model.IsLayoutPageSelected)
+    {
+@:@@{
+    @:ViewData["Title"] = $"{Model.Title} {details}";
+        if (!string.IsNullOrEmpty(Model.LayoutPageFile))
+        {
+    @:Layout = "@Model.LayoutPageFile";
+        }
+@:}
+    }
+    else
+    {
+@:@@{
+    @:Layout = null;
+@:}
+@:
+@:<!DOCTYPE html>
+@:
+@:<html>
+@:<head>
+    @:<meta name="viewport" content="width=device-width" />
+    @:<title>>@@($"{Model.Title} {details}")</title>
+@:</head>
+@:<body>
+    }
+}
+@{
+@:<div class="@@containerDivClass">
+    @:<partial name="_N4Cmessage" model="Model" />
+@:@@if (Model.Data is not null)
+@:{
+Dictionary<string, IPropertyMetadata> propertyLookup = ((IModelMetadata)Model.ModelMetadata).Properties.ToDictionary(x => x.PropertyName, x => x);
+Dictionary<string, INavigationMetadata> navigationLookup = ((IModelMetadata)Model.ModelMetadata).Navigations.ToDictionary(x => x.AssociationPropertyName, x => x);
+
+foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
+{
+    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
+    {
+    if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
+        && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
+    {
+    if (item.Name == "MainFile")
+    {
+        mainFileFound = true;
+    <hr />
+    <div style="@@filesStyle">
+        <div class="row mb-3">
+            <div class="col-2 fw-bold">
+                @@Html.DisplayNameFor(model => model.Data.MainFile, Model.Culture)
+            </div>
+            @{
+            @:@@if (string.IsNullOrWhiteSpace(Model.Data.MainFile))
+            @:{
+            @:<div class="col-4">
+                @:<span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
+            @:</div>
+            @:}
+            @:else
+            @:{
+            @:<div class="col-4">
+                @:<span class="text-danger mainfilemessage"></span>
+                @:<br />
+                @:<a asp-action="Download" asp-route-path="@@Model.Data.MainFile"><img src="@@Model.Data.MainFile" class="img-fluid" /></a>
+            @:</div>
+            @:<div class="col-6 text-end pe-12">
+                @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@Model.Data.MainFile" class="deletemainfile">@@deleteFile</a>
+            @:</div>
+            @:}
+            }
+        </div>
+        <hr />
+        <div class="row mb-3">
+            <div class="col-2 fw-bold">
+                @@Html.DisplayNameFor(model => model.Data.OtherFiles, Model.Culture)
+            </div>
+            <div class="col-10">
+            @{
+            @:@@if (Model.Data.OtherFiles is not null && Model.Data.OtherFiles.Any())
+            @:{
+            @:foreach (var otherFile in Model.Data.OtherFiles)
+            @:{
+                @:<div class="row">
+                    @:<div class="col-4">
+                        @:<a asp-action="Download" asp-route-path="@@otherFile"><img src="@@otherFile" class="img-fluid" /></a>
+                        @:<input type="hidden" value="@@otherFile" class="otherfiles" />
+                    @:</div>
+                    @:<div class="col-8 text-end pe-12">
+                        @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@otherFile">@@deleteFile</a>
+                    @:</div>
+                @:</div>
+                @:<hr />
+            @:}
+            @:}
+            @:else
+            @:{
+                @:<span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
+            @:}
+            }
+            </div>
+        </div> 
+    </div>
+    }
+    else
+    {
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @@Html.DisplayNameFor(model => model.Data.@GetValueExpression(property), Model.Culture)
+        </div>
+        <div class="col-10">
+            @@Html.Raw(Model.Data.@GetValueExpression(property))
+        </div>
+    </div>
+    }
+    }
+    else if (navigationLookup.TryGetValue(item.Name, out INavigationMetadata navigation))
+    {
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @@Html.DisplayNameFor(model => model.Data.@GetValueExpression(navigation), Model.Culture)
+        </div>
+        <div class="col-10">
+            @@Html.Raw(Model.Data.@GetValueExpression(navigation))
+        </div>
+    </div>
+    }
+    }
+}
+@:
+@:@@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@@
+    @:@@*
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            <b>@@Html.DisplayNameFor(model => model.Data.{Entity}s, Model.Culture)</b>
+        </div>
+        <div class="col-10">
+            @@Html.Raw(Model.Data.{Entity}s)
+        </div>
+    </div>
+    @:*@@
+}
+@{
+    @:<hr /> 
+string pkName = GetPrimaryKeyName();
+if (pkName != null)
+{
+@:@@if (isAuthenticated)
+@:{
+    @:<a asp-action="Edit" asp-route-id="@@Model.Data.@pkName">@@edit</a>@@:&nbsp;|&nbsp;
+    @:<a asp-action="Delete" asp-route-id="@@Model.Data.@pkName">@@delete</a>@@:&nbsp;|&nbsp;
+@:}
+    @:<a asp-action="Index" asp-route-session="true">@@backToList</a>
+}
+@:}
+@:</div>
+if (mainFileFound)
+{
+@:
+@:@@section Scripts {
+    @:<script>
+        @:$(function () {
+            @:$('.deletemainfile').click(function (event) {
+                @:var preventEvent = false;
+                @:if ($('.mainfile').val() != '') {
+                    @:$('.otherfiles').each(function () {
+                        @:if ($(this).val() != '') {
+                            @:preventEvent = true;
+                        @:}
+                    @:});
+                @:}
+                @:if (preventEvent) {
+                    @:event.preventDefault();
+                    @:$('.mainfilemessage').text('@@Html.Raw(mainFileMessage)');
+                @:}
+            @:});
+        @:});
+    @:</script>
+@:}
+}
+}
+@{
+    if (!Model.IsPartialView && !Model.IsLayoutPageSelected)
+    {
+@:</body>
+@:</html>
+    }
+}
+@functions
+{
+    string GetPrimaryKeyName()
+    {
+        return (Model.ModelMetadata.PrimaryKeys != null && Model.ModelMetadata.PrimaryKeys.Length == 1)
+        ? Model.ModelMetadata.PrimaryKeys[0].PropertyName
+        : null;
+    }
+
+    string GetValueExpression(IPropertyMetadata property)
+    {
+        if (property.TypeName.Equals(typeof(bool).FullName) || property.TypeName.Equals(typeof(bool?).FullName) ||
+            property.TypeName.Equals(typeof(DateTime).FullName) || property.TypeName.Equals(typeof(DateTime?).FullName) ||
+            property.TypeName.Equals(typeof(decimal).FullName) || property.TypeName.Equals(typeof(decimal?).FullName) ||
+            property.TypeName.Equals(typeof(double).FullName) || property.TypeName.Equals(typeof(double?).FullName) ||
+            property.TypeName.Equals(typeof(float).FullName) || property.TypeName.Equals(typeof(float?).FullName))
+        {
+            return property.PropertyName + "S";
+        }
+        return property.PropertyName;
+    }
+
+    string GetValueExpression(INavigationMetadata navigation)
+    {
+        return navigation.AssociationPropertyName;
+    }
+}

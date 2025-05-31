@@ -1,0 +1,132 @@
+﻿@inherits Microsoft.VisualStudio.Web.CodeGeneration.Templating.RazorTemplateBase
+@using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore
+@using System.Collections.Generic
+@using System.Linq
+@{
+@:@@using N4C.Models
+@:@@using N4C.Extensions
+    var entity = Model.ViewDataTypeName.Split('.')[Model.ViewDataTypeName.Split('.').Length - 1];
+    var viewModel = "@model Result<" + entity + "Response>";
+}
+
+@viewModel
+
+@@* Generated from N4C Template. *@@
+@@* @(entity + "Response") namespace using directive should be added to _ViewImports.cshtml. *@@
+
+@{
+@:@@{
+    @:var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    @:var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
+    @:var question = Model.Culture == Cultures.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
+    @:var save = Model.Culture == Cultures.TR ? "Evet" : "Yes";
+    @:var backToList = Model.Culture == Cultures.TR ? "Hayır" : "No";
+@:}
+    if (Model.IsPartialView)
+    {
+    }
+    else if (Model.IsLayoutPageSelected)
+    {
+@:@@{
+    @:ViewData["Title"] = $"{Model.Title} {delete}";
+        if (!string.IsNullOrEmpty(Model.LayoutPageFile))
+        {
+    @:Layout = "@Model.LayoutPageFile";
+        }
+@:}
+    }
+    else
+    {
+@:@@{
+    @:Layout = null;
+@:}
+@:
+@:<!DOCTYPE html>
+@:
+@:<html>
+@:<head>
+    @:<meta name="viewport" content="width=device-width" />
+    @:<title>@@($"{Model.Title} {delete}")</title>
+@:</head>
+@:<body>
+    }
+}
+@{
+@:<div class="@@containerDivClass">
+    @:<partial name="_N4Cmessage" model="Model" />
+@:@@if (Model.Data is not null)
+@:{
+Dictionary<string, IPropertyMetadata> propertyLookup = ((IModelMetadata)Model.ModelMetadata).Properties.ToDictionary(x => x.PropertyName, x => x);
+Dictionary<string, INavigationMetadata> navigationLookup = ((IModelMetadata)Model.ModelMetadata).Navigations.ToDictionary(x => x.AssociationPropertyName, x => x);
+
+foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
+{
+    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles" && item.Name != "MainFile")
+    {
+    if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
+        && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
+    {
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @@Html.DisplayNameFor(model => model.Data.@GetValueExpression(property), Model.Culture)
+        </div>
+        <div class="col-10">
+            @@Html.Raw(Model.Data.@GetValueExpression(property))
+        </div>
+    </div>
+    }
+    else if (navigationLookup.TryGetValue(item.Name, out INavigationMetadata navigation))
+    {
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @@Html.DisplayNameFor(model => model.Data.@GetValueExpression(navigation), Model.Culture)
+        </div>
+        <div class="col-10">
+            @@Html.Raw(Model.Data.@GetValueExpression(navigation))
+        </div>
+    </div>
+    }
+    }
+}
+    @:<hr />
+    @:<h5 class="text-danger">@@question</h5>
+    @:<form asp-action="@Model.ViewName">
+	    @:@@Html.AntiForgeryToken()
+    foreach (var property in Model.ModelMetadata.Properties)
+    {
+        if (property.IsPrimaryKey)
+        {
+        @:<input type="hidden" asp-for="Data.@GetValueExpression(property)" />
+        }
+    }
+        @:<button type="submit" class="btn btn-danger">@@save</button>&nbsp;&nbsp;
+        @:<a asp-action="Index" asp-route-session="true" class="btn btn-outline-danger">@@backToList</a>
+    @:</form>
+@:}
+@:</div>
+    if (!Model.IsPartialView && !Model.IsLayoutPageSelected)
+    {
+@:</body>
+@:</html>
+    }
+}
+@functions
+{
+    string GetValueExpression(IPropertyMetadata property)
+    {
+        if (property.TypeName.Equals(typeof(bool).FullName) || property.TypeName.Equals(typeof(bool?).FullName) ||
+            property.TypeName.Equals(typeof(DateTime).FullName) || property.TypeName.Equals(typeof(DateTime?).FullName) ||
+            property.TypeName.Equals(typeof(decimal).FullName) || property.TypeName.Equals(typeof(decimal?).FullName) ||
+            property.TypeName.Equals(typeof(double).FullName) || property.TypeName.Equals(typeof(double?).FullName) ||
+            property.TypeName.Equals(typeof(float).FullName) || property.TypeName.Equals(typeof(float?).FullName))
+        {
+            return property.PropertyName + "S";
+        }
+        return property.PropertyName;
+    }
+
+    string GetValueExpression(INavigationMetadata navigation)
+    {
+        return navigation.AssociationPropertyName;
+    }
+}

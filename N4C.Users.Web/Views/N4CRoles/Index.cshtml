@@ -1,0 +1,106 @@
+﻿@using N4C.Models
+@using N4C.Extensions
+
+@model Result<List<N4CRoleResponse>>
+
+@* Generated from N4C Template. *@
+@* N4CRoleResponse namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var list = Model.Culture == Cultures.TR ? "Listesi" : "List";
+    var details = Model.Culture == Cultures.TR ? "Detay" : "Details";
+    var create = Model.Culture == Cultures.TR ? "Yeni" : "Create";
+    var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
+    var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
+    var export = Model.Culture == Cultures.TR ? "Excel'e Aktar" : "Export to Excel";
+    var isAuthenticated = User.Identity.IsAuthenticated;
+    isAuthenticated = true;
+}
+@{
+    ViewData["Title"] = $"{Model.Title} {list}";
+}
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" model="Model" />
+@if (Model.Data is not null)
+{
+    <form asp-action="Index" autocomplete="off" id="form">
+        <div class="row">
+            <div class="col-10">
+            </div>
+            <div class="col-2 text-end pb-3">
+            @if (isAuthenticated)
+            {
+                <a asp-action="ExportToExcel">@export</a>
+                @:&nbsp;|&nbsp;
+                <a asp-action="Create">@create</a>
+            }
+            </div>
+        </div>
+        @if (Model.Data.Any())
+        {
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-secondary">
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().Name, Model.Culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().UsersCount, Model.Culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().CreateDateS, Model.Culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().CreatedBy, Model.Culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().UpdateDateS, Model.Culture)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Data.First().UpdatedBy, Model.Culture)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+		        @foreach (var item in Model.Data) {
+			    <tr>
+				    <td>
+					    @Html.Raw(item.Name)
+				    </td>
+                    <td>
+					    @Html.Raw(item.UsersCount)
+				    </td>
+                    <td>
+					    @Html.Raw(item.CreateDateS)
+				    </td>
+                    <td>
+					    @Html.Raw(item.CreatedBy)
+				    </td>
+                    <td>
+					    @Html.Raw(item.UpdateDateS)
+				    </td>
+                    <td>
+					    @Html.Raw(item.UpdatedBy)
+				    </td>
+				    <td class="text-end w-25">
+                    @if (isAuthenticated)
+                    {
+					    <a asp-action="Details" asp-route-id="@item.Id">@details</a>@:&nbsp;|&nbsp;
+					    <a asp-action="Edit" asp-route-id="@item.Id">@edit</a>@:&nbsp;|&nbsp;
+                        <a href="#" onclick="deleteRecord(@item.Id);">@delete</a>
+                    }
+				    </td>
+			    </tr>
+		        }
+            </tbody>
+        </table>
+        }
+    </form>
+}
+</div>
+
+@section Scripts {
+    <partial name="_N4Calertify" model="Model" />
+}

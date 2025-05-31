@@ -1,0 +1,107 @@
+﻿@using N4C.Models
+@using N4C.Extensions
+
+@model Result<N4CRoleResponse>
+
+@* Generated from N4C Template. *@
+@* N4CRoleResponse namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var details = Model.Culture == Cultures.TR ? "Detayı" : "Details";
+    var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
+    var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
+    var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    var deleteFile = Model.Culture == Cultures.TR ? "Dosya Sil" : "Delete File";
+    var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
+    var mainFileMessage = Model.Culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
+    var isAuthenticated = User.Identity.IsAuthenticated;
+    isAuthenticated = true;
+}
+@{
+    ViewData["Title"] = $"{Model.Title} {details}";
+}
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" model="Model" />
+@if (Model.Data is not null)
+{
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.Name, Model.Culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.Name)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.UsersCount, Model.Culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.UsersCount)
+        </div>
+    </div>
+    @if (Model.Data.UsersCount > 0)
+    {
+        <div class="row mb-3">
+            <div class="col-2 fw-bold">
+                @Html.DisplayNameFor(model => model.Data.Users, Model.Culture)
+            </div>
+            <div class="col-10">
+                @Html.Raw(string.Join(", ", Model.Data.Users.Select(user => user.UserName)))
+            </div>
+        </div>
+    }
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.CreateDateS, Model.Culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.CreateDateS)
+        </div>
+    </div>
+     <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.CreatedBy, Model.Culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.CreatedBy)
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.UpdateDateS, Model.Culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.UpdateDateS)
+        </div>
+    </div>
+     <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.UpdatedBy, Model.Culture)
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.UpdatedBy)
+        </div>
+    </div>
+
+@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
+    @*
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            <b>@Html.DisplayNameFor(model => model.Data.{Entity}s, Model.Culture)</b>
+        </div>
+        <div class="col-10">
+            @Html.Raw(Model.Data.{Entity}s)
+        </div>
+    </div>
+    *@
+    <hr /> 
+@if (isAuthenticated)
+{
+    <a asp-action="Edit" asp-route-id="@Model.Data.Id">@edit</a>@:&nbsp;|&nbsp;
+    <a asp-action="Delete" asp-route-id="@Model.Data.Id">@delete</a>@:&nbsp;|&nbsp;
+}
+    <a asp-action="Index" asp-route-session="true">@backToList</a>
+}
+</div>

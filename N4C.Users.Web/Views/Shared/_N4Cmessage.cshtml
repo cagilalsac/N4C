@@ -1,0 +1,35 @@
+﻿@using N4C.Models
+@using System.Net
+
+@model Result
+
+@if (TempData["Message"] is not null)
+{
+if (TempData["Message"].ToString().EndsWith("!"))
+{
+<p class="text-danger fs-5">
+	@Html.Raw(TempData["Message"].ToString().Replace(";", "<br>"))
+</p>
+}
+else
+{
+<p class="text-success fs-5">
+	@Html.Raw(TempData["Message"].ToString().Replace(";", "<br>"))
+</p>
+}
+}
+else if (Model is not null)
+{
+if (Model.Success)
+{
+<p class="text-success fs-5">
+	@Html.Raw(Model.Message.Replace(";", "<br>"))
+</p>
+}
+else
+{
+<p class="text-danger fs-5">
+	@Html.Raw(Model.Message.Replace(";", "<br>"))
+</p>
+}
+}

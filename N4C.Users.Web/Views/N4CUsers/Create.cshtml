@@ -1,0 +1,101 @@
+﻿@using N4C.Models
+@using N4C.Extensions
+
+@model Result<N4CUserRequest>
+
+@* Generated from N4C Template. *@
+@* N4CUserRequest namespace using directive should be added to _ViewImports.cshtml. *@
+
+@{
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var dateTimePickerClass = "datepicker"; // "datetimepicker" can be used for date with time
+    var create = Model.Culture == Cultures.TR ? "Yeni" : "Create";
+    var select = Model.Culture == Cultures.TR ? "-- Seçiniz --" : "-- Select --";
+    var save = Model.Culture == Cultures.TR ? "Kaydet" : "Save";
+    var clear = Model.Culture == Cultures.TR ? "Temizle" : "Clear";
+    var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
+    var mainFileMessage = Model.Culture == Cultures.TR ? "Ana dosya seçilmelidir!" : "Main file must be selected!";
+}
+@{
+    ViewData["Title"] = $"{create} {Model.Title}";
+}
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" model="Model" />
+    <form asp-action="Create" autocomplete="off" enctype="multipart/form-data">
+		@Html.AntiForgeryToken()
+        <div class="row mb-3">
+            <displayname asp-for="Data.UserName" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+			    <input asp-for="Data.UserName" name="UserName" class="form-control" />
+                <validation asp-for="Data.UserName" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.Password" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+                <input asp-for="Data.Password" name="Password" class="form-control password" type="password" />
+                <validation asp-for="Data.Password" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <div class="offset-2 col-10">
+                <partial name="_N4Cpassword" model="true" />
+            </div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.Email" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+			    <input asp-for="Data.Email" name="Email" class="form-control" />
+                <validation asp-for="Data.Email" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.FirstName" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+			    <input asp-for="Data.FirstName" name="FirstName" class="form-control" />
+                <validation asp-for="Data.FirstName" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.LastName" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+			    <input asp-for="Data.LastName" name="LastName" class="form-control" />
+                <validation asp-for="Data.LastName" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.StatusId" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+				<select asp-for="Data.StatusId" name="StatusId" class="form-select select2" asp-items="ViewBag.StatusId">
+					<option value="">@select</option>
+				</select>
+                <validation asp-for="Data.StatusId" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+
+@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
+        
+        <div class="row mb-3">
+            <displayname asp-for="Data.RoleIds" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+	        <div class="col-10">
+		        <select multiple asp-for="Data.RoleIds" name="RoleIds" class="form-select select2" asp-items="ViewBag.RoleIds"></select>
+                <validation asp-for="Data.RoleIds" asp-culture="@Model.Culture" class="text-danger"></validation>
+	        </div>
+        </div>
+       
+        <hr />  
+        <div class="row mb-3">
+			<div class="offset-2 col-10">
+                <button type="submit" class="btn btn-primary">@save</button>
+				&nbsp;&nbsp;
+                <button type="reset" class="btn btn-outline-primary">@clear</button>
+				&nbsp;&nbsp;
+				<a asp-action="Index" asp-route-session="true">@backToList</a>
+			</div>
+        </div>
+    </form>
+</div>  
+
+@section Scripts {
+    <partial name="_N4Cselect2" />
+}
