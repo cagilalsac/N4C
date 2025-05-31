@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 using N4C.Domain;
 using N4C.Extensions;
 using N4C.Models;
+using Newtonsoft.Json;
 using System.Globalization;
 using System.Net;
+using System.Security.Claims;
 
 namespace N4C.Services
 {
@@ -46,7 +50,8 @@ namespace N4C.Services
             return new Result<TData>(httpStatusCode, data, message, Culture, Config.Title);
         }
 
-        protected Result Result(Result previousResult) => Result(previousResult.HttpStatusCode, previousResult.Id, previousResult.Message);
+        protected Result Result(Result previousResult, string tr = default, string en = default) 
+            => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Cultures.TR ? tr : en);
 
         public virtual Result NotFound(int? id = default) => Result(HttpStatusCode.NotFound, id, Config.NotFound);
 
@@ -125,5 +130,82 @@ namespace N4C.Services
         public void LogError(string message) => Logger.LogError(message);
 
         public string GetUserName() => HttpContextAccessor.HttpContext?.User.Identity?.Name;
+
+        public int GetUserId() => Convert.ToInt32(HttpContextAccessor.HttpContext?.User.Claims?.SingleOrDefault(claim => claim.Type == nameof(Entity.Id))?.Value);
+
+        public T GetSession<T>(string key) where T : class
+        {
+            return JsonConvert.DeserializeObject<T>(HttpContextAccessor.HttpContext.Session.GetString(key));
+        }
+
+        public void CreateSession<T>(string key, T instance) where T : class
+        {
+            HttpContextAccessor.HttpContext.Session.SetString(key, JsonConvert.SerializeObject(instance));
+        }
+
+        public void DeleteSession(string key)
+        {
+            HttpContextAccessor.HttpContext.Session.Remove(key);
+        }
+
+        public string GetCookie(string key)
+        {
+            return HttpContextAccessor.HttpContext.Request.Cookies[key];
+        }
+
+        public void CreateCookie(string key, string value, CookieOptions cookieOptions)
+        {
+            HttpContextAccessor.HttpContext.Response.Cookies.Append(key, value, cookieOptions);
+        }
+
+        public void CreateCookie(string key, string value, bool isHttpOnly = true, int? expirationInMinutes = default)
+        {
+            var cookieOptions = new CookieOptions()
+            {
+                Expires = expirationInMinutes.HasValue ?
+                    DateTime.SpecifyKind(DateTime.Now.AddMinutes(expirationInMinutes.Value), DateTimeKind.Utc) : DateTimeOffset.MaxValue,
+                HttpOnly = isHttpOnly
+            };
+            CreateCookie(key, value, cookieOptions);
+        }
+
+        public void DeleteCookie(string key, bool isHttpOnly = true)
+        {
+            var cookieOptions = new CookieOptions()
+            {
+                Expires = DateTime.SpecifyKind(DateTime.Now.AddDays(-1), DateTimeKind.Utc),
+                HttpOnly = isHttpOnly
+            };
+            CreateCookie(key, string.Empty, cookieOptions);
+        }
+
+        public async Task SignIn(List<Claim> claims, DateTime? expiration = default, bool isPersistent = true, string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
+        {
+            var identity = new ClaimsIdentity(claims, authenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            var authenticationProperties = new AuthenticationProperties() { IsPersistent = isPersistent };
+            if (expiration.HasValue)
+                authenticationProperties.ExpiresUtc = DateTime.SpecifyKind(expiration.Value, DateTimeKind.Utc);
+            await HttpContextAccessor.HttpContext.SignInAsync(authenticationScheme, principal, authenticationProperties);
+        }
+
+        public async Task SignOut(string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
+        {
+            await HttpContextAccessor.HttpContext.SignOutAsync(authenticationScheme);
+        }
+
+        public void GetResponse(byte[] data, string fileName, string contentType)
+        {
+            if (data is not null && data.Length > 0)
+            {
+                HttpContextAccessor.HttpContext.Response.Headers.Clear();
+                HttpContextAccessor.HttpContext.Response.Clear();
+                HttpContextAccessor.HttpContext.Response.ContentType = contentType;
+                HttpContextAccessor.HttpContext.Response.Headers.Append("content-length", data.Length.ToString());
+                HttpContextAccessor.HttpContext.Response.Headers.Append("content-disposition", "attachment; filename=\"" + fileName + "\"");
+                HttpContextAccessor.HttpContext.Response.Body.WriteAsync(data, 0, data.Length);
+                HttpContextAccessor.HttpContext.Response.Body.Flush();
+            }
+        }
     }
 }

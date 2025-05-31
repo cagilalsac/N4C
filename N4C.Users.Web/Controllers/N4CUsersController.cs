@@ -9,6 +9,7 @@ using N4C.Services;
 using N4C.Controllers;
 using N4C.Users.App.Models;
 using N4C.Users.App.Domain;
+using N4C.Users.App.Services;
 
 // Generated from N4C Template.
 
@@ -50,7 +51,7 @@ namespace N4C.Users.Web.Controllers
                 config.AddViewData("StatusId", new SelectList(_statusService.Responses().Result.Data, "Id", "Title"));
 
                 /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.Responses().Result.Data.Where(response => response.Id != (int)N4CRoles.System), "Id", "Name"));
+                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.Responses().Result.Data, "Id", "Name"));
             });
         }
 
@@ -150,6 +151,22 @@ namespace N4C.Users.Web.Controllers
             // Delete item logic:
             var result = await Service.Delete(n4CUserRequest);
 
+            SetTempData(result);
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Deactivate(int id)
+        {
+            var userService = Service as N4CUserService;
+            var result = await userService.Deactivate(id);
+            SetTempData(result);
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Activate(string guid)
+        {
+            var userService = Service as N4CUserService;
+            var result = await userService.Activate(guid);
             SetTempData(result);
             return RedirectToAction(nameof(Index));
         }

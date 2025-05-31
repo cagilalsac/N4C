@@ -39,8 +39,8 @@ namespace N4C.Models
 
         public string RelationsFound => Culture == Cultures.TR ? "İlişkili kayıtlar bulunmaktadır" : "Relational records found";
 
-        public string True => "<i class='bx bx-check fs-3'></i>";
+        public string TrueHtml => "<i class='bx bx-check fs-3'></i>";
 
-        public string False => "<i class='bx bx-x fs-3'></i>";
+        public string FalseHtml => "<i class='bx bx-x fs-3'></i>";
     }
 }

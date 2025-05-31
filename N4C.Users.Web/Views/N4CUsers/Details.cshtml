@@ -75,7 +75,7 @@
             @Html.DisplayNameFor(model => model.Data.Status, Model.Culture)
         </div>
         <div class="col-10">
-            @Html.Raw(Model.Data.Status.Title)
+            @Html.Raw(Model.Data.ActiveS + " " + Model.Data.Status.Title)
         </div>
     </div>
 

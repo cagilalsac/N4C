@@ -31,5 +31,11 @@ namespace N4C.Users.App.Models
 
         [DisplayName("Durum")]
         public N4CStatusResponse Status { get; set; }
+
+        [DisplayName("Durum", "Status")]
+        public bool Active { get; set; }
+
+        [DisplayName("Durum", "Status")]
+        public string ActiveS { get; set; }
     }
 }

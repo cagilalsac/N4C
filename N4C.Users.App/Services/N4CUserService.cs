@@ -22,6 +22,8 @@ namespace N4C.Users.App.Services
                 config.SetResponse()
                     .Map(destination => destination.Roles, source => string.Join("<br>", source.UserRoles.OrderBy(userRole => userRole.Role.Name).Select(userRole => userRole.Role.Name)))
                     .Map(destination => destination.FullName, source => Culture == Cultures.TR ? $"{source.FirstName} {source.LastName}" : $"{source.LastName} {source.FirstName}")
+                    .Map(destination => destination.Active, source => source.StatusId == (int)N4CStatuses.Active)
+                    .Map(destination => destination.ActiveS, source => (source.StatusId == (int)N4CStatuses.Active).ToHtml(Config.TrueHtml, Config.FalseHtml, Culture))
                     .Map(destination => destination.Status, source => new N4CStatusResponse()
                     {
                         Id = source.Status.Id,
@@ -80,7 +82,7 @@ namespace N4C.Users.App.Services
             {
                 Update(Entity(result.Data).UserRoles);
                 result.Data.StatusId = (int)N4CStatuses.Inactive;
-                Result(await base.Update(result.Data, true, cancellationToken));
+                return Result(await base.Update(result.Data, true, cancellationToken), "Kullanıcı başarıyla etkisizleştirildi", "User is deactivated successfully");
             }
             return result;
         }
@@ -94,7 +96,7 @@ namespace N4C.Users.App.Services
                     return Error("System kullanıcısı etkinleştirilemez", "System user can't be activated");
                 Update(Entity(result.Data).UserRoles);
                 result.Data.StatusId = (int)N4CStatuses.Active;
-                return Result(await base.Update(result.Data, true, cancellationToken));
+                return Result(await base.Update(result.Data, true, cancellationToken), "Kullanıcı başarıyla etkinleştirildi", "User is activated successfully");
             }
             return result;
         }
