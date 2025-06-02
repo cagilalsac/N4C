@@ -16,7 +16,6 @@
     var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
     var mainFileMessage = Model.Culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
     var isAuthenticated = User.Identity.IsAuthenticated;
-    isAuthenticated = true;
 }
 @{
     ViewData["Title"] = $"{Model.Title} {details}";

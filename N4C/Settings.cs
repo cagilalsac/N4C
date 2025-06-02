@@ -9,7 +9,7 @@ namespace N4C
 
         public static string Culture { get; private set; }
         public static int SessionExpirationInMinutes { get; private set; }
-
+        
         public static bool Development { get; internal set; }
 
         private readonly IConfiguration _configuration;

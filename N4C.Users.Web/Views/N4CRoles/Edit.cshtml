@@ -17,7 +17,6 @@
     var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
     var mainFileMessage = Model.Culture == Cultures.TR ? "Ana dosya seçilmelidir!" : "Main file must be selected!";
     var isAuthenticated = User.Identity.IsAuthenticated;
-    isAuthenticated = true;
 }
 @{
     ViewData["Title"] = $"{Model.Title} {edit}";

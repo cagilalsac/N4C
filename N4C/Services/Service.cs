@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using N4C.Domain;
 using N4C.Extensions;
 using N4C.Models;
+using System.Linq.Expressions;
 
 namespace N4C.Services
 {
@@ -36,6 +37,11 @@ namespace N4C.Services
             return query.Where(entity => (EF.Property<bool?>(entity, nameof(Domain.Entity.Deleted)) ?? false) == false);
         }
 
+        protected IQueryable<TEntity> Entities(Expression<Func<TEntity, bool>> predicate)
+        {
+            return Entities().Where(predicate);
+        }
+
         protected TEntity Entity(TRequest request, CancellationToken cancellationToken = default)
         {
             TEntity item = null;
@@ -60,7 +66,21 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(list, exception);
+                return Result(list, exception);
+            }
+        }
+
+        public virtual async Task<Result<List<TResponse>>> Responses(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            List<TResponse> list = null;
+            try
+            {
+                list = await Entities(predicate).Map<TEntity, TResponse>(Config).ToListAsync(cancellationToken);
+                return Found(list);
+            }
+            catch (Exception exception)
+            {
+                return Result(list, exception);
             }
         }
 
@@ -74,11 +94,25 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(item, exception);
+                return Result(item, exception);
             }
         }
 
-        public virtual async Task<Result<TRequest>> Request(int? id = default, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TResponse>> Response(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            TResponse item = null;
+            try
+            {
+                item = await Entities(predicate).Map<TEntity, TResponse>(Config).SingleOrDefaultAsync(cancellationToken);
+                return Found(item);
+            }
+            catch (Exception exception)
+            {
+                return Result(item, exception);
+            }
+        }
+
+        public virtual async Task<Result<TRequest>> Result(int? id = default, CancellationToken cancellationToken = default)
         {
             TRequest item = null;
             try
@@ -91,11 +125,11 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(item, exception);
+                return Result(item, exception);
             }
         }
 
-        public virtual async Task<Result<TRequest>> Request(string guid, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TRequest>> Result(string guid, CancellationToken cancellationToken = default)
         {
             TRequest item = null;
             try
@@ -105,7 +139,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(item, exception);
+                return Result(item, exception);
             }
         }
 
@@ -138,7 +172,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(request, exception);
+                return Result(request, exception);
             }
         }
 
@@ -185,7 +219,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(request, exception);
+                return Result(request, exception);
             }
         }
 
@@ -218,7 +252,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(request, exception);
+                return Result(request, exception);
             }
         }
 
@@ -248,7 +282,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(request, exception);
+                return Result(request, exception);
             }
         }
 

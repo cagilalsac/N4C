@@ -1,22 +1,21 @@
 ﻿#nullable disable
 
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using N4C.Models;
 using N4C.Services;
-using N4C.Controllers;
-using N4C.Users.App.Models;
+using N4C.Users.App.Controllers;
 using N4C.Users.App.Domain;
-using N4C.Users.App.Services;
+using N4C.Users.App.Models;
 
 // Generated from N4C Template.
 
 namespace N4C.Users.Web.Controllers
 {
-    //[Authorize]
-    public class N4CUsersController : MvcController<N4CUser, N4CUserRequest, N4CUserResponse>
+    [Authorize(Roles = "System")]
+    public class N4CUsersController : N4CUsersController<N4CUser, N4CUserRequest, N4CUserResponse>
     {
         // Service injections:
         private readonly Service<N4CStatus, N4CStatusRequest, N4CStatusResponse> _statusService;
@@ -78,7 +77,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Create()
         {
             // Get item for create logic:
-            var result = await Service.Request();
+            var result = await Service.Result();
             
             SetViewData();
             return View(result);
@@ -103,7 +102,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             // Get item for edit logic:
-            var result = await Service.Request(id);
+            var result = await Service.Result(id);
 
             SetViewData();
             return View(result);
@@ -151,22 +150,6 @@ namespace N4C.Users.Web.Controllers
             // Delete item logic:
             var result = await Service.Delete(n4CUserRequest);
 
-            SetTempData(result);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public async Task<IActionResult> Deactivate(int id)
-        {
-            var userService = Service as N4CUserService;
-            var result = await userService.Deactivate(id);
-            SetTempData(result);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public async Task<IActionResult> Activate(string guid)
-        {
-            var userService = Service as N4CUserService;
-            var result = await userService.Activate(guid);
             SetTempData(result);
             return RedirectToAction(nameof(Index));
         }

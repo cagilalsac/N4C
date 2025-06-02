@@ -163,7 +163,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Create()
         {
             // Get item for create logic:
-            var result = await @(_serviceAbstractName).Request();
+            var result = await @(_serviceAbstractName).Result();
             
             SetViewData();
             return View(result);
@@ -190,7 +190,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Edit(@primaryKeyShortTypeName id)
         {
             // Get item for edit logic:
-            var result = await @(_serviceAbstractName).Request(id);
+            var result = await @(_serviceAbstractName).Result(id);
 
             SetViewData();
             return View(result);

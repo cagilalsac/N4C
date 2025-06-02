@@ -16,7 +16,6 @@
     var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
     var mainFileMessage = Model.Culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
     var isAuthenticated = User.Identity.IsAuthenticated;
-    isAuthenticated = true;
 }
 @{
     ViewData["Title"] = $"{Model.Title} {details}";
@@ -86,7 +85,7 @@
             <b>@Html.DisplayNameFor(model => model.Data.Roles, Model.Culture)</b>
         </div>
         <div class="col-10">
-            @Html.Raw(Model.Data.Roles)
+            @Html.Raw(string.Join("<br>", Model.Data.Roles))
         </div>
     </div>
    

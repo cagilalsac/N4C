@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,8 +24,18 @@ namespace N4C.Users.App
             builder.Services.AddScoped<Service<N4CUser, N4CUserRequest, N4CUserResponse>, N4CUserService>();
 
             // AppSettings:
-            var appSettings = new AppSettings(builder.Configuration, Cultures.EN, 20);
+            var appSettings = new N4CAppSettings(builder.Configuration, Cultures.EN, 20, 30);
             appSettings.Bind();
+
+            // Authentication:
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, config =>
+                {
+                    config.LoginPath = "/Login";
+                    config.AccessDeniedPath = "/Login";
+                    config.SlidingExpiration = true;
+                    config.ExpireTimeSpan = TimeSpan.FromMinutes(N4CAppSettings.AuthCookieExpirationInMinutes);
+                });
 
             // N4C:
             builder.ConfigureN4C();
@@ -32,6 +43,9 @@ namespace N4C.Users.App
 
         public static void ConfigureN4CUsers(this WebApplication application)
         {
+            // Authentication:
+            application.UseAuthentication();
+
             // N4C:
             application.ConfigureN4C();
         }

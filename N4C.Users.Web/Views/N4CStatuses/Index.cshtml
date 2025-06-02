@@ -15,7 +15,6 @@
     var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
     var export = Model.Culture == Cultures.TR ? "Excel'e Aktar" : "Export to Excel";
     var isAuthenticated = User.Identity.IsAuthenticated;
-    isAuthenticated = true;
 }
 @{
     ViewData["Title"] = $"{Model.Title} {list}";

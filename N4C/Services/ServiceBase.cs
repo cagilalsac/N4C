@@ -40,18 +40,21 @@ namespace N4C.Services
 
         public void SetModelStateErrors(bool modelStateErrors) => ModelStateErrors = modelStateErrors;
 
-        protected Result Result(HttpStatusCode httpStatusCode, int? id = default, string message = default)
+        private Result Result(HttpStatusCode httpStatusCode, int? id = default, string message = default)
         {
             return new Result(httpStatusCode, message, Culture, Config.Title, id);
         }
 
-        protected Result<TData> Result<TData>(HttpStatusCode httpStatusCode, TData data, string message = default) where TData : class, new()
+        private Result<TData> Result<TData>(HttpStatusCode httpStatusCode, TData data, string message = default) where TData : class, new()
         {
             return new Result<TData>(httpStatusCode, data, message, Culture, Config.Title);
         }
 
         protected Result Result(Result previousResult, string tr = default, string en = default) 
             => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Cultures.TR ? tr : en);
+
+        protected Result<TData> Result<TData>(TData data, Result previousResult, string tr = default, string en = default) where TData : class, new()
+            => Result(previousResult.HttpStatusCode, data, tr is null && en is null ? previousResult.Message : Culture == Cultures.TR ? tr : en);
 
         public virtual Result NotFound(int? id = default) => Result(HttpStatusCode.NotFound, id, Config.NotFound);
 
@@ -60,56 +63,58 @@ namespace N4C.Services
                 ids.Count() == 1 ? Result(HttpStatusCode.OK, ids.First()) :
                 NotFound();
 
-        public virtual Result Error(string tr = default, string en = default, int? id = default)
-            => Result(HttpStatusCode.BadRequest, id, $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
+        public virtual Result Result(bool success = true, string tr = default, string en = default, int? id = default)
+            => Result(success ? HttpStatusCode.OK : HttpStatusCode.BadRequest, id, success ? string.Empty : $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
 
-        public virtual Result Error(Exception exception, int? id = default)
+        public virtual Result Result(Exception exception, int? id = default)
             => Result(HttpStatusCode.InternalServerError, id, Config.Exception);
 
         public virtual Result Created(int? id = default) => Result(HttpStatusCode.Created, id, Config.Created);
         public virtual Result Updated(int? id = default) => Result(HttpStatusCode.NoContent, id, Config.Updated);
         public virtual Result Deleted(int? id = default) => Result(HttpStatusCode.NoContent, id, Config.Deleted);
         public virtual Result Unauthorized(int? id = default) => Result(HttpStatusCode.Unauthorized, id, Config.Unauthorized);
-        public virtual Result Success(string tr = default, string en = default, int? id = default) => Result(HttpStatusCode.OK, id, Culture == Cultures.TR ? tr : en);
 
-        public virtual Result<List<TData>> Found<TData>(List<TData> list) where TData : Data, new()
+        protected virtual Result<List<TData>> Found<TData>(List<TData> list) where TData : Data, new()
             => list.Count > 0 ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}") : 
                 Result(HttpStatusCode.NotFound, list, Config.NotFound);
 
-        public virtual Result<TData> NotFound<TData>(TData item) where TData : Data, new()
+        protected virtual Result<TData> NotFound<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.NotFound, item, Config.NotFound);
 
-        public virtual Result<TData> Found<TData>(TData item) where TData : Data, new()
+        protected virtual Result<TData> Found<TData>(TData item) where TData : Data, new()
             => item is not null ? Result(HttpStatusCode.OK, item) : NotFound(item);
 
-        public virtual Result<TData> Error<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
+        protected virtual Result<TData> Result<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
             => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
 
-        public virtual Result<List<TData>> Error<TData>(List<TData> list, Exception exception) where TData : Data, new()
+        protected virtual Result<List<TData>> Result<TData>(List<TData> list, Exception exception) where TData : Data, new()
         {
             LogError("ServiceException: " + exception.Message);
             return Result(HttpStatusCode.InternalServerError, list, Config.Exception);
         }
 
-        public virtual Result<TData> Error<TData>(TData item, Exception exception) where TData : Data, new()
+        protected virtual Result<TData> Result<TData>(TData item, Exception exception) where TData : Data, new()
         {
             LogError("ServiceException: Id = " + item.Id + ": " + exception.Message);
             return Result(HttpStatusCode.InternalServerError, item, Config.Exception);
         }
 
-        public virtual Result<TData> Created<TData>(TData item) where TData : Data, new()
+        public Result<TData> Result<TData>(bool success = true) where TData : Data, new()
+            => Result(success ? HttpStatusCode.OK : HttpStatusCode.BadRequest, new TData());
+
+        protected virtual Result<TData> Created<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.Created, item, Config.Created);
 
-        public virtual Result<TData> Updated<TData>(TData item) where TData : Data, new()
+        protected virtual Result<TData> Updated<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.NoContent, item, Config.Updated);
 
-        public virtual Result<TData> Deleted<TData>(TData item) where TData : Data, new()
+        protected virtual Result<TData> Deleted<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.NoContent, item, Config.Deleted);
 
-        public virtual Result<TData> RelationsFound<TData>(TData item) where TData : Data, new()
+        protected virtual Result<TData> RelationsFound<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {Config.RelationsFound}");
 
-        public virtual Result<TData> Validated<TData>(TData item, string modelStateErrors, string uniquePropertyError = default) where TData : Data, new()
+        protected virtual Result<TData> Validated<TData>(TData item, string modelStateErrors, string uniquePropertyError = default) where TData : Data, new()
         {
             var error = modelStateErrors.Length > 0 || (uniquePropertyError ?? string.Empty).Length > 0;
             var errors = Config.Error;
@@ -179,7 +184,21 @@ namespace N4C.Services
             CreateCookie(key, string.Empty, cookieOptions);
         }
 
-        public async Task SignIn(List<Claim> claims, DateTime? expiration = default, bool isPersistent = true, string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
+        protected virtual List<Claim> GetClaims(int userId, string userName, IEnumerable<string> roleNames)
+        {
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Name, userName),
+                new Claim("Id", userId.ToString())
+            };
+            foreach (var roleName in roleNames)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, roleName));
+            }
+            return claims;
+        }
+
+        protected async Task SignIn(List<Claim> claims, DateTime? expiration = default, bool isPersistent = true, string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
         {
             var identity = new ClaimsIdentity(claims, authenticationScheme);
             var principal = new ClaimsPrincipal(identity);
@@ -189,7 +208,7 @@ namespace N4C.Services
             await HttpContextAccessor.HttpContext.SignInAsync(authenticationScheme, principal, authenticationProperties);
         }
 
-        public async Task SignOut(string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
+        protected async Task SignOut(string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
         {
             await HttpContextAccessor.HttpContext.SignOutAsync(authenticationScheme);
         }

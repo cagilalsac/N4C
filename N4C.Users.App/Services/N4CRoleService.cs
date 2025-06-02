@@ -54,14 +54,14 @@ namespace N4C.Users.App.Services
         public override async Task<Result<N4CRoleRequest>> Update(N4CRoleRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             if (request.Id == (int)N4CRoles.System)
-                return Error(request, "System rolü güncellenemez", "System role can't be updated");
+                return Result(request, "System rolü güncellenemez", "System role can't be updated");
             return await base.Update(request, save, cancellationToken);
         }
 
         public override async Task<Result<N4CRoleRequest>> Delete(N4CRoleRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             if (request.Id == (int)N4CRoles.System)
-                return Error(request, "System rolü silinemez", "System role can't be deleted");
+                return Result(request, "System rolü silinemez", "System role can't be deleted");
             Delete(Entity(request).UserRoles);
             return await base.Delete(request, save, cancellationToken);
         }

@@ -24,7 +24,7 @@ namespace N4C.Users.App.Models
         public string FullName { get; set; }
 
         [DisplayName("Roller")]
-        public string Roles { get; set; }
+        public List<string> Roles { get; set; }
 
         [DisplayName("Roller", "Roles")]
         public List<int> RoleIds { get; set; }

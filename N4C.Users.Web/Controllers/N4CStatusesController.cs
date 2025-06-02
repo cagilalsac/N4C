@@ -14,7 +14,7 @@ using N4C.Users.App.Domain;
 
 namespace N4C.Users.Web.Controllers
 {
-    //[Authorize]
+    [Authorize(Roles = "System")]
     public class N4CStatusesController : MvcController<N4CStatus, N4CStatusRequest, N4CStatusResponse>
     {
         // Service injections:
@@ -73,7 +73,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Create()
         {
             // Get item for create logic:
-            var result = await Service.Request();
+            var result = await Service.Result();
             
             SetViewData();
             return View(result);
@@ -98,7 +98,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             // Get item for edit logic:
-            var result = await Service.Request(id);
+            var result = await Service.Result(id);
 
             SetViewData();
             return View(result);

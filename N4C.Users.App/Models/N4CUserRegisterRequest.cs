@@ -3,7 +3,7 @@ using N4C.Models;
 
 namespace N4C.Users.App.Models
 {
-    public class N4CUserRequest : Request
+    public class N4CUserRegisterRequest : Request
     {
         [Required]
         [StringLength(30, MinimumLength = 3)]
@@ -14,6 +14,11 @@ namespace N4C.Users.App.Models
         [StringLength(15, MinimumLength = 3)]
         [DisplayName("Şifre")]
         public string Password { get; set; }
+
+        [Required]
+        [StringLength(15, MinimumLength = 3)]
+        [DisplayName("Şifre Onay")]
+        public string ConfirmPassword { get; set; }
 
         [StringLength(200, MinimumLength = 5)]
         [DisplayName("E-Posta", "E-Mail")]
@@ -26,13 +31,5 @@ namespace N4C.Users.App.Models
         [StringLength(75)]
         [DisplayName("Soyadı")]
         public string LastName { get; set; }
-
-        [Required]
-        [DisplayName("Durum", "Status")]
-        public int? StatusId { get; set; }
-
-        [Required]
-        [DisplayName("Roller", "Roles")]
-        public List<int> RoleIds { get; set; } = new();
     }
 }

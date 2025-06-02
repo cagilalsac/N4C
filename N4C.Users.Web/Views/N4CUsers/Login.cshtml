@@ -1,0 +1,44 @@
+﻿@using N4C.Models
+@using N4C.Extensions
+
+@model Result<N4CUserLoginRequest>
+
+@{
+    var containerDivClass = "container-fluid"; // "container" can be used for no full width
+    var login = Model.Culture == Cultures.TR ? "Giriş" : "Login";
+}
+
+@{
+    ViewData["Title"] = $"{Model.Title} {login}";
+}
+<div class="@containerDivClass">
+    <partial name="_N4Cmessage" model="Model" />
+    <form asp-action="Login" autocomplete="off">
+		@Html.AntiForgeryToken()
+        <div class="row mb-3">
+            <displayname asp-for="Data.UserName" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+			    <input asp-for="Data.UserName" name="UserName" class="form-control" />
+                <validation asp-for="Data.UserName" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.Password" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+			<div class="col-10">
+                <input asp-for="Data.Password" name="Password" class="form-control password" type="password" />
+                <validation asp-for="Data.Password" asp-culture="@Model.Culture" class="text-danger"></validation>
+			</div>
+        </div>
+        <div class="row mb-3">
+            <div class="offset-2 col-10">
+                <partial name="_N4Cpassword" model="true" />
+            </div>
+        </div>
+        <hr />  
+        <div class="row mb-3">
+			<div class="offset-2 col-10">
+                <button type="submit" class="btn btn-primary">@login</button>
+			</div>
+        </div>
+    </form>
+</div>

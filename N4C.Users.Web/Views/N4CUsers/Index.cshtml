@@ -17,7 +17,6 @@
     var deactivate = Model.Culture == Cultures.TR ? "Etkisizleştir" : "Deactivate";
     var activate = Model.Culture == Cultures.TR ? "Etkinleştir" : "Activate";
     var isAuthenticated = User.Identity.IsAuthenticated;
-    isAuthenticated = true;
 }
 @{
     ViewData["Title"] = $"{Model.Title} {list}";

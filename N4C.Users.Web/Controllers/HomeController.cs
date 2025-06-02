@@ -14,21 +14,21 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        return View(_service.Success());
+        return View(_service.Result());
     }
 
     public IActionResult About()
     {
-        return View(_service.Success());
+        return View(_service.Result());
     }
 
     public IActionResult Error()
     {
-        return View("_N4Cmessage", _service.Error("Hata", "Error"));
+        return View("_N4Cmessage", _service.Result(false, "Hata", "Error"));
     }
 
     public IActionResult Exception()
     {
-        return View("_N4Cmessage", _service.Error(new Exception("HomeException")));
+        return View("_N4Cmessage", _service.Result(new Exception("HomeException")));
     }
 }
