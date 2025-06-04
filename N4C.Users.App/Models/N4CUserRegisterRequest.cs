@@ -22,6 +22,7 @@ namespace N4C.Users.App.Models
 
         [StringLength(200, MinimumLength = 5)]
         [DisplayName("E-Posta", "E-Mail")]
+        [EmailAddress]
         public string Email { get; set; }
 
         [StringLength(75)]

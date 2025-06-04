@@ -130,13 +130,13 @@ namespace @Model.ControllerNamespace
     {
         foreach (var property in relatedProperties.Values)
         {
-                @:config.AddViewData("@(property.ForeignKeyPropertyNames[0])", new SelectList(_@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(0, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1))Service.Responses().Result.Data, "Id", "Name"));
+                @:config.AddViewData("@(property.ForeignKeyPropertyNames[0])", new SelectList(_@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(0, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1))Service.GetResponse().Result.Data, "Id", "Name"));
         }
     }
 }  
 
                 /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-                //config.AddViewData("{Entity}Ids", new MultiSelectList(_{Entity}Service.Responses().Result.Data, "Id", "Name"));
+                //config.AddViewData("{Entity}Ids", new MultiSelectList(_{Entity}Service.GetResponse().Result.Data, "Id", "Name"));
             });
         }
 
@@ -145,7 +145,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Index()
         {
             // Get collection logic:
-            var result = await @(_serviceAbstractName).Responses();
+            var result = await @(_serviceAbstractName).GetResponse();
             
             return View(result);
         }
@@ -154,7 +154,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Details(@primaryKeyShortTypeName id)
         {
             // Get item logic:
-            var result = await @(_serviceAbstractName).Response(id);
+            var result = await @(_serviceAbstractName).GetResponse(id);
 
             return View(result);
         }
@@ -163,7 +163,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Create()
         {
             // Get item for create logic:
-            var result = await @(_serviceAbstractName).Result();
+            var result = await @(_serviceAbstractName).GetRequest();
             
             SetViewData();
             return View(result);
@@ -190,7 +190,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Edit(@primaryKeyShortTypeName id)
         {
             // Get item for edit logic:
-            var result = await @(_serviceAbstractName).Result(id);
+            var result = await @(_serviceAbstractName).GetRequest(id);
 
             SetViewData();
             return View(result);
@@ -218,7 +218,7 @@ namespace @Model.ControllerNamespace
         public async Task<IActionResult> Delete(@primaryKeyShortTypeName id)
         {
             // Get item for delete logic:
-            var result = await @(_serviceAbstractName).Response(id);
+            var result = await @(_serviceAbstractName).GetResponse(id);
 
             return View(result);
         }

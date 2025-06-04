@@ -22,7 +22,7 @@
     @:var create = Model.Culture == Cultures.TR ? "Yeni" : "Create";
     @:var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
     @:var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    @:var export = Model.Culture == Cultures.TR ? "Excel'e Aktar" : "Export to Excel";
+    @:var excel = Model.Culture == Cultures.TR ? "Excel'e Aktar" : "Export to Excel";
     @:var isAuthenticated = User.Identity.IsAuthenticated;
 @:}
     if (Model.IsPartialView)
@@ -65,7 +65,7 @@
             @:<div class="col-2 text-end pb-3">
             @:@@if (isAuthenticated)
             @:{
-                @:<a asp-action="ExportToExcel">@@export</a>
+                @:<a asp-action="DownloadExcel">@@excel</a>
                 @:@@:&nbsp;|&nbsp;
                 @:<a asp-action="Create">@@create</a>
             @:}

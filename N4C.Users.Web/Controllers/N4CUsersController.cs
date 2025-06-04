@@ -47,10 +47,10 @@ namespace N4C.Users.Web.Controllers
                 config.SetModelStateErrors(false);
 
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
-                config.AddViewData("StatusId", new SelectList(_statusService.Responses().Result.Data, "Id", "Title"));
+                config.AddViewData("StatusId", new SelectList(_statusService.GetResponse().Result.Data, "Id", "Title"));
 
                 /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.Responses().Result.Data, "Id", "Name"));
+                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.GetResponse().Result.Data, "Id", "Name"));
             });
         }
 
@@ -59,7 +59,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Index()
         {
             // Get collection logic:
-            var result = await Service.Responses();
+            var result = await Service.GetResponse();
             
             return View(result);
         }
@@ -68,7 +68,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Details(int id)
         {
             // Get item logic:
-            var result = await Service.Response(id);
+            var result = await Service.GetResponse(id);
 
             return View(result);
         }
@@ -77,7 +77,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Create()
         {
             // Get item for create logic:
-            var result = await Service.Result();
+            var result = await Service.GetRequest();
             
             SetViewData();
             return View(result);
@@ -102,7 +102,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             // Get item for edit logic:
-            var result = await Service.Result(id);
+            var result = await Service.GetRequest(id);
 
             SetViewData();
             return View(result);
@@ -128,7 +128,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             // Get item for delete logic:
-            var result = await Service.Response(id);
+            var result = await Service.GetResponse(id);
 
             return View(result);
         }

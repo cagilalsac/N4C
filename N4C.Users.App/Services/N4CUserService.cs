@@ -21,6 +21,7 @@ namespace N4C.Users.App.Services
             {
                 config.SetResponse()
                     .Map(destination => destination.Roles, source => source.UserRoles.OrderBy(userRole => userRole.Role.Name).Select(userRole => userRole.Role.Name).ToList())
+                    .Map(destination => destination.RolesE, source => string.Join(", ", source.UserRoles.OrderBy(userRole => userRole.Role.Name).Select(userRole => userRole.Role.Name)))
                     .Map(destination => destination.FullName, source => Culture == Cultures.TR ? $"{source.FirstName} {source.LastName}" : $"{source.LastName} {source.FirstName}")
                     .Map(destination => destination.Active, source => source.StatusId == (int)N4CStatuses.Active)
                     .Map(destination => destination.ActiveS, source => (source.StatusId == (int)N4CStatuses.Active).ToHtml(Config.TrueHtml, Config.FalseHtml, Culture))
@@ -34,12 +35,12 @@ namespace N4C.Users.App.Services
             });
         }
 
-        protected override IQueryable<N4CUser> Entities()
+        protected override IQueryable<N4CUser> Query()
         {
             var systemUserId = (int)N4CUsers.System;
-            var systemUserQuery = base.Entities().Where(user => user.Id == systemUserId)
+            var systemUserQuery = base.Query().Where(user => user.Id == systemUserId)
                 .Include(user => user.Status).Include(user => user.UserRoles).ThenInclude(userRole => userRole.Role);
-            var otherUsersQuery = base.Entities().Where(user => user.Id != systemUserId)
+            var otherUsersQuery = base.Query().Where(user => user.Id != systemUserId)
                 .Include(user => user.Status).Include(user => user.UserRoles).ThenInclude(userRole => userRole.Role)
                 .OrderByDescending(user => user.UpdateDate).OrderByDescending(user => user.CreateDate).ThenBy(user => user.UserName);
             return systemUserQuery.Union(otherUsersQuery);
@@ -48,16 +49,16 @@ namespace N4C.Users.App.Services
         public override async Task<Result<N4CUserRequest>> Create(N4CUserRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             if (request.RoleIds.Any(roleId => roleId == (int)N4CRoles.System))
-                return Result(request, "System rolünde yeni bir kullanıcı oluşturulamaz", "New user with role System can't be created");
+                return Error(request, "System rolünde yeni bir kullanıcı oluşturulamaz", "New user with role System can't be created");
             return await base.Create(request, save, cancellationToken);
         }
 
         public override async Task<Result<N4CUserRequest>> Update(N4CUserRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            var userRoles = Entity(request).UserRoles;
+            var userRoles = GetEntity(request).UserRoles;
             if (userRoles.Any(userRole => userRole.RoleId == (int)N4CRoles.System) && request.RoleIds.Any(roleId => roleId != (int)N4CRoles.System) ||
                 userRoles.Any(userRole => userRole.RoleId != (int)N4CRoles.System) && request.RoleIds.Any(roleId => roleId == (int)N4CRoles.System))
-                return Result(request, "System rolü için kullanıcı güncellenemez", "User for role System can't be updated");
+                return Error(request, "System rolü için kullanıcı güncellenemez", "User for role System can't be updated");
             if (request.Id == (int)N4CUsers.System)
                 request.RoleIds.Clear();
             else
@@ -68,19 +69,19 @@ namespace N4C.Users.App.Services
         public override async Task<Result<N4CUserRequest>> Delete(N4CUserRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             if (request.Id == (int)N4CUsers.System)
-                return Result(request, "System kullanıcısı silinemez", "System user can't be deleted");
-            Delete(Entity(request).UserRoles);
+                return Error(request, "System kullanıcısı silinemez", "System user can't be deleted");
+            Delete(GetEntity(request).UserRoles);
             return await base.Delete(request, save, cancellationToken);
         }
 
         public async Task<Result> Deactivate(int id, CancellationToken cancellationToken = default)
         {
             if (id == (int)N4CUsers.System)
-                return Result(false, "System kullanıcısı etkisizleştirilemez", "System user can't be deactivated", id);
-            var result = await Result(id);
+                return Error("System kullanıcısı etkisizleştirilemez", "System user can't be deactivated", id);
+            var result = await GetRequest(id);
             if (result.Success)
             {
-                Update(Entity(result.Data).UserRoles);
+                Update(GetEntity(result.Data).UserRoles);
                 result.Data.StatusId = (int)N4CStatuses.Inactive;
                 return Result(await base.Update(result.Data, true, cancellationToken), "Kullanıcı başarıyla etkisizleştirildi", "User is deactivated successfully");
             }
@@ -89,12 +90,12 @@ namespace N4C.Users.App.Services
 
         public async Task<Result> Activate(string guid, CancellationToken cancellationToken = default)
         {
-            var result = await Result(guid);
+            var result = await GetRequest(guid);
             if (result.Success)
             {
                 if (result.Data.Id == (int)N4CUsers.System)
-                    return Result(false, "System kullanıcısı etkinleştirilemez", "System user can't be activated");
-                Update(Entity(result.Data).UserRoles);
+                    return Error("System kullanıcısı etkinleştirilemez", "System user can't be activated");
+                Update(GetEntity(result.Data).UserRoles);
                 result.Data.StatusId = (int)N4CStatuses.Active;
                 return Result(await base.Update(result.Data, true, cancellationToken), "Kullanıcı başarıyla etkinleştirildi", "User is activated successfully");
             }
@@ -105,12 +106,12 @@ namespace N4C.Users.App.Services
         {
             var validationResult = Validate(request.ModelState);
             if (!validationResult.Success)
-                return Result(request, validationResult);
-            var result = await Response(user => user.UserName == request.UserName &&
+                return Result(validationResult, request);
+            var result = await GetResponse(user => user.UserName == request.UserName &&
                 user.Password == request.Password && user.StatusId == (int)N4CStatuses.Active, cancellationToken);
             if (result.Success)
-                await SignIn(GetClaims(result.Data.Id, result.Data.UserName, result.Data.Roles));
-            return Result(request, result);
+                await SignIn(GetClaims(result.Data.Single().Id, result.Data.Single().UserName, result.Data.Single().Roles));
+            return Result(result, request);
         }
 
         public async Task Logout()
@@ -122,9 +123,9 @@ namespace N4C.Users.App.Services
         {
             var validationResult = Validate(request.ModelState);
             if (!validationResult.Success)
-                return Result(request, validationResult);
+                return Result(validationResult, request);
             if (request.Password != request.ConfirmPassword)
-                return Result(request, Culture == Cultures.TR ? "Şifre ve Şifre Onay aynı olmalıdır!" : "Password and Confirm Password must be the same!");
+                return Error(request, Culture == Cultures.TR ? "Şifre ve Şifre Onay aynı olmalıdır!" : "Password and Confirm Password must be the same!");
             var result = await Create(new N4CUserRequest()
             {
                 UserName = request.UserName,
@@ -135,7 +136,7 @@ namespace N4C.Users.App.Services
                 StatusId = (int)N4CStatuses.Active,
                 RoleIds = [(int)N4CRoles.User]
             });
-            return Result(request, result);
+            return Result(result, request);
         }
     }
 }

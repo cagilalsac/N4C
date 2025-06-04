@@ -36,7 +36,7 @@ namespace N4C.Users.App.Controllers
         [AllowAnonymous, Route("[action]")]
         public virtual IActionResult Login()
         {
-            return View(Service.Result<N4CUserLoginRequest>());
+            return View(Service.GetRequest<N4CUserLoginRequest>());
         }
 
         [HttpPost, AllowAnonymous, Route("[action]")]
@@ -59,7 +59,7 @@ namespace N4C.Users.App.Controllers
         [AllowAnonymous, Route("[action]")]
         public virtual IActionResult Register()
         {
-            return View(Service.Result<N4CUserRegisterRequest>());
+            return View(Service.GetRequest<N4CUserRegisterRequest>());
         }
 
         [HttpPost, AllowAnonymous, Route("[action]")]

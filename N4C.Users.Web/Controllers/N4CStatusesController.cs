@@ -55,7 +55,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Index()
         {
             // Get collection logic:
-            var result = await Service.Responses();
+            var result = await Service.GetResponse();
             
             return View(result);
         }
@@ -64,7 +64,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Details(int id)
         {
             // Get item logic:
-            var result = await Service.Response(id);
+            var result = await Service.GetResponse(id);
 
             return View(result);
         }
@@ -73,7 +73,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Create()
         {
             // Get item for create logic:
-            var result = await Service.Result();
+            var result = await Service.GetRequest();
             
             SetViewData();
             return View(result);
@@ -98,7 +98,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             // Get item for edit logic:
-            var result = await Service.Result(id);
+            var result = await Service.GetRequest(id);
 
             SetViewData();
             return View(result);
@@ -124,7 +124,7 @@ namespace N4C.Users.Web.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             // Get item for delete logic:
-            var result = await Service.Response(id);
+            var result = await Service.GetResponse(id);
 
             return View(result);
         }

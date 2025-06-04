@@ -41,12 +41,12 @@ namespace N4C.Users.App.Services
             });
         }
 
-        protected override IQueryable<N4CRole> Entities()
+        protected override IQueryable<N4CRole> Query()
         {
             var systemRoleId = (int)N4CRoles.System;
-            var systemRoleQuery = base.Entities().Where(role => role.Id == systemRoleId)
+            var systemRoleQuery = base.Query().Where(role => role.Id == systemRoleId)
                 .Include(role => role.UserRoles).ThenInclude(userRole => userRole.User).ThenInclude(user => user.Status);
-            var otherRolesQuery = base.Entities().Where(role => role.Id != systemRoleId)
+            var otherRolesQuery = base.Query().Where(role => role.Id != systemRoleId)
                 .Include(role => role.UserRoles).ThenInclude(userRole => userRole.User).ThenInclude(user => user.Status).OrderBy(role => role.Name);
             return systemRoleQuery.Union(otherRolesQuery);
         }
@@ -54,15 +54,15 @@ namespace N4C.Users.App.Services
         public override async Task<Result<N4CRoleRequest>> Update(N4CRoleRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             if (request.Id == (int)N4CRoles.System)
-                return Result(request, "System rolü güncellenemez", "System role can't be updated");
+                return Error(request, "System rolü güncellenemez", "System role can't be updated");
             return await base.Update(request, save, cancellationToken);
         }
 
         public override async Task<Result<N4CRoleRequest>> Delete(N4CRoleRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             if (request.Id == (int)N4CRoles.System)
-                return Result(request, "System rolü silinemez", "System role can't be deleted");
-            Delete(Entity(request).UserRoles);
+                return Error(request, "System rolü silinemez", "System role can't be deleted");
+            Delete(GetEntity(request).UserRoles);
             return await base.Delete(request, save, cancellationToken);
         }
     }

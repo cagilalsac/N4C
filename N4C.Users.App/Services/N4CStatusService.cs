@@ -25,14 +25,14 @@ namespace N4C.Users.App.Services
             });
         }
 
-        protected override IQueryable<N4CStatus> Entities()
+        protected override IQueryable<N4CStatus> Query()
         {
-            return base.Entities().Include(status => status.Users).OrderBy(status => status.Title);
+            return base.Query().Include(status => status.Users).OrderBy(status => status.Title);
         }
 
         public override Task<Result<N4CStatusRequest>> Delete(N4CStatusRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            Validate(Entity(request).Users);
+            Validate(GetEntity(request).Users);
             return base.Delete(request, save, cancellationToken);
         }
     }

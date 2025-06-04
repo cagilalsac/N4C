@@ -51,7 +51,7 @@ namespace N4C.Extensions
                     }
                 }
             }
-            return result.TrimEnd('S');
+            return result.TrimEnd('S', 'E');
         }
 
         public static string GetErrorMessage(this string value, string propertyName, string culture)

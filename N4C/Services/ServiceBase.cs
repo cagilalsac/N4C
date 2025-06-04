@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 using N4C.Domain;
 using N4C.Extensions;
 using N4C.Models;
 using Newtonsoft.Json;
+using OfficeOpenXml;
 using System.Globalization;
 using System.Net;
 using System.Security.Claims;
@@ -53,7 +55,7 @@ namespace N4C.Services
         protected Result Result(Result previousResult, string tr = default, string en = default) 
             => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Cultures.TR ? tr : en);
 
-        protected Result<TData> Result<TData>(TData data, Result previousResult, string tr = default, string en = default) where TData : class, new()
+        protected Result<TData> Result<TData>(Result previousResult, TData data, string tr = default, string en = default) where TData : class, new()
             => Result(previousResult.HttpStatusCode, data, tr is null && en is null ? previousResult.Message : Culture == Cultures.TR ? tr : en);
 
         public virtual Result NotFound(int? id = default) => Result(HttpStatusCode.NotFound, id, Config.NotFound);
@@ -63,10 +65,13 @@ namespace N4C.Services
                 ids.Count() == 1 ? Result(HttpStatusCode.OK, ids.First()) :
                 NotFound();
 
-        public virtual Result Result(bool success = true, string tr = default, string en = default, int? id = default)
-            => Result(success ? HttpStatusCode.OK : HttpStatusCode.BadRequest, id, success ? string.Empty : $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
+        public virtual Result Success(string tr = default, string en = default, int? id = default)
+            => Result(HttpStatusCode.OK, id, string.Empty);
 
-        public virtual Result Result(Exception exception, int? id = default)
+        public virtual Result Error(string tr = default, string en = default, int? id = default)
+            => Result(HttpStatusCode.BadRequest, id, $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
+
+        public virtual Result Error(Exception exception, int? id = default)
             => Result(HttpStatusCode.InternalServerError, id, Config.Exception);
 
         public virtual Result Created(int? id = default) => Result(HttpStatusCode.Created, id, Config.Created);
@@ -84,32 +89,38 @@ namespace N4C.Services
         protected virtual Result<TData> Found<TData>(TData item) where TData : Data, new()
             => item is not null ? Result(HttpStatusCode.OK, item) : NotFound(item);
 
-        protected virtual Result<TData> Result<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
+        protected virtual Result<TData> Success<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
+            => Result(HttpStatusCode.OK, item, string.Empty);
+
+        protected virtual Result<TData> Error<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
             => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
 
-        protected virtual Result<List<TData>> Result<TData>(List<TData> list, Exception exception) where TData : Data, new()
+        protected virtual Result<List<TData>> Error<TData>(Exception exception, List<TData> list) where TData : Data, new()
         {
             LogError("ServiceException: " + exception.Message);
             return Result(HttpStatusCode.InternalServerError, list, Config.Exception);
         }
 
-        protected virtual Result<TData> Result<TData>(TData item, Exception exception) where TData : Data, new()
+        protected virtual Result<TData> Error<TData>(Exception exception, TData item) where TData : Data, new()
         {
             LogError("ServiceException: Id = " + item.Id + ": " + exception.Message);
             return Result(HttpStatusCode.InternalServerError, item, Config.Exception);
         }
 
-        public Result<TData> Result<TData>(bool success = true) where TData : Data, new()
-            => Result(success ? HttpStatusCode.OK : HttpStatusCode.BadRequest, new TData());
-
         protected virtual Result<TData> Created<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.Created, item, Config.Created);
+
+        protected virtual Result<List<TData>> Created<TData>(List<TData> list) where TData : Data, new()
+            => Result(HttpStatusCode.Created, list, Config.Created);
 
         protected virtual Result<TData> Updated<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.NoContent, item, Config.Updated);
 
         protected virtual Result<TData> Deleted<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.NoContent, item, Config.Deleted);
+
+        protected virtual Result<List<TData>> Deleted<TData>(List<TData> list) where TData : Data, new()
+            => Result(HttpStatusCode.NoContent, list, Config.Deleted);
 
         protected virtual Result<TData> RelationsFound<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {Config.RelationsFound}");
@@ -217,6 +228,7 @@ namespace N4C.Services
         {
             if (data is not null && data.Length > 0)
             {
+                HttpContextAccessor.HttpContext.Features.Get<IHttpBodyControlFeature>().AllowSynchronousIO = true;
                 HttpContextAccessor.HttpContext.Response.Headers.Clear();
                 HttpContextAccessor.HttpContext.Response.Clear();
                 HttpContextAccessor.HttpContext.Response.ContentType = contentType;
@@ -224,6 +236,318 @@ namespace N4C.Services
                 HttpContextAccessor.HttpContext.Response.Headers.Append("content-disposition", "attachment; filename=\"" + fileName + "\"");
                 HttpContextAccessor.HttpContext.Response.Body.WriteAsync(data, 0, data.Length);
                 HttpContextAccessor.HttpContext.Response.Body.Flush();
+            }
+        }
+
+        protected string GetFileExtension(IFormFile formFile)
+        {
+            return Path.GetExtension(formFile.FileName).ToLower();
+        }
+
+        protected string GetFileExtension(string filePath)
+        {
+            return $".{filePath.Split('.')[1]}";
+        }
+
+        protected string GetFilePath(IFormFile formFile)
+        {
+            return Path.Combine("wwwroot", GetFileFolder(), $"{Guid.NewGuid().ToString()}{GetFileExtension(formFile)}");
+        }
+
+        protected string GetFilePath(string filePath, bool wwwroot = false)
+        {
+            return string.IsNullOrWhiteSpace(filePath) ? null : wwwroot ? $"wwwroot{filePath}" : filePath.Substring(7).Replace(@"\", "/");
+        }
+
+        protected string GetFileContentType(string filePath, bool data = false, bool base64 = false)
+        {
+            var fileExtension = GetFileExtension(filePath);
+            var contentType = Config.FileMimeTypes[fileExtension];
+            if (data)
+                contentType = "data:" + contentType;
+            if (base64)
+                contentType = contentType + ";base64,";
+            return contentType;
+        }
+
+        protected string GetFileFolder(string filePath = default)
+        {
+            return string.IsNullOrWhiteSpace(filePath) ? Config.FilesFolder : filePath.Split('/')[1];
+        }
+
+        protected string GetFileName(string filePath, bool extension = true)
+        {
+            var fileName = filePath.Split('/')[filePath.Split('/').Length - 1].Split('.')[0];
+            if (extension)
+                fileName += GetFileExtension(filePath);
+            return fileName;
+        }
+
+        protected int GetFileOrder(string filePath)
+        {
+            return Convert.ToInt32(filePath.Split('/')[2]);
+        }
+
+        protected List<string> GetOtherFilePaths(List<FileResponse> otherFiles, int orderInitialValue, int orderPaddingTotalWidth = 3)
+        {
+            List<string> otherFilePaths = null;
+            if (otherFiles is not null && otherFiles.Any())
+            {
+                otherFilePaths = new List<string>();
+                string orderValue;
+                for (int i = 0; i < otherFiles.Count; i++)
+                {
+                    orderValue = orderInitialValue++.ToString().PadLeft(orderPaddingTotalWidth, '0');
+                    otherFilePaths.Add($"/{GetFileFolder(otherFiles[i].MainFile)}/{orderValue}/{GetFileName(otherFiles[i].MainFile)}");
+                }
+            }
+            return otherFilePaths;
+        }
+
+        protected void GetOtherFilePaths(List<string> otherFilePaths)
+        {
+            if (otherFilePaths is not null && otherFilePaths.Any())
+            {
+                for (int i = 0; i < otherFilePaths.Count; i++)
+                {
+                    otherFilePaths[i] = $"/{GetFileFolder(otherFilePaths[i])}/{GetFileName(otherFilePaths[i])}";
+                }
+            }
+        }
+
+        protected virtual Result ValidateFile(IFormFile formFile)
+        {
+            if (formFile.Length > Config.MaximumFileSizeInMb * Math.Pow(1024, 2))
+            {
+                return Error(Culture == Cultures.TR ? $"Geçersiz dosya boyutu, geçerli maksimum dosya boyutu: {Config.MaximumFileSizeInMb} MB!" :
+                    $"Invalid file size, valid maxiumum file size: {Config.MaximumFileSizeInMb} MB!");
+            }
+            else if (!Config.FileExtensions.Contains(GetFileExtension(formFile)))
+            {
+                return Error(Culture == Cultures.TR ? $"Geçersiz dosya uzantısı, geçerli dosya uzantıları: {string.Join(", ", Config.FileExtensions)}!" :
+                    $"Invalid file extension, valid file extensions: {string.Join(", ", Config.FileExtensions)}!");
+            }
+            return Success();
+        }
+
+        protected virtual Result ValidateOtherFiles(List<IFormFile> otherFormFiles, List<string> otherFilePaths = default)
+        {
+            var otherFilesCount = 0;
+            if (otherFormFiles is not null)
+                otherFilesCount += otherFormFiles.Count;
+            if (otherFilePaths is not null)
+                otherFilesCount += otherFilePaths.Count;
+            if (otherFilesCount > Config.MaximumOtherFilesCount)
+                return Error(Culture == Cultures.TR ? $"Diğer dosya sayısı maksimum {Config.MaximumOtherFilesCount} olmalıdır!" :
+                    $"Other files count must be maximum {Config.MaximumOtherFilesCount}!");
+            return Success();
+        }
+
+        public Result<FileResponse> CreateFile(IFormFile formFile)
+        {
+            FileResponse fileResponse = null;
+            try
+            {
+                string filePath = null;
+                if (formFile is not null && formFile.Length > 0)
+                {
+                    var result = ValidateFile(formFile);
+                    if (result.Success)
+                    {
+                        filePath = GetFilePath(formFile);
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            formFile.CopyTo(fileStream);
+                        }
+                        fileResponse = new FileResponse()
+                        {
+                            MainFile = GetFilePath(filePath)
+                        };
+                        return Created(fileResponse);
+                    }
+                    return Result(result, fileResponse);
+                }
+                fileResponse = new FileResponse()
+                {
+                    MainFile = GetFilePath(filePath)
+                };
+                return Success(fileResponse);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception, fileResponse);
+            }
+        }
+
+        public Result<FileResponse> DeleteFile(string filePath)
+        {
+            FileResponse fileResponse = null;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(filePath))
+                {
+                    filePath = GetFilePath(filePath, true);
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                        fileResponse = new FileResponse()
+                        {
+                            MainFile = GetFilePath(filePath)
+                        };
+                        return Deleted(fileResponse);
+                    }
+                }
+                fileResponse = new FileResponse()
+                {
+                    MainFile = GetFilePath(filePath)
+                };
+                return Success(fileResponse);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception, fileResponse);
+            }
+        }
+
+        public Result<FileResponse> UpdateFile(IFormFile formFile, string filePath)
+        {
+            FileResponse fileResponse = null;
+            try
+            {
+                filePath = GetFilePath(filePath, true);
+                if (formFile is not null && formFile.Length > 0)
+                {
+                    var result = ValidateFile(formFile);
+                    if (result.Success)
+                    {
+                        result = DeleteFile(filePath);
+                        if (result.Success)
+                        {
+                            filePath = GetFilePath(formFile);
+                            using (var fileStream = new FileStream(filePath, FileMode.Create))
+                            {
+                                formFile.CopyTo(fileStream);
+                            }
+                            fileResponse = new FileResponse()
+                            {
+                                MainFile = GetFilePath(filePath)
+                            };
+                            return Updated(fileResponse);
+                        }
+                    }
+                    return Result(result, fileResponse);
+                }
+                fileResponse = new FileResponse()
+                {
+                    MainFile = GetFilePath(filePath)
+                };
+                return Success(fileResponse);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception, fileResponse);
+            }
+        }
+
+        public Result<List<FileResponse>> CreateFiles(List<IFormFile> formFiles)
+        {
+            List<FileResponse> fileResponseList = null;
+            FileResponse fileResponse = null;
+            Result<FileResponse> result;
+            Result validationResult = Success();
+            if (formFiles is not null && formFiles.Any())
+            {
+                fileResponseList = new List<FileResponse>();
+                foreach (var formFile in formFiles)
+                {
+                    validationResult = ValidateFile(formFile);
+                    if (!validationResult.Success)
+                        break;
+                }
+                if (validationResult.Success)
+                {
+                    result = Success(fileResponse);
+                    foreach (var formFile in formFiles)
+                    {
+                        result = CreateFile(formFile);
+                        if (!result.Success)
+                            break;
+                        fileResponseList.Add(result.Data);
+                    }
+                    if (!result.Success)
+                        return Result(result, fileResponseList);
+                }
+                else
+                {
+                    return Result(validationResult, fileResponseList);
+                }
+            }
+            return Created(fileResponseList);
+        }
+
+        public Result<List<FileResponse>> DeleteFiles(List<string> filePaths)
+        {
+            List<FileResponse> fileResponseList = null;
+            FileResponse fileResponse = null;
+            Result<FileResponse> result = Success(fileResponse);
+            if (filePaths is not null && filePaths.Any())
+            {
+                fileResponseList = new List<FileResponse>();
+                foreach (var filePath in filePaths)
+                {
+                    result = DeleteFile(filePath);
+                    if (!result.Success)
+                        break;
+                    fileResponseList.Add(result.Data);
+                }
+                if (!result.Success)
+                    return Result(result, fileResponseList);
+            }
+            return Deleted(fileResponseList);
+        }
+
+        public void GetExcel<T>(List<T> list, string fileName = default) where T : class, new()
+        {
+            try
+            {
+                var dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss").Replace("-", "").Replace(":", "").Replace(" ", "_");
+                fileName = !string.IsNullOrWhiteSpace(fileName) ? $"{fileName}.xlsx" : (Culture == Cultures.TR ? $"Rapor_{dateTime}.xlsx" : $"Report_{dateTime}.xlsx");
+                var worksheet = Culture == Cultures.TR ? "Sayfa1" : "Sheet1";
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                ExcelPackage.LicenseContext = Config.ExcelLicenseCommercial ? LicenseContext.Commercial : LicenseContext.NonCommercial;
+                var excelPackage = new ExcelPackage();
+                var excelWorksheet = excelPackage.Workbook.Worksheets.Add(worksheet);
+                excelWorksheet.Cells["A1"].LoadFromDataTable(list.ConvertToDataTable(Culture), true);
+                excelWorksheet.Cells["A1:AZ1"].Style.Font.Bold = true;
+                excelWorksheet.Cells["A1:AZ1"].AutoFilter = true;
+                excelWorksheet.Cells["A:AZ"].AutoFitColumns();
+                GetResponse(excelPackage.GetAsByteArray(), fileName, contentType);
+            }
+            catch (Exception exception)
+            {
+                LogError("ServiceException: " + exception.Message);
+            }
+        }
+
+        public Result<FileResponse> GetFile(string filePath, bool useOctetStreamContentType = false)
+        {
+            FileResponse fileResponse = null;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(filePath))
+                {
+                    fileResponse = new FileResponse()
+                    {
+                        FileStream = new FileStream(GetFilePath(filePath, true), FileMode.Open),
+                        FileContentType = useOctetStreamContentType ? "application/octet-stream" : GetFileContentType(filePath),
+                        FileName = GetFileName(filePath)
+                    };
+                }
+                return Found(fileResponse);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception, fileResponse);
             }
         }
     }

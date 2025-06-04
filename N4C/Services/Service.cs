@@ -29,7 +29,7 @@ namespace N4C.Services
             Set(Config.Culture, Config.TitleTR, (Config.TitleEN ?? "Record") == "Record" ? typeof(TEntity).Name : Config.TitleEN);
         }
 
-        protected virtual IQueryable<TEntity> Entities()
+        protected virtual IQueryable<TEntity> Query()
         {
             var query = Config.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
             if (Config.SqlServer && Config.SplitQuery)
@@ -37,17 +37,17 @@ namespace N4C.Services
             return query.Where(entity => (EF.Property<bool?>(entity, nameof(Domain.Entity.Deleted)) ?? false) == false);
         }
 
-        protected IQueryable<TEntity> Entities(Expression<Func<TEntity, bool>> predicate)
+        protected IQueryable<TEntity> Query(Expression<Func<TEntity, bool>> predicate)
         {
-            return Entities().Where(predicate);
+            return Query().Where(predicate);
         }
 
-        protected TEntity Entity(TRequest request, CancellationToken cancellationToken = default)
+        protected TEntity GetEntity(TRequest request, CancellationToken cancellationToken = default)
         {
             TEntity item = null;
             try
             {
-                item = Entities().SingleOrDefaultAsync(entity => entity.Id == request.Id, cancellationToken)?.Result ?? new TEntity();
+                item = Query().SingleOrDefaultAsync(entity => entity.Id == request.Id, cancellationToken)?.Result ?? new TEntity();
             }
             catch (Exception exception)
             {
@@ -56,91 +56,94 @@ namespace N4C.Services
             return item;
         }
 
-        public virtual async Task<Result<List<TResponse>>> Responses(CancellationToken cancellationToken = default)
+        public virtual async Task<Result<List<TResponse>>> GetResponse(CancellationToken cancellationToken = default)
         {
             List<TResponse> list = null;
             try
             {
-                list = await Entities().Map<TEntity, TResponse>(Config).ToListAsync(cancellationToken);
+                list = await Query().Map<TEntity, TResponse>(Config).ToListAsync(cancellationToken);
+                GetFiles(list);
                 return Found(list);
             }
             catch (Exception exception)
             {
-                return Result(list, exception);
+                return Error(exception, list);
             }
         }
 
-        public virtual async Task<Result<List<TResponse>>> Responses(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<List<TResponse>>> GetResponse(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         {
             List<TResponse> list = null;
             try
             {
-                list = await Entities(predicate).Map<TEntity, TResponse>(Config).ToListAsync(cancellationToken);
+                list = await Query(predicate).Map<TEntity, TResponse>(Config).ToListAsync(cancellationToken);
+                GetFiles(list);
                 return Found(list);
             }
             catch (Exception exception)
             {
-                return Result(list, exception);
+                return Error(exception, list);
             }
         }
 
-        public virtual async Task<Result<TResponse>> Response(int id, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TResponse>> GetResponse(int id, CancellationToken cancellationToken = default)
         {
             TResponse item = null;
             try
             {
-                item = await Entities().Map<TEntity, TResponse>(Config).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                item = await Query().Map<TEntity, TResponse>(Config).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                GetFiles(item);
                 return Found(item);
             }
             catch (Exception exception)
             {
-                return Result(item, exception);
+                return Error(exception, item);
             }
         }
 
-        public virtual async Task<Result<TResponse>> Response(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
-        {
-            TResponse item = null;
-            try
-            {
-                item = await Entities(predicate).Map<TEntity, TResponse>(Config).SingleOrDefaultAsync(cancellationToken);
-                return Found(item);
-            }
-            catch (Exception exception)
-            {
-                return Result(item, exception);
-            }
-        }
-
-        public virtual async Task<Result<TRequest>> Result(int? id = default, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TRequest>> GetRequest(int? id = default, CancellationToken cancellationToken = default)
         {
             TRequest item = null;
             try
             {
                 if (id.HasValue)
-                    item = await Entities().Map<TEntity, TRequest>(Config).SingleOrDefaultAsync(request => request.Id == id.Value, cancellationToken);
+                {
+                    var entity = await Query().SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
+                    item = entity.Map(Config, item);
+                    GetFiles(item, entity);
+                }
                 else
+                {
                     item = new TRequest();
+                }
                 return Found(item);
             }
             catch (Exception exception)
             {
-                return Result(item, exception);
+                return Error(exception, item);
             }
         }
 
-        public virtual async Task<Result<TRequest>> Result(string guid, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TRequest>> GetRequest(string guid, CancellationToken cancellationToken = default)
         {
             TRequest item = null;
             try
             {
-                item = await Entities().Map<TEntity, TRequest>(Config).SingleOrDefaultAsync(request => request.Guid == guid, cancellationToken);
+                var entity = await Query().SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
+                item = entity.Map(Config, item);
+                GetFiles(item, entity);
                 return Found(item);
             }
             catch (Exception exception)
             {
-                return Result(item, exception);
+                return Error(exception, item);
             }
+        }
+
+        public Result<T> GetRequest<T>() where T : Request, new()
+        {
+            var item = new T();
+            return Success(item);
         }
 
         protected virtual Result<TRequest> Validate(TRequest request)
@@ -157,7 +160,7 @@ namespace N4C.Services
                     {
                         entityProperty = ObjectExtensions.GetProperty<TEntity>(uniqueProperty);
                         requestProperty = ObjectExtensions.GetProperty(uniqueProperty, true, request);
-                        if (entityProperty is not null && requestProperty is not null && Entities().Any(entity => entity.Id != request.Id &&
+                        if (entityProperty is not null && requestProperty is not null && Query().Any(entity => entity.Id != request.Id &&
                             EF.Functions.Collate(EF.Property<string>(entity, entityProperty.Name), collation) == EF.Functions.Collate((requestProperty.Value ?? "").ToString(), collation).Trim()))
                         {
                             if (Culture == Cultures.TR)
@@ -172,7 +175,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Result(request, exception);
+                return Error(exception, request);
             }
         }
 
@@ -203,11 +206,14 @@ namespace N4C.Services
             {
                 var validationResult = Validate(request);
                 if (!validationResult.Success)
-                    return validationResult;
+                    return Result(validationResult, request);
                 var entity = request.Map<TRequest, TEntity>(Config).Trim();
                 entity.Guid = Guid.NewGuid().ToString();
                 entity.CreateDate = DateTime.Now;
                 entity.CreatedBy = GetUserName();
+                var fileResult = CreateFiles(request, entity);
+                if (!fileResult.Success)
+                    return Result(fileResult, request);
                 Db.Set<TEntity>().Add(entity);
                 if (save)
                 {
@@ -219,7 +225,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Result(request, exception);
+                return Error(exception, request);
             }
         }
 
@@ -229,13 +235,16 @@ namespace N4C.Services
             {
                 var validationResult = Validate(request);
                 if (!validationResult.Success)
-                    return validationResult;
+                    return Result(validationResult, request);
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return NotFound(request);
                 entity = request.Map(Config, entity).Trim();
                 entity.UpdateDate = DateTime.Now;
                 entity.UpdatedBy = GetUserName();
+                var fileResult = UpdateFiles(request, entity);
+                if (!fileResult.Success)
+                    return Result(fileResult, request);
                 Db.Set<TEntity>().Update(entity);
                 if (save)
                 {
@@ -252,7 +261,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Result(request, exception);
+                return Error(exception, request);
             }
         }
 
@@ -274,6 +283,9 @@ namespace N4C.Services
                 }
                 else
                 {
+                    var fileResult = DeleteFiles(request, entity);
+                    if (!fileResult.Success)
+                        return Result(fileResult, request);
                     Db.Set<TEntity>().Remove(entity);
                 }
                 if (save)
@@ -282,8 +294,170 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Result(request, exception);
+                return Error(exception, request);
             }
+        }
+
+        protected Result<TRequest> CreateFiles(TRequest request, TEntity entity)
+        {
+            if (request is FileRequest && entity is FileEntity)
+            {
+                var fileRequest = request as FileRequest;
+                var validationResult = ValidateOtherFiles(fileRequest?.OtherFormFiles);
+                if (validationResult.Success)
+                {
+                    var mainFileResult = CreateFile(fileRequest.MainFormFile);
+                    if (mainFileResult.Success)
+                    {
+                        var fileEntity = entity as FileEntity;
+                        fileEntity.MainFile = mainFileResult.Data.MainFile;
+                        var otherFilesResult = CreateFiles(fileRequest.OtherFormFiles);
+                        if (otherFilesResult.Success)
+                            fileEntity.OtherFiles = GetOtherFilePaths(otherFilesResult.Data, 1);
+                        else
+                            return Result(otherFilesResult, request);
+                    }
+                    else
+                    {
+                        return Result(mainFileResult, request);
+                    }
+                }
+            }
+            return Success(request);
+        }
+
+        protected Result<TRequest> UpdateFiles(TRequest request, TEntity entity = default)
+        {
+            if (request is FileRequest)
+            {
+                if (entity is null)
+                {
+                    entity = Db.Set<TEntity>().Find(request.Id);
+                    if (entity is null)
+                        return NotFound(request);
+                }
+                if (entity is FileEntity)
+                {
+                    var fileRequest = request as FileRequest;
+                    var fileEntity = entity as FileEntity;
+                    var validationResult = ValidateOtherFiles(fileRequest?.OtherFormFiles, fileEntity.OtherFiles);
+                    if (validationResult.Success)
+                    {
+                        var mainFileResult = UpdateFile(fileRequest.MainFormFile, fileEntity.MainFile);
+                        if (mainFileResult.Success)
+                        {
+                            fileEntity.MainFile = mainFileResult.Data.MainFile;
+                            var orderInitialValue = 1;
+                            if (fileEntity.OtherFiles is not null && fileEntity.OtherFiles.Any())
+                            {
+                                var lastOtherFile = fileEntity.OtherFiles.Order().Last();
+                                orderInitialValue = GetFileOrder(lastOtherFile) + 1;
+                            }
+                            var otherFilesResult = CreateFiles(fileRequest.OtherFormFiles);
+                            if (otherFilesResult.Success)
+                            {
+                                if (otherFilesResult.Data is not null && otherFilesResult.Data.Any())
+                                    fileEntity.OtherFiles = GetOtherFilePaths(otherFilesResult.Data, orderInitialValue);
+                            }
+                            else
+                            {
+                                return Result(otherFilesResult, request);
+                            }
+                        }
+                        else
+                        {
+                            return Result(mainFileResult, request);
+                        }
+                    }
+                }
+            }
+            return Success(request);
+        }
+
+        protected Result<TRequest> DeleteFiles(TRequest request, TEntity entity, string filePath = default)
+        {
+            Result<FileResponse> mainFileResult;
+            Result<List<FileResponse>> otherFilesResult;
+            if (request is FileRequest && entity is FileEntity)
+            {
+                var fileEntity = entity as FileEntity;
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    mainFileResult = DeleteFile(fileEntity.MainFile);
+                    if (!mainFileResult.Success)
+                        return Result(mainFileResult, request);
+                    fileEntity.MainFile = null;
+                    otherFilesResult = DeleteFiles(fileEntity.OtherFiles);
+                    if (!otherFilesResult.Success)
+                        return Result(otherFilesResult, request);
+                    fileEntity.OtherFiles = null;
+                }
+                else if (filePath == fileEntity.MainFile)
+                {
+                    mainFileResult = DeleteFile(fileEntity.MainFile);
+                    if (!mainFileResult.Success)
+                        return Result(mainFileResult, request);
+                    fileEntity.MainFile = null;
+                }
+                else
+                {
+                    mainFileResult = DeleteFile(filePath);
+                    if (!mainFileResult.Success)
+                        return Result(mainFileResult, request);
+                    filePath = fileEntity.OtherFiles.SingleOrDefault(otherFile => $"/{GetFileFolder(otherFile)}/{GetFileName(otherFile)}" == filePath);
+                    if (!string.IsNullOrWhiteSpace(filePath))
+                    {
+                        fileEntity.OtherFiles.Remove(filePath);
+                        if (!fileEntity.OtherFiles.Any())
+                            fileEntity.OtherFiles = null;
+                    }
+                }
+                Db.Set<TEntity>().Update(entity);
+            }
+            return Success(request);
+        }
+
+        public async Task<Result<TRequest>> DeleteFiles(int id, string filePath = default, CancellationToken cancellationToken = default)
+        {
+            var request = new TRequest() { Id = id };
+            var entity = Db.Set<TEntity>().Find(request.Id);
+            if (entity is null)
+                return NotFound(request);
+            var deleteResult = DeleteFiles(request, entity, filePath);
+            if (!deleteResult.Success)
+                return Result(deleteResult, request);
+            await Save(cancellationToken);
+            return Success(request);
+        }
+
+        protected void GetFiles(TResponse item)
+        {
+            if (item is FileResponse && item is not null)
+                GetOtherFilePaths((item as FileResponse).OtherFiles);
+        }
+
+        protected void GetFiles(List<TResponse> list)
+        {
+            if (list.Count > 0)
+            {
+                foreach (var item in list)
+                {
+                    GetFiles(item);
+                }
+            }
+        }
+
+        protected void GetFiles(TRequest item, TEntity entity)
+        {
+            if (item is FileRequest && item is not null && entity is FileEntity && entity is not null)
+                (item as FileRequest).MainFile = (entity as FileEntity).MainFile;
+        }
+
+        public async Task GetExcel(CancellationToken cancellationToken = default)
+        {
+            var result = await GetResponse(cancellationToken);
+            if (result.Success)
+                GetExcel(result.Data);
         }
 
         protected async Task Save(CancellationToken cancellationToken = default)

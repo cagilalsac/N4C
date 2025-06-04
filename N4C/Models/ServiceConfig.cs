@@ -17,7 +17,7 @@ namespace N4C.Models
         public void SetSplitQuery(bool splitQuery) => SplitQuery = splitQuery;
         public void SetSqlServer(bool sqlServer) => SqlServer = sqlServer;
         public void SetSoftDelete(bool softDelete) => SoftDelete = softDelete;
-
+        
         public IMappingExpression<TEntity, TRequest> SetRequest() => CreateMap<TEntity, TRequest>();
 
         public IMappingExpression<TEntity, TResponse> SetResponse() => CreateMap<TEntity, TResponse>()

@@ -24,7 +24,7 @@ namespace N4C.Users.App
             builder.Services.AddScoped<Service<N4CUser, N4CUserRequest, N4CUserResponse>, N4CUserService>();
 
             // AppSettings:
-            var appSettings = new N4CAppSettings(builder.Configuration, Cultures.EN, 20, 30);
+            var appSettings = new N4CAppSettings(builder.Configuration, Cultures.TR, 20, 30);
             appSettings.Bind();
 
             // Authentication:
