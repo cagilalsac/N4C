@@ -25,11 +25,11 @@ namespace N4C.Controllers
             Set(Config.Culture, Config.ViewData);
         }
 
-        public virtual async Task<IActionResult> DeleteFile(int id, string path = null, string action = "Details")
+        public virtual async Task<IActionResult> DeleteFile(int id, string path = null, string redirectToAction = "Details")
         {
             var result = await Service.DeleteFiles(id, path);
             SetTempData(result);
-            return RedirectToAction(action, new { id });
+            return RedirectToAction(redirectToAction, new { id });
         }
 
         public virtual async Task DownloadExcel()

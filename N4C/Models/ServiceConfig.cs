@@ -21,10 +21,14 @@ namespace N4C.Models
         public IMappingExpression<TEntity, TRequest> SetRequest() => CreateMap<TEntity, TRequest>();
 
         public IMappingExpression<TEntity, TResponse> SetResponse() => CreateMap<TEntity, TResponse>()
-            .Map(destination => destination.CreateDateS, source => 
-                source.CreateDate.HasValue ? $"{source.CreateDate.Value.ToShortDateString()} {source.CreateDate.Value.ToLongTimeString()}" : string.Empty)
-            .Map(destination => destination.UpdateDateS, source => 
-                source.UpdateDate.HasValue? $"{source.UpdateDate.Value.ToShortDateString()} {source.UpdateDate.Value.ToLongTimeString()}" : string.Empty);
+            .Map(destination => destination.CreateDate_, source =>
+                source.CreateDate.HasValue && !string.IsNullOrWhiteSpace(source.CreatedBy) ? 
+                    $"{source.CreatedBy} @ {source.CreateDate.Value.ToShortDateString()} {source.CreateDate.Value.ToLongTimeString()}" : 
+                    string.Empty)
+            .Map(destination => destination.UpdateDate_, source => 
+                source.UpdateDate.HasValue && !string.IsNullOrWhiteSpace(source.UpdatedBy) ? 
+                    $"{source.UpdatedBy} @ {source.UpdateDate.Value.ToShortDateString()} {source.UpdateDate.Value.ToLongTimeString()}" : 
+                    string.Empty);
 
         public List<string> UniqueProperties { get; private set; } = ["Name", "UserName", "Title"];
 
@@ -53,7 +57,7 @@ namespace N4C.Models
                     RecordsPerPageCounts.AddRange(recordsPerPageCounts.Select(recordsPerPageCount => recordsPerPageCount.ToString()));
                 else
                     RecordsPerPageCounts.AddRange(["5", "10", "25", "50", "100"]);
-                RecordsPerPageCounts.Add(Culture == Cultures.TR ? "Tümü" : "All");
+                RecordsPerPageCounts.Add(Culture == Defaults.TR ? "Tümü" : "All");
             }
         }
 
@@ -61,7 +65,7 @@ namespace N4C.Models
         {
             Property property;
             var entityPropertyList = ObjectExtensions.GetProperties<TEntity>();
-            var descValue = Culture == Cultures.TR ? "Azalan" : "Descending";
+            var descValue = Culture == Defaults.TR ? "Azalan" : "Descending";
             OrderExpressions.Clear();
             foreach (var entityProperty in entityProperties)
             {

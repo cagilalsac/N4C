@@ -35,7 +35,7 @@ namespace N4C.Extensions
             {
                 value = value.Substring(1, value.Length - 2);
                 var valueParts = value.Split(';');
-                if (culture == Cultures.TR)
+                if (culture == Defaults.TR)
                 {
                     result = valueParts.First();
                 }
@@ -51,7 +51,7 @@ namespace N4C.Extensions
                     }
                 }
             }
-            return result.TrimEnd('S', 'E');
+            return result.Contains('_') ? result.Remove(result.IndexOf('_')) : result;
         }
 
         public static string GetErrorMessage(this string value, string propertyName, string culture)
@@ -63,7 +63,7 @@ namespace N4C.Extensions
             {
                 if (value.Contains("not valid", StringComparison.OrdinalIgnoreCase) || value.Contains("invalid", StringComparison.OrdinalIgnoreCase))
                 {
-                    result = culture == Cultures.TR ? "Geçersiz değer" : "Invalid value";
+                    result = culture == Defaults.TR ? "Geçersiz değer" : "Invalid value";
                 }
                 else if ((value.GetCount('{') == 0 && value.GetCount('}') == 0) || (value.GetCount('{') == 2 && value.GetCount('}') == 2))
                 {
@@ -75,7 +75,7 @@ namespace N4C.Extensions
                     if (value.GetCount(';') == 1)
                     {
                         valueParts = value.Split(';');
-                        if (culture == Cultures.TR)
+                        if (culture == Defaults.TR)
                             result = valueParts.First();
                         else
                             result = valueParts.Last();

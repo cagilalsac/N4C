@@ -20,13 +20,13 @@
 @:@@{
     @:var containerDivClass = "container-fluid"; // "container" can be used for no full width
     @:var dateTimePickerClass = "datepicker"; // "datetimepicker" can be used for date with time
-    @:var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
-    @:var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    @:var select = Model.Culture == Cultures.TR ? "-- Seçiniz --" : "-- Select --";
-    @:var save = Model.Culture == Cultures.TR ? "Kaydet" : "Save";
-    @:var clear = Model.Culture == Cultures.TR ? "Temizle" : "Clear";
-    @:var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
-    @:var mainFileMessage = Model.Culture == Cultures.TR ? "Ana dosya seçilmelidir!" : "Main file must be selected!";
+    @:var edit = Model.Culture == Defaults.TR ? "Düzenle" : "Edit";
+    @:var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
+    @:var select = Model.Culture == Defaults.TR ? "-- Seçiniz --" : "-- Select --";
+    @:var save = Model.Culture == Defaults.TR ? "Kaydet" : "Save";
+    @:var clear = Model.Culture == Defaults.TR ? "Temizle" : "Clear";
+    @:var backToList = Model.Culture == Defaults.TR ? "Listeye Dön" : "Back to List";
+    @:var mainFileMessage = Model.Culture == Defaults.TR ? "Ana dosya seçilmelidir!" : "Main file must be selected!";
     @:var isAuthenticated = User.Identity.IsAuthenticated;
 @:}
     if (Model.IsPartialView)
@@ -130,7 +130,7 @@ foreach (PropertyMetadata property in Model.ModelMetadata.Properties)
             @:<displayname asp-for="Data.MainFormFile" asp-culture="@@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
             @:<div class="col-10">
                 @:<input asp-for="Data.MainFormFile" name="MainFormFile" class="form-control mainfile" type="file" />
-                @:<input asp-for="Data.MainFile" type="hidden" class="mainfilehidden" />
+                @:<input asp-for="Data.MainFile" name="MainFile" type="hidden" class="mainfilehidden" />
                 <span class="text-danger mainfilemessage"></span>
             @:</div>
         @:</div>

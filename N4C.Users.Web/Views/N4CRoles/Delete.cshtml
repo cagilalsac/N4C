@@ -8,10 +8,10 @@
 
 @{
     var containerDivClass = "container-fluid"; // "container" can be used for no full width
-    var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    var question = Model.Culture == Cultures.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
-    var save = Model.Culture == Cultures.TR ? "Evet" : "Yes";
-    var backToList = Model.Culture == Cultures.TR ? "Hayır" : "No";
+    var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
+    var question = Model.Culture == Defaults.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
+    var save = Model.Culture == Defaults.TR ? "Evet" : "Yes";
+    var backToList = Model.Culture == Defaults.TR ? "Hayır" : "No";
 }
 @{
     ViewData["Title"] = $"{Model.Title} {delete}";

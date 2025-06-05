@@ -3,7 +3,7 @@ using N4C.Models;
 
 namespace N4C.Users.App.Models
 {
-    public class N4CUserRequest : Request
+    public class N4CUserRequest : FileRequest
     {
         [Required]
         [StringLength(30, MinimumLength = 3)]

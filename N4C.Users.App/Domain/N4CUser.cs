@@ -4,7 +4,7 @@ using N4C.Domain;
 
 namespace N4C.Users.App.Domain
 {
-    public class N4CUser : Entity
+    public class N4CUser : FileEntity
     {
         [Required]
         [StringLength(30, MinimumLength = 3)]

@@ -22,8 +22,8 @@ namespace N4C.Models
                 else if (!Success && !message.EndsWith("!"))
                     Message += "!";
             }
-            Culture = culture ?? Cultures.TR;
-            Title = title is null ? (Culture == Cultures.TR ? "Kayıt" : "Record") : title;
+            Culture = culture ?? Defaults.TR;
+            Title = title is null ? (Culture == Defaults.TR ? "Kayıt" : "Record") : title;
             Id = id;
         }
     }

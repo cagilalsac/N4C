@@ -7,9 +7,9 @@
 @model Result
 
 @{
-    var culture = Model?.Culture ?? Cultures.TR;
+    var culture = Model?.Culture ?? Defaults.TR;
     var isAuthenticated = User.Identity.IsAuthenticated;
-    var isInRoleSystem = User.IsInRole("System");
+    var isInRoleSystem = User.IsInRole("system");
 }
 
 <!doctype html>
@@ -79,7 +79,7 @@
                 <ul class="menu-inner py-1">
                     <li class="menu-header small">
                         <span class="menu-header-text">
-                            @(culture == Cultures.TR ? "MENÜ" : "MENU")
+                            @(culture == Defaults.TR ? "MENÜ" : "MENU")
                         </span>
                     </li>
                     @if (N4CAppSettings.Development)
@@ -99,7 +99,7 @@
                             <a asp-area="" asp-action="Index" asp-controller="N4CUsers" class="menu-link">
                                 <i class="menu-icon tf-icons bx bxs-user-detail"></i>
                                 <div class="text-truncate">
-                                    @(culture == Cultures.TR ? "Kullanıcılar" : "Users")
+                                    @(culture == Defaults.TR ? "Kullanıcılar" : "Users")
                                 </div>
                             </a>
                         </li>
@@ -107,7 +107,7 @@
                             <a asp-area="" asp-action="Index" asp-controller="N4CRoles" class="menu-link">
                                 <i class="menu-icon tf-icons bx bxs-user-account"></i>
                                 <div class="text-truncate">
-                                    @(culture == Cultures.TR ? "Roller" : "Roles")
+                                    @(culture == Defaults.TR ? "Roller" : "Roles")
                                 </div>
                             </a>
                         </li>
@@ -115,7 +115,7 @@
                             <a asp-area="" asp-action="Index" asp-controller="N4CStatuses" class="menu-link">
                                 <i class="menu-icon tf-icons bx bxs-user-check"></i>
                                 <div class="text-truncate">
-                                    @(culture == Cultures.TR ? "Durumlar" : "Statuses")
+                                    @(culture == Defaults.TR ? "Durumlar" : "Statuses")
                                 </div>
                             </a>
                         </li>
@@ -159,7 +159,7 @@
                                     <a asp-area="" asp-action="Logout" asp-controller="N4CUsers" class="nav-link ps-3">
                                         <i class="bx bx-log-out bx-md me-1"></i>
                                         <span>
-                                            @(culture == Cultures.TR ? "Çıkış" : "Logout")
+                                            @(culture == Defaults.TR ? "Çıkış" : "Logout")
                                         </span>
                                     </a>
                                 </li>
@@ -170,7 +170,7 @@
                                     <a asp-area="" asp-action="Register" asp-controller="N4CUsers" class="nav-link">
                                         <i class="bx bx-user-plus bx-md me-1"></i>
                                         <span>
-                                            @(culture == Cultures.TR ? "Kayıt" : "Register")
+                                            @(culture == Defaults.TR ? "Kayıt" : "Register")
                                         </span>
                                     </a>
                                 </li>
@@ -178,7 +178,7 @@
                                     <a asp-area="" asp-action="Login" asp-controller="N4CUsers" class="nav-link ps-3">
                                         <i class="bx bx-log-in bx-md me-1"></i>
                                         <span>
-                                            @(culture == Cultures.TR ? "Giriş" : "Login")
+                                            @(culture == Defaults.TR ? "Giriş" : "Login")
                                         </span>
                                     </a>
                                 </li>
@@ -203,7 +203,7 @@
                             <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
                                 <div class="text-body">
                                     <a asp-area="" asp-action="About" asp-controller="Home">
-                                        @(culture == Cultures.TR ? "Hakkında" : "About")
+                                        @(culture == Defaults.TR ? "Hakkında" : "About")
                                     </a>
                                     &nbsp;|&nbsp;
                                     <a href="/sneat/html/index.html" target="_blank" class="footer-link">Sneat</a>

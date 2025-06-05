@@ -5,8 +5,8 @@
 
 @{
     var containerDivClass = "container-fluid"; // "container" can be used for no full width
-    var register = Model.Culture == Cultures.TR ? "Kayıt" : "Register";
-    var clear = Model.Culture == Cultures.TR ? "Temizle" : "Clear";
+    var register = Model.Culture == Defaults.TR ? "Kayıt" : "Register";
+    var clear = Model.Culture == Defaults.TR ? "Temizle" : "Clear";
 }
 @{
     ViewData["Title"] = $"{Model.Title} {register}";

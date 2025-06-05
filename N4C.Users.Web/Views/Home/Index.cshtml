@@ -4,7 +4,7 @@
 @model Result
 
 @{
-    ViewData["Title"] = Model.Culture == Cultures.TR ? "Ana Sayfa" : "Home";
+    ViewData["Title"] = Model.Culture == Defaults.TR ? "Ana Sayfa" : "Home";
 }
 
 <div class="container-fluid">
@@ -12,6 +12,6 @@
     <div class="text-center">
         <h3 class="display-4">@N4CAppSettings.Title</h3>
         <hr />
-        <h5>@(Model.Culture == Cultures.TR ? N4CAppSettings.DescriptionTR : N4CAppSettings.DescriptionEN)</h5>
+        <h5>@(Model.Culture == Defaults.TR ? N4CAppSettings.DescriptionTR : N4CAppSettings.DescriptionEN)</h5>
     </div>
 </div>

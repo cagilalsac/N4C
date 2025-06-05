@@ -20,7 +20,7 @@ namespace N4C.Users.App.Services
             base.Set(config =>
             {
                 config.SetResponse()
-                    .Map(destination => destination.Users, source => string.Join("<br>", source.Users));
+                    .Map(destination => destination.Users, source => string.Join("<br>", source.Users.Select(user => user.UserName)));
                 config.SetTitle("Durum", "Status");
             });
         }

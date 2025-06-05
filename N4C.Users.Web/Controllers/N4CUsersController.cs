@@ -14,7 +14,7 @@ using N4C.Users.App.Models;
 
 namespace N4C.Users.Web.Controllers
 {
-    [Authorize(Roles = "System")]
+    [Authorize(Roles = "system")]
     public class N4CUsersController : N4CUsersController<N4CUser, N4CUserRequest, N4CUserResponse>
     {
         // Service injections:
@@ -93,7 +93,10 @@ namespace N4C.Users.Web.Controllers
             var result = await Service.Create(n4CUserRequest);
             
             if (result.Success)
+            {
+                SetTempData(result);
                 return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+            }
             SetViewData();
             return View(result);
         }
@@ -118,7 +121,10 @@ namespace N4C.Users.Web.Controllers
             var result = await Service.Update(n4CUserRequest);
             
             if (result.Success)
-                return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+            {
+                 SetTempData(result);
+                 return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+             }
             SetViewData();
             return View(result);
         }

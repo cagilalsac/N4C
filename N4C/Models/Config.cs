@@ -62,28 +62,28 @@ namespace N4C.Models
             }
         }
 
-        public string Title => Culture == Cultures.TR ? TitleTR : TitleEN ?? "Record";
+        public string Title => Culture == Defaults.TR ? TitleTR : TitleEN ?? "Record";
 
-        public string NotFound => Culture == Cultures.TR ? $"{Title} bulunamadı" : $"{Title} not found";
+        public string NotFound => Culture == Defaults.TR ? $"{Title} bulunamadı" : $"{Title} not found";
 
-        public string Found => Culture == Cultures.TR ? Title == "Kayıt" ? $"{Title.ToLower()} bulundu" : $"{Title.ToLower()} kaydı bulundu" :
+        public string Found => Culture == Defaults.TR ? Title == "Kayıt" ? $"{Title.ToLower()} bulundu" : $"{Title.ToLower()} kaydı bulundu" :
                 Title == "Record" ? $"{Title.ToLower()}(s) found" : $"{Title.ToLower()} record(s) found";
 
-        public string Created => Culture == Cultures.TR ? $"{Title} başarıyla oluşturuldu" : $"{Title} created successfully";
+        public string Created => Culture == Defaults.TR ? $"{Title} başarıyla oluşturuldu" : $"{Title} created successfully";
 
-        public string Updated => Culture == Cultures.TR ? $"{Title} başarıyla güncellendi" : $"{Title} updated successfully";
+        public string Updated => Culture == Defaults.TR ? $"{Title} başarıyla güncellendi" : $"{Title} updated successfully";
 
-        public string Deleted => Culture == Cultures.TR ? $"{Title} başarıyla silindi" : $"{Title} deleted successfully";
+        public string Deleted => Culture == Defaults.TR ? $"{Title} başarıyla silindi" : $"{Title} deleted successfully";
 
-        public string Success => Culture == Cultures.TR ? "İşlem başarıyla gerçekleştirildi." : "Operation successful.";
+        public string Success => Culture == Defaults.TR ? "İşlem başarıyla gerçekleştirildi." : "Operation successful.";
 
-        public string Error => Culture == Cultures.TR ? "İşlem gerçekleştirilemedi!" : "Operation failed!";
+        public string Error => Culture == Defaults.TR ? "İşlem gerçekleştirilemedi!" : "Operation failed!";
 
-        public string Unauthorized => Culture == Cultures.TR ? "Yetkisiz işlem!" : "Unauthorized operation!";
+        public string Unauthorized => Culture == Defaults.TR ? "Yetkisiz işlem!" : "Unauthorized operation!";
 
-        public string Exception => Culture == Cultures.TR ? "Hata meydana geldi!" : "Exception occurred!";
+        public string Exception => Culture == Defaults.TR ? "Hata meydana geldi!" : "Exception occurred!";
 
-        public string RelationsFound => Culture == Cultures.TR ? "İlişkili kayıtlar bulunmaktadır" : "Relational records found";
+        public string RelationsFound => Culture == Defaults.TR ? "İlişkili kayıtlar bulunmaktadır" : "Relational records found";
 
         public string TrueHtml => "<i class='bx bx-check fs-3'></i>";
 

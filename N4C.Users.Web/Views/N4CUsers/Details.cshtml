@@ -8,13 +8,13 @@
 
 @{
     var containerDivClass = "container-fluid"; // "container" can be used for no full width
-    var details = Model.Culture == Cultures.TR ? "Detayı" : "Details";
-    var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
-    var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
-    var deleteFile = Model.Culture == Cultures.TR ? "Dosya Sil" : "Delete File";
-    var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
-    var mainFileMessage = Model.Culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
+    var details = Model.Culture == Defaults.TR ? "Detayı" : "Details";
+    var edit = Model.Culture == Defaults.TR ? "Düzenle" : "Edit";
+    var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
+    var backToList = Model.Culture == Defaults.TR ? "Listeye Dön" : "Back to List";
+    var deleteMainFile = Model.Culture == Defaults.TR ? "Ana Dosyayı Sil" : "Delete Main File";
+    var deleteOtherFile = Model.Culture == Defaults.TR ? "Diğer Dosyayı Sil" : "Delete Other File";
+    var mainFileMessage = Model.Culture == Defaults.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
     var isAuthenticated = User.Identity.IsAuthenticated;
 }
 @{
@@ -33,12 +33,11 @@
         </div>
     </div>
     <div class="row mb-3">
-        <div class="col-2 fw-bold">
-            <displayname asp-for="Data.Password" asp-culture="culture" />
-        </div>
-        <div class="col-10">
-            <input asp-for="Data.Password" class="form-control password" readonly />
-        </div>
+        <displayname asp-for="Data.Password" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+		<div class="col-10">
+			<input asp-for="Data.Password" name="Password" class="form-control password" />
+            <validation asp-for="Data.Password" asp-culture="@Model.Culture" class="text-danger"></validation>
+		</div>
     </div>
     <div class="row mb-3">
         <div class="offset-2 col-10">
@@ -55,18 +54,10 @@
     </div>
     <div class="row mb-3">
         <div class="col-2 fw-bold">
-            @Html.DisplayNameFor(model => model.Data.FirstName, Model.Culture)
+            @Html.DisplayNameFor(model => model.Data.FullName, Model.Culture)
         </div>
         <div class="col-10">
-            @Html.Raw(Model.Data.FirstName)
-        </div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-2 fw-bold">
-            @Html.DisplayNameFor(model => model.Data.LastName, Model.Culture)
-        </div>
-        <div class="col-10">
-            @Html.Raw(Model.Data.LastName)
+            @Html.Raw(Model.Data.FullName)
         </div>
     </div>
     <div class="row mb-3">
@@ -74,10 +65,9 @@
             @Html.DisplayNameFor(model => model.Data.Status, Model.Culture)
         </div>
         <div class="col-10">
-            @Html.Raw(Model.Data.ActiveS + " " + Model.Data.Status.Title)
+            @Html.Raw(Model.Data.Active_Html + " " + Model.Data.Status.Title)
         </div>
     </div>
-
 @* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
     
     <div class="row mb-3">
@@ -85,10 +75,69 @@
             <b>@Html.DisplayNameFor(model => model.Data.Roles, Model.Culture)</b>
         </div>
         <div class="col-10">
-            @Html.Raw(string.Join("<br>", Model.Data.Roles))
+            @Html.Raw(Model.Data.Roles_)
         </div>
     </div>
    
+    <hr />
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @Html.DisplayNameFor(model => model.Data.MainFile, Model.Culture)
+        </div>
+        <div class="col-5">
+            @if (string.IsNullOrWhiteSpace(Model.Data.MainFile) && (Model.Data.OtherFiles == null || !Model.Data.OtherFiles.Any()))
+            {
+            <span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
+            }
+            else
+            {
+            <div id="files" class="carousel slide" data-bs-interval="false">
+                <div class="carousel-inner">
+                    @if (!string.IsNullOrWhiteSpace(Model.Data.MainFile))
+                    {
+                    <div class="carousel-item active">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="text-danger mainfilemessage mb-1"></span>
+                            <a asp-action="DownloadFile" asp-route-path="@Model.Data.MainFile">
+                                <img src="@Model.Data.MainFile" class="d-block img-fluid" />
+                            </a>
+                            <div class="mt-2">
+                                <a asp-action="DeleteFile" asp-route-id="@Model.Data.Id" asp-route-path="@Model.Data.MainFile" class="btn btn-danger btn-sm deletemainfile">@deleteMainFile</a>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                    @if (Model.Data.OtherFiles != null && Model.Data.OtherFiles.Any())
+                    {
+                    var isFirst = string.IsNullOrWhiteSpace(Model.Data.MainFile);
+                    var active = isFirst ? "active" : "";
+                    foreach (var otherFile in Model.Data.OtherFiles)
+                    {
+                    <div class="carousel-item @active">
+                        <div class="d-flex flex-column align-items-center">
+                            <a asp-action="DownloadFile" asp-route-path="@otherFile">
+                                <img src="@otherFile" class="d-block img-fluid" />
+                            </a>
+                            <input type="hidden" value="@otherFile" class="otherfiles" />
+                            <div class="mt-2">
+                                <a asp-action="DeleteFile" asp-route-id="@Model.Data.Id" asp-route-path="@otherFile" class="btn btn-danger btn-sm">@deleteOtherFile</a>
+                            </div>
+                        </div>
+                    </div>
+                    isFirst = false;
+                    }
+                    }
+                </div>
+                <button class="carousel-control-prev bg-primary" type="button" data-bs-target="#files" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next bg-primary" type="button" data-bs-target="#files" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+            }
+        </div>
+    </div>
     <hr /> 
 @if (isAuthenticated)
 {
@@ -98,3 +147,24 @@
     <a asp-action="Index" asp-route-session="true">@backToList</a>
 }
 </div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('.deletemainfile').click(function (event) {
+                var preventEvent = false;
+                if ($('.mainfile').val() != '') {
+                    $('.otherfiles').each(function () {
+                        if ($(this).val() != '') {
+                            preventEvent = true;
+                        }
+                    });
+                }
+                if (preventEvent) {
+                    event.preventDefault();
+                    $('.mainfilemessage').text('@Html.Raw(mainFileMessage)');
+                }
+            });
+        });
+    </script>
+}

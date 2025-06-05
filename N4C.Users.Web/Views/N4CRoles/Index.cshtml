@@ -8,12 +8,12 @@
 
 @{
     var containerDivClass = "container-fluid"; // "container" can be used for no full width
-    var list = Model.Culture == Cultures.TR ? "Listesi" : "List";
-    var details = Model.Culture == Cultures.TR ? "Detay" : "Details";
-    var create = Model.Culture == Cultures.TR ? "Yeni" : "Create";
-    var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
-    var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    var export = Model.Culture == Cultures.TR ? "Excel'e Aktar" : "Export to Excel";
+    var list = Model.Culture == Defaults.TR ? "Listesi" : "List";
+    var details = Model.Culture == Defaults.TR ? "Detay" : "Details";
+    var create = Model.Culture == Defaults.TR ? "Yeni" : "Create";
+    var edit = Model.Culture == Defaults.TR ? "Düzenle" : "Edit";
+    var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
+    var export = Model.Culture == Defaults.TR ? "Excel'e Aktar" : "Export to Excel";
     var isAuthenticated = User.Identity.IsAuthenticated;
 }
 @{
@@ -46,16 +46,10 @@
                         @Html.DisplayNameFor(model => model.Data.First().UsersCount, Model.Culture)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Data.First().CreateDateS, Model.Culture)
+                        @Html.DisplayNameFor(model => model.Data.First().CreateDate_, Model.Culture)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Data.First().CreatedBy, Model.Culture)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Data.First().UpdateDateS, Model.Culture)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Data.First().UpdatedBy, Model.Culture)
+                        @Html.DisplayNameFor(model => model.Data.First().UpdateDate_, Model.Culture)
                     </th>
                     <th></th>
                 </tr>
@@ -70,16 +64,10 @@
 					    @Html.Raw(item.UsersCount)
 				    </td>
                     <td>
-					    @Html.Raw(item.CreateDateS)
+					    @Html.Raw(item.CreateDate_)
 				    </td>
                     <td>
-					    @Html.Raw(item.CreatedBy)
-				    </td>
-                    <td>
-					    @Html.Raw(item.UpdateDateS)
-				    </td>
-                    <td>
-					    @Html.Raw(item.UpdatedBy)
+					    @Html.Raw(item.UpdateDate_)
 				    </td>
 				    <td class="text-end w-25">
                     @if (isAuthenticated)

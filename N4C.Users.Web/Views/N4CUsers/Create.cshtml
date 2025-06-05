@@ -9,12 +9,12 @@
 @{
     var containerDivClass = "container-fluid"; // "container" can be used for no full width
     var dateTimePickerClass = "datepicker"; // "datetimepicker" can be used for date with time
-    var create = Model.Culture == Cultures.TR ? "Yeni" : "Create";
-    var select = Model.Culture == Cultures.TR ? "-- Seçiniz --" : "-- Select --";
-    var save = Model.Culture == Cultures.TR ? "Kaydet" : "Save";
-    var clear = Model.Culture == Cultures.TR ? "Temizle" : "Clear";
-    var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
-    var mainFileMessage = Model.Culture == Cultures.TR ? "Ana dosya seçilmelidir!" : "Main file must be selected!";
+    var create = Model.Culture == Defaults.TR ? "Yeni" : "Create";
+    var select = Model.Culture == Defaults.TR ? "-- Seçiniz --" : "-- Select --";
+    var save = Model.Culture == Defaults.TR ? "Kaydet" : "Save";
+    var clear = Model.Culture == Defaults.TR ? "Temizle" : "Clear";
+    var backToList = Model.Culture == Defaults.TR ? "Listeye Dön" : "Back to List";
+    var mainFileMessage = Model.Culture == Defaults.TR ? "Ana dosya seçilmelidir!" : "Main file must be selected!";
 }
 @{
     ViewData["Title"] = $"{create} {Model.Title}";
@@ -33,7 +33,7 @@
         <div class="row mb-3">
             <displayname asp-for="Data.Password" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
 			<div class="col-10">
-                <input asp-for="Data.Password" name="Password" class="form-control password" type="password" />
+			    <input asp-for="Data.Password" name="Password" class="form-control password" type="password" />
                 <validation asp-for="Data.Password" asp-culture="@Model.Culture" class="text-danger"></validation>
 			</div>
         </div>
@@ -72,6 +72,19 @@
                 <validation asp-for="Data.StatusId" asp-culture="@Model.Culture" class="text-danger"></validation>
 			</div>
         </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.MainFormFile" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+	        <div class="col-10">
+	            <input asp-for="Data.MainFormFile" name="MainFormFile" class="form-control mainfile" type="file" />
+                <span class="text-danger mainfilemessage"></span>
+	        </div>
+        </div>
+        <div class="row mb-3">
+            <displayname asp-for="Data.OtherFormFiles" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
+            <div class="col-10">
+                <input asp-for="Data.OtherFormFiles" name="OtherFormFiles" class="form-control otherfiles" type="file" multiple />
+            </div>
+        </div>
 
 @* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
         
@@ -97,5 +110,15 @@
 </div>  
 
 @section Scripts {
+    <script>
+        $(function () {
+            $('button[type="submit"]').click(function (event) {
+                if ($('.otherfiles').val() && !$('.mainfile').val()) {
+                    event.preventDefault();
+                    $('.mainfilemessage').text('@Html.Raw(mainFileMessage)');
+                }
+            });
+        });
+    </script>
     <partial name="_N4Cselect2" />
 }

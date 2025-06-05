@@ -17,10 +17,10 @@
 @{
 @:@@{
     @:var containerDivClass = "container-fluid"; // "container" can be used for no full width
-    @:var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    @:var question = Model.Culture == Cultures.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
-    @:var save = Model.Culture == Cultures.TR ? "Evet" : "Yes";
-    @:var backToList = Model.Culture == Cultures.TR ? "Hayır" : "No";
+    @:var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
+    @:var question = Model.Culture == Defaults.TR ? "Silmek istediğinize emin misiniz?" : "Are you sure you want to delete?";
+    @:var save = Model.Culture == Defaults.TR ? "Evet" : "Yes";
+    @:var backToList = Model.Culture == Defaults.TR ? "Hayır" : "No";
 @:}
     if (Model.IsPartialView)
     {
@@ -61,7 +61,7 @@ Dictionary<string, INavigationMetadata> navigationLookup = ((IModelMetadata)Mode
 
 foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
 {
-    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles" && item.Name != "MainFile")
+    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreatedBy" && item.Name != "UpdatedBy" && item.Name != "OtherFiles" && item.Name != "MainFile")
     {
     if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
         && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
@@ -120,7 +120,7 @@ foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
             property.TypeName.Equals(typeof(double).FullName) || property.TypeName.Equals(typeof(double?).FullName) ||
             property.TypeName.Equals(typeof(float).FullName) || property.TypeName.Equals(typeof(float?).FullName))
         {
-            return property.PropertyName + "S";
+            return property.PropertyName + "_";
         }
         return property.PropertyName;
     }

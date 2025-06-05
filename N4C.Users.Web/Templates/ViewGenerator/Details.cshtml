@@ -18,13 +18,13 @@
 @{
 @:@@{
     @:var containerDivClass = "container-fluid"; // "container" can be used for no full width
-    @:var details = Model.Culture == Cultures.TR ? "Detayı" : "Details";
-    @:var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
-    @:var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    @:var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
-    @:var deleteFile = Model.Culture == Cultures.TR ? "Dosya Sil" : "Delete File";
-    @:var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
-    @:var mainFileMessage = Model.Culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
+    @:var details = Model.Culture == Defaults.TR ? "Detayı" : "Details";
+    @:var edit = Model.Culture == Defaults.TR ? "Düzenle" : "Edit";
+    @:var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
+    @:var backToList = Model.Culture == Defaults.TR ? "Listeye Dön" : "Back to List";
+    @:var deleteMainFile = Model.Culture == Defaults.TR ? "Ana Dosyayı Sil" : "Delete Main File";
+    @:var deleteOtherFile = Model.Culture == Defaults.TR ? "Diğer Dosyayı Sil" : "Delete Other File";
+    @:var mainFileMessage = Model.Culture == Defaults.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
     @:var isAuthenticated = User.Identity.IsAuthenticated;
 @:}
     if (Model.IsPartialView)
@@ -66,7 +66,7 @@ Dictionary<string, INavigationMetadata> navigationLookup = ((IModelMetadata)Mode
 
 foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
 {
-    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreateDate" && item.Name != "CreatedBy" && item.Name != "UpdateDate" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
+    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreatedBy" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
     {
     if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
         && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
@@ -75,61 +75,64 @@ foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
     {
         mainFileFound = true;
     <hr />
-    <div style="@@filesStyle">
-        <div class="row mb-3">
-            <div class="col-2 fw-bold">
-                @@Html.DisplayNameFor(model => model.Data.MainFile, Model.Culture)
-            </div>
+    <div class="row mb-3">
+        <div class="col-2 fw-bold">
+            @@Html.DisplayNameFor(model => model.Data.MainFile, Model.Culture)
+        </div>
+        <div class="col-5">
             @{
-            @:@@if (string.IsNullOrWhiteSpace(Model.Data.MainFile))
+            @:@@if (string.IsNullOrWhiteSpace(Model.Data.MainFile) && (Model.Data.OtherFiles == null || !Model.Data.OtherFiles.Any()))
             @:{
-            @:<div class="col-4">
-                @:<span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
-            @:</div>
+            @:<span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
             @:}
             @:else
             @:{
-            @:<div class="col-4">
-                @:<span class="text-danger mainfilemessage"></span>
-                @:<br />
-                @:<a asp-action="Download" asp-route-path="@@Model.Data.MainFile"><img src="@@Model.Data.MainFile" class="img-fluid" /></a>
-            @:</div>
-            @:<div class="col-6 text-end pe-12">
-                @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@Model.Data.MainFile" class="deletemainfile">@@deleteFile</a>
+            @:<div id="files" class="carousel slide" data-bs-interval="false">
+                @:<div class="carousel-inner">
+                    @:@@if (!string.IsNullOrWhiteSpace(Model.Data.MainFile))
+                    @:{
+                    @:<div class="carousel-item active">
+                        @:<div class="d-flex flex-column align-items-center">
+                            @:<a asp-action="DownloadFile" asp-route-path="@@Model.Data.MainFile">
+                                @:<img src="@@Model.Data.MainFile" class="d-block img-fluid" />
+                            @:</a>
+                            @:<div class="mt-2">
+                                @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@Model.Data.MainFile" class="btn btn-danger btn-sm deletemainfile">@@deleteMainFile</a>
+                            @:</div>
+                        @:</div>
+                    @:</div>
+                    @:}
+                    @:@@if (Model.Data.OtherFiles != null && Model.Data.OtherFiles.Any())
+                    @:{
+                    @:var isFirst = string.IsNullOrWhiteSpace(Model.Data.MainFile);
+                    @:var active = isFirst ? "active" : "";
+                    @:foreach (var otherFile in Model.Data.OtherFiles)
+                    @:{
+                    @:<div class="carousel-item @@active">
+                        @:<div class="d-flex flex-column align-items-center">
+                            @:<a asp-action="DownloadFile" asp-route-path="@@otherFile">
+                                @:<img src="@@otherFile" class="d-block img-fluid" />
+                            @:</a>
+                            @:<input type="hidden" value="@@otherFile" class="otherfiles" />
+                            @:<div class="mt-2">
+                                @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@otherFile" class="btn btn-danger btn-sm">@@deleteOtherFile</a>
+                            @:</div>
+                        @:</div>
+                    @:</div>
+                    @:isFirst = false;
+                    @:}
+                    @:}
+                @:</div>
+                @:<button class="carousel-control-prev bg-primary" type="button" data-bs-target="#files" data-bs-slide="prev">
+                    @:<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                @:</button>
+                @:<button class="carousel-control-next bg-primary" type="button" data-bs-target="#files" data-bs-slide="next">
+                    @:<span class="carousel-control-next-icon" aria-hidden="true"></span>
+                @:</button>
             @:</div>
             @:}
             }
         </div>
-        <hr />
-        <div class="row mb-3">
-            <div class="col-2 fw-bold">
-                @@Html.DisplayNameFor(model => model.Data.OtherFiles, Model.Culture)
-            </div>
-            <div class="col-10">
-            @{
-            @:@@if (Model.Data.OtherFiles is not null && Model.Data.OtherFiles.Any())
-            @:{
-            @:foreach (var otherFile in Model.Data.OtherFiles)
-            @:{
-                @:<div class="row">
-                    @:<div class="col-4">
-                        @:<a asp-action="Download" asp-route-path="@@otherFile"><img src="@@otherFile" class="img-fluid" /></a>
-                        @:<input type="hidden" value="@@otherFile" class="otherfiles" />
-                    @:</div>
-                    @:<div class="col-8 text-end pe-12">
-                        @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@otherFile">@@deleteFile</a>
-                    @:</div>
-                @:</div>
-                @:<hr />
-            @:}
-            @:}
-            @:else
-            @:{
-                @:<span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
-            @:}
-            }
-            </div>
-        </div> 
     </div>
     }
     else
@@ -233,7 +236,7 @@ if (mainFileFound)
             property.TypeName.Equals(typeof(double).FullName) || property.TypeName.Equals(typeof(double?).FullName) ||
             property.TypeName.Equals(typeof(float).FullName) || property.TypeName.Equals(typeof(float?).FullName))
         {
-            return property.PropertyName + "S";
+            return property.PropertyName + "_";
         }
         return property.PropertyName;
     }

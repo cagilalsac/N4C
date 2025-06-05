@@ -20,24 +20,25 @@ namespace N4C.Users.App.Services
             base.Set(config =>
             {
                 config.SetResponse()
+                    .Map(destination => destination.FullName, source => $"{source.FirstName} {source.LastName}")
                     .Map(destination => destination.Roles, source => source.UserRoles.OrderBy(userRole => userRole.Role.Name).Select(userRole => userRole.Role.Name).ToList())
-                    .Map(destination => destination.RolesE, source => string.Join(", ", source.UserRoles.OrderBy(userRole => userRole.Role.Name).Select(userRole => userRole.Role.Name)))
-                    .Map(destination => destination.FullName, source => Culture == Cultures.TR ? $"{source.FirstName} {source.LastName}" : $"{source.LastName} {source.FirstName}")
-                    .Map(destination => destination.Active, source => source.StatusId == (int)N4CStatuses.Active)
-                    .Map(destination => destination.ActiveS, source => (source.StatusId == (int)N4CStatuses.Active).ToHtml(Config.TrueHtml, Config.FalseHtml, Culture))
+                    .Map(destination => destination.Roles_, source => string.Join(", ", source.UserRoles.OrderBy(userRole => userRole.Role.Name).Select(userRole => userRole.Role.Name)))
                     .Map(destination => destination.Status, source => new N4CStatusResponse()
                     {
                         Id = source.Status.Id,
                         Guid = source.Status.Guid,
                         Title = source.Status.Title
-                    });
+                    })
+                    .Map(destination => destination.Active, source => source.StatusId == Defaults.ActiveId)
+                    .Map(destination => destination.Active_, source => source.Status.Title)
+                    .Map(destination => destination.Active_Html, source => (source.StatusId == Defaults.ActiveId).ToHtml(Config.TrueHtml, Config.FalseHtml, Culture));
                 config.SetTitle("Kullanıcı", "User");
             });
         }
 
         protected override IQueryable<N4CUser> Query()
         {
-            var systemUserId = (int)N4CUsers.System;
+            var systemUserId = Defaults.SystemId;
             var systemUserQuery = base.Query().Where(user => user.Id == systemUserId)
                 .Include(user => user.Status).Include(user => user.UserRoles).ThenInclude(userRole => userRole.Role);
             var otherUsersQuery = base.Query().Where(user => user.Id != systemUserId)
@@ -48,7 +49,7 @@ namespace N4C.Users.App.Services
 
         public override async Task<Result<N4CUserRequest>> Create(N4CUserRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            if (request.RoleIds.Any(roleId => roleId == (int)N4CRoles.System))
+            if (request.RoleIds.Any(roleId => roleId == Defaults.SystemId))
                 return Error(request, "System rolünde yeni bir kullanıcı oluşturulamaz", "New user with role System can't be created");
             return await base.Create(request, save, cancellationToken);
         }
@@ -56,10 +57,10 @@ namespace N4C.Users.App.Services
         public override async Task<Result<N4CUserRequest>> Update(N4CUserRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             var userRoles = GetEntity(request).UserRoles;
-            if (userRoles.Any(userRole => userRole.RoleId == (int)N4CRoles.System) && request.RoleIds.Any(roleId => roleId != (int)N4CRoles.System) ||
-                userRoles.Any(userRole => userRole.RoleId != (int)N4CRoles.System) && request.RoleIds.Any(roleId => roleId == (int)N4CRoles.System))
+            if (userRoles.Any(userRole => userRole.RoleId == Defaults.SystemId) && request.RoleIds.Any(roleId => roleId != Defaults.SystemId) ||
+                userRoles.Any(userRole => userRole.RoleId != Defaults.SystemId) && request.RoleIds.Any(roleId => roleId == Defaults.SystemId))
                 return Error(request, "System rolü için kullanıcı güncellenemez", "User for role System can't be updated");
-            if (request.Id == (int)N4CUsers.System)
+            if (request.Id == Defaults.SystemId)
                 request.RoleIds.Clear();
             else
                 Update(userRoles);
@@ -68,7 +69,7 @@ namespace N4C.Users.App.Services
 
         public override async Task<Result<N4CUserRequest>> Delete(N4CUserRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            if (request.Id == (int)N4CUsers.System)
+            if (request.Id == Defaults.SystemId)
                 return Error(request, "System kullanıcısı silinemez", "System user can't be deleted");
             Delete(GetEntity(request).UserRoles);
             return await base.Delete(request, save, cancellationToken);
@@ -76,13 +77,13 @@ namespace N4C.Users.App.Services
 
         public async Task<Result> Deactivate(int id, CancellationToken cancellationToken = default)
         {
-            if (id == (int)N4CUsers.System)
+            if (id == Defaults.SystemId)
                 return Error("System kullanıcısı etkisizleştirilemez", "System user can't be deactivated", id);
             var result = await GetRequest(id);
             if (result.Success)
             {
                 Update(GetEntity(result.Data).UserRoles);
-                result.Data.StatusId = (int)N4CStatuses.Inactive;
+                result.Data.StatusId = Defaults.InactiveId;
                 return Result(await base.Update(result.Data, true, cancellationToken), "Kullanıcı başarıyla etkisizleştirildi", "User is deactivated successfully");
             }
             return result;
@@ -93,10 +94,10 @@ namespace N4C.Users.App.Services
             var result = await GetRequest(guid);
             if (result.Success)
             {
-                if (result.Data.Id == (int)N4CUsers.System)
+                if (result.Data.Id == Defaults.SystemId)
                     return Error("System kullanıcısı etkinleştirilemez", "System user can't be activated");
                 Update(GetEntity(result.Data).UserRoles);
-                result.Data.StatusId = (int)N4CStatuses.Active;
+                result.Data.StatusId = Defaults.ActiveId;
                 return Result(await base.Update(result.Data, true, cancellationToken), "Kullanıcı başarıyla etkinleştirildi", "User is activated successfully");
             }
             return result;
@@ -108,7 +109,7 @@ namespace N4C.Users.App.Services
             if (!validationResult.Success)
                 return Result(validationResult, request);
             var result = await GetResponse(user => user.UserName == request.UserName &&
-                user.Password == request.Password && user.StatusId == (int)N4CStatuses.Active, cancellationToken);
+                user.Password == request.Password && user.StatusId == Defaults.ActiveId, cancellationToken);
             if (result.Success)
                 await SignIn(GetClaims(result.Data.Single().Id, result.Data.Single().UserName, result.Data.Single().Roles));
             return Result(result, request);
@@ -125,7 +126,7 @@ namespace N4C.Users.App.Services
             if (!validationResult.Success)
                 return Result(validationResult, request);
             if (request.Password != request.ConfirmPassword)
-                return Error(request, Culture == Cultures.TR ? "Şifre ve Şifre Onay aynı olmalıdır!" : "Password and Confirm Password must be the same!");
+                return Error(request, "Şifre ve Şifre Onay aynı olmalıdır!", "Password and Confirm Password must be the same!");
             var result = await Create(new N4CUserRequest()
             {
                 UserName = request.UserName,
@@ -133,8 +134,8 @@ namespace N4C.Users.App.Services
                 Email = request.Email?.Trim(),
                 FirstName = request.FirstName?.Trim(),
                 LastName = request.LastName?.Trim(),
-                StatusId = (int)N4CStatuses.Active,
-                RoleIds = [(int)N4CRoles.User]
+                StatusId = Defaults.ActiveId,
+                RoleIds = [Defaults.UserId]
             });
             return Result(result, request);
         }

@@ -21,7 +21,7 @@ namespace N4C.Controllers
 
         protected void Set(string culture, Dictionary<string, object> viewData = default)
         {
-            Culture = culture ?? Cultures.TR;
+            Culture = culture ?? Defaults.TR;
             _viewData = viewData ?? new Dictionary<string, object>();
         }
 
@@ -39,7 +39,7 @@ namespace N4C.Controllers
 
         protected void SetTempData(string tr, string en = default, string key = "Message")
         {
-            TempData[key] = Culture == Cultures.TR ? tr : en ?? string.Empty;
+            TempData[key] = Culture == Defaults.TR ? tr : en ?? string.Empty;
         }
 
         protected void SetTempData(Result result, string key = "Message")

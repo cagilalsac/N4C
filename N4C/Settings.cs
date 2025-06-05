@@ -17,7 +17,7 @@ namespace N4C
         protected Settings(IConfiguration configuration, string culture = default, int sessionExpirationInMinutes = 20)
         {
             _configuration = configuration;
-            Culture = culture ?? Cultures.TR;
+            Culture = culture ?? Defaults.TR;
             SessionExpirationInMinutes = sessionExpirationInMinutes;
         }
 

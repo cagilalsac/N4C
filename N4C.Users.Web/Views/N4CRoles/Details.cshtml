@@ -8,13 +8,13 @@
 
 @{
     var containerDivClass = "container-fluid"; // "container" can be used for no full width
-    var details = Model.Culture == Cultures.TR ? "Detayı" : "Details";
-    var edit = Model.Culture == Cultures.TR ? "Düzenle" : "Edit";
-    var delete = Model.Culture == Cultures.TR ? "Sil" : "Delete";
-    var backToList = Model.Culture == Cultures.TR ? "Listeye Dön" : "Back to List";
-    var deleteFile = Model.Culture == Cultures.TR ? "Dosya Sil" : "Delete File";
+    var details = Model.Culture == Defaults.TR ? "Detayı" : "Details";
+    var edit = Model.Culture == Defaults.TR ? "Düzenle" : "Edit";
+    var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
+    var backToList = Model.Culture == Defaults.TR ? "Listeye Dön" : "Back to List";
+    var deleteFile = Model.Culture == Defaults.TR ? "Dosya Sil" : "Delete File";
     var filesStyle = "height:370px;overflow-y:auto;overflow-x:hidden;";
-    var mainFileMessage = Model.Culture == Cultures.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
+    var mainFileMessage = Model.Culture == Defaults.TR ? "Önce diğer dosyalar silinmelidir!" : "Other files must be deleted first!";
     var isAuthenticated = User.Identity.IsAuthenticated;
 }
 @{
@@ -51,38 +51,6 @@
             </div>
         </div>
     }
-    <div class="row mb-3">
-        <div class="col-2 fw-bold">
-            @Html.DisplayNameFor(model => model.Data.CreateDateS, Model.Culture)
-        </div>
-        <div class="col-10">
-            @Html.Raw(Model.Data.CreateDateS)
-        </div>
-    </div>
-     <div class="row mb-3">
-        <div class="col-2 fw-bold">
-            @Html.DisplayNameFor(model => model.Data.CreatedBy, Model.Culture)
-        </div>
-        <div class="col-10">
-            @Html.Raw(Model.Data.CreatedBy)
-        </div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-2 fw-bold">
-            @Html.DisplayNameFor(model => model.Data.UpdateDateS, Model.Culture)
-        </div>
-        <div class="col-10">
-            @Html.Raw(Model.Data.UpdateDateS)
-        </div>
-    </div>
-     <div class="row mb-3">
-        <div class="col-2 fw-bold">
-            @Html.DisplayNameFor(model => model.Data.UpdatedBy, Model.Culture)
-        </div>
-        <div class="col-10">
-            @Html.Raw(Model.Data.UpdatedBy)
-        </div>
-    </div>
 
 @* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@
     @*

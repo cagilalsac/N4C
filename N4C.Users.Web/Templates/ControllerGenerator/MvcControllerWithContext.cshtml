@@ -181,7 +181,10 @@ namespace @Model.ControllerNamespace
             @:
             @:if (result.Success)
 }  
+            {
+                SetTempData(result);
                 return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+            }
             SetViewData();
             return View(result);
         }
@@ -208,7 +211,10 @@ namespace @Model.ControllerNamespace
             @:
             @:if (result.Success)
 }  
-                return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+            {
+                 SetTempData(result);
+                 return RedirectToAction(nameof(Details), new { id = result.Data.Id });
+             }
             SetViewData();
             return View(result);
         }

@@ -10,11 +10,11 @@
 @model Result
 
 @{
-    var culture = Model?.Culture ?? Cultures.TR;
-    var title = culture == Cultures.TR ? "Uyarı!" : "Warning!";
-    var message = culture == Cultures.TR ? "Bu kaydı silmek istediğinize emin misiniz?" : "Are you sure you want to delete this record?";
-    var yes = culture == Cultures.TR ? "Evet" : "Yes";
-    var no = culture == Cultures.TR ? "Hayır" : "No";
+    var culture = Model?.Culture ?? Defaults.TR;
+    var title = culture == Defaults.TR ? "Uyarı!" : "Warning!";
+    var message = culture == Defaults.TR ? "Bu kaydı silmek istediğinize emin misiniz?" : "Are you sure you want to delete this record?";
+    var yes = culture == Defaults.TR ? "Evet" : "Yes";
+    var no = culture == Defaults.TR ? "Hayır" : "No";
 }
 
 <script>

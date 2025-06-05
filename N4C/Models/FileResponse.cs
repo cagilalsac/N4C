@@ -14,10 +14,10 @@ namespace N4C.Models
         [ExcelIgnore]
         public string FileName { get; set; }
 
-        [ExcelIgnore, DisplayName("Ana Dosya")]
+        [ExcelIgnore, DisplayName("Dosyalar", "Files")]
         public virtual string MainFile { get; set; }
 
-        [ExcelIgnore, DisplayName("Diğer Dosyalar")]
+        [ExcelIgnore]
         public virtual List<string> OtherFiles { get; set; }
     }
 }

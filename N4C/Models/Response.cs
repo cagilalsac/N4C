@@ -5,16 +5,10 @@ namespace N4C.Models
 {
     public class Response : Data
     {
-        [DisplayName("Oluşturulma Tarihi")]
-        public virtual string CreateDateS { get; set; }
+        [DisplayName("Oluşturan", "Created By")]
+        public virtual string CreateDate_ { get; set; }
 
-        [DisplayName("Oluşturan")]
-        public virtual string CreatedBy { get; set; }
-
-        [DisplayName("Güncellenme Tarihi")]
-        public virtual string UpdateDateS { get; set; }
-
-        [DisplayName("Güncelleyen")]
-        public virtual string UpdatedBy { get; set; }
+        [DisplayName("Güncelleyen", "Updated By")]
+        public virtual string UpdateDate_ { get; set; }
     }
 }

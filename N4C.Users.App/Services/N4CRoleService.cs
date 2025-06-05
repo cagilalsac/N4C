@@ -27,8 +27,6 @@ namespace N4C.Users.App.Services
                         Guid = userRole.User.Guid,
                         UserName = userRole.User.UserName,
                         Email = userRole.User.Email,
-                        FirstName = userRole.User.FirstName,
-                        LastName = userRole.User.LastName,
                         FullName = $"{userRole.User.FirstName} {userRole.User.LastName}",
                         Status = new N4CStatusResponse()
                         {
@@ -43,7 +41,7 @@ namespace N4C.Users.App.Services
 
         protected override IQueryable<N4CRole> Query()
         {
-            var systemRoleId = (int)N4CRoles.System;
+            var systemRoleId = Defaults.SystemId;
             var systemRoleQuery = base.Query().Where(role => role.Id == systemRoleId)
                 .Include(role => role.UserRoles).ThenInclude(userRole => userRole.User).ThenInclude(user => user.Status);
             var otherRolesQuery = base.Query().Where(role => role.Id != systemRoleId)
@@ -53,16 +51,16 @@ namespace N4C.Users.App.Services
 
         public override async Task<Result<N4CRoleRequest>> Update(N4CRoleRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            if (request.Id == (int)N4CRoles.System)
+            if (request.Id == Defaults.SystemId)
                 return Error(request, "System rolü güncellenemez", "System role can't be updated");
             return await base.Update(request, save, cancellationToken);
         }
 
         public override async Task<Result<N4CRoleRequest>> Delete(N4CRoleRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
-            if (request.Id == (int)N4CRoles.System)
+            if (request.Id == Defaults.SystemId)
                 return Error(request, "System rolü silinemez", "System role can't be deleted");
-            Delete(GetEntity(request).UserRoles);
+            Validate(GetEntity(request).UserRoles);
             return await base.Delete(request, save, cancellationToken);
         }
     }

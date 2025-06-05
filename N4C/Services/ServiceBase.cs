@@ -53,10 +53,10 @@ namespace N4C.Services
         }
 
         protected Result Result(Result previousResult, string tr = default, string en = default) 
-            => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Cultures.TR ? tr : en);
+            => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en);
 
         protected Result<TData> Result<TData>(Result previousResult, TData data, string tr = default, string en = default) where TData : class, new()
-            => Result(previousResult.HttpStatusCode, data, tr is null && en is null ? previousResult.Message : Culture == Cultures.TR ? tr : en);
+            => Result(previousResult.HttpStatusCode, data, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en);
 
         public virtual Result NotFound(int? id = default) => Result(HttpStatusCode.NotFound, id, Config.NotFound);
 
@@ -69,7 +69,7 @@ namespace N4C.Services
             => Result(HttpStatusCode.OK, id, string.Empty);
 
         public virtual Result Error(string tr = default, string en = default, int? id = default)
-            => Result(HttpStatusCode.BadRequest, id, $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
+            => Result(HttpStatusCode.BadRequest, id, $"{Config.Error} {(Culture == Defaults.TR ? tr : en)}".TrimEnd());
 
         public virtual Result Error(Exception exception, int? id = default)
             => Result(HttpStatusCode.InternalServerError, id, Config.Exception);
@@ -93,7 +93,7 @@ namespace N4C.Services
             => Result(HttpStatusCode.OK, item, string.Empty);
 
         protected virtual Result<TData> Error<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
-            => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {(Culture == Cultures.TR ? tr : en)}".TrimEnd());
+            => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {(Culture == Defaults.TR ? tr : en)}".TrimEnd());
 
         protected virtual Result<List<TData>> Error<TData>(Exception exception, List<TData> list) where TData : Data, new()
         {
@@ -147,7 +147,7 @@ namespace N4C.Services
 
         public string GetUserName() => HttpContextAccessor.HttpContext?.User.Identity?.Name;
 
-        public int GetUserId() => Convert.ToInt32(HttpContextAccessor.HttpContext?.User.Claims?.SingleOrDefault(claim => claim.Type == nameof(Entity.Id))?.Value);
+        public int GetUserId() => Convert.ToInt32(HttpContextAccessor.HttpContext?.User.Claims?.SingleOrDefault(claim => claim.Type == nameof(Data.Id))?.Value);
 
         public T GetSession<T>(string key) where T : class
         {
@@ -200,7 +200,7 @@ namespace N4C.Services
             var claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Name, userName),
-                new Claim("Id", userId.ToString())
+                new Claim(nameof(Data.Id), userId.ToString())
             };
             foreach (var roleName in roleNames)
             {
@@ -319,12 +319,12 @@ namespace N4C.Services
         {
             if (formFile.Length > Config.MaximumFileSizeInMb * Math.Pow(1024, 2))
             {
-                return Error(Culture == Cultures.TR ? $"Geçersiz dosya boyutu, geçerli maksimum dosya boyutu: {Config.MaximumFileSizeInMb} MB!" :
+                return Error(Culture == Defaults.TR ? $"Geçersiz dosya boyutu, geçerli maksimum dosya boyutu: {Config.MaximumFileSizeInMb} MB!" :
                     $"Invalid file size, valid maxiumum file size: {Config.MaximumFileSizeInMb} MB!");
             }
             else if (!Config.FileExtensions.Contains(GetFileExtension(formFile)))
             {
-                return Error(Culture == Cultures.TR ? $"Geçersiz dosya uzantısı, geçerli dosya uzantıları: {string.Join(", ", Config.FileExtensions)}!" :
+                return Error(Culture == Defaults.TR ? $"Geçersiz dosya uzantısı, geçerli dosya uzantıları: {string.Join(", ", Config.FileExtensions)}!" :
                     $"Invalid file extension, valid file extensions: {string.Join(", ", Config.FileExtensions)}!");
             }
             return Success();
@@ -338,7 +338,7 @@ namespace N4C.Services
             if (otherFilePaths is not null)
                 otherFilesCount += otherFilePaths.Count;
             if (otherFilesCount > Config.MaximumOtherFilesCount)
-                return Error(Culture == Cultures.TR ? $"Diğer dosya sayısı maksimum {Config.MaximumOtherFilesCount} olmalıdır!" :
+                return Error(Culture == Defaults.TR ? $"Diğer dosya sayısı maksimum {Config.MaximumOtherFilesCount} olmalıdır!" :
                     $"Other files count must be maximum {Config.MaximumOtherFilesCount}!");
             return Success();
         }
@@ -511,8 +511,8 @@ namespace N4C.Services
             try
             {
                 var dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss").Replace("-", "").Replace(":", "").Replace(" ", "_");
-                fileName = !string.IsNullOrWhiteSpace(fileName) ? $"{fileName}.xlsx" : (Culture == Cultures.TR ? $"Rapor_{dateTime}.xlsx" : $"Report_{dateTime}.xlsx");
-                var worksheet = Culture == Cultures.TR ? "Sayfa1" : "Sheet1";
+                fileName = !string.IsNullOrWhiteSpace(fileName) ? $"{fileName}.xlsx" : (Culture == Defaults.TR ? $"Rapor_{dateTime}.xlsx" : $"Report_{dateTime}.xlsx");
+                var worksheet = Culture == Defaults.TR ? "Sayfa1" : "Sheet1";
                 var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 ExcelPackage.LicenseContext = Config.ExcelLicenseCommercial ? LicenseContext.Commercial : LicenseContext.NonCommercial;
                 var excelPackage = new ExcelPackage();

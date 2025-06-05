@@ -32,6 +32,7 @@ namespace N4C.Services
         protected virtual IQueryable<TEntity> Query()
         {
             var query = Config.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
+            query = query.OrderByDescending(entity => entity.UpdateDate).ThenByDescending(entity => entity.CreateDate);
             if (Config.SqlServer && Config.SplitQuery)
                 query = query.AsSplitQuery();
             return query.Where(entity => (EF.Property<bool?>(entity, nameof(Domain.Entity.Deleted)) ?? false) == false);
@@ -163,7 +164,7 @@ namespace N4C.Services
                         if (entityProperty is not null && requestProperty is not null && Query().Any(entity => entity.Id != request.Id &&
                             EF.Functions.Collate(EF.Property<string>(entity, entityProperty.Name), collation) == EF.Functions.Collate((requestProperty.Value ?? "").ToString(), collation).Trim()))
                         {
-                            if (Culture == Cultures.TR)
+                            if (Culture == Defaults.TR)
                                 uniquePropertyError = $"{requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} değerine sahip {Config.Title.ToLower()} bulunmaktadır!";
                             else
                                 uniquePropertyError = $"{Config.Title} with the same value for {requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} exists!";
@@ -210,7 +211,7 @@ namespace N4C.Services
                 var entity = request.Map<TRequest, TEntity>(Config).Trim();
                 entity.Guid = Guid.NewGuid().ToString();
                 entity.CreateDate = DateTime.Now;
-                entity.CreatedBy = GetUserName();
+                entity.CreatedBy = GetUserName() ?? Defaults.User;
                 var fileResult = CreateFiles(request, entity);
                 if (!fileResult.Success)
                     return Result(fileResult, request);

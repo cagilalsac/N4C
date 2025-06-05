@@ -8,7 +8,7 @@ namespace N4C.Extensions
     {
         public static DataTable ConvertToDataTable<T>(this List<T> list, string culture = default) where T : class, new()
         {
-            culture = string.IsNullOrWhiteSpace(culture) ? Cultures.TR : culture;
+            culture = string.IsNullOrWhiteSpace(culture) ? Defaults.TR : culture;
             DataTable dataTable = null;
             DataRow row;
             PropertyInfo propertyInfo;
