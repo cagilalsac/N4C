@@ -12,7 +12,7 @@ namespace N4C.Users.App.Controllers
     public abstract class N4CUsersController<TEntity, TRequest, TResponse> : MvcController<TEntity, TRequest, TResponse>
         where TEntity : N4CUser, new() where TRequest : N4CUserRequest, new() where TResponse : N4CUserResponse, new()
     {
-        protected N4CUsersController(Service<TEntity, TRequest, TResponse> service, IModelMetadataProvider modelMetaDataProvider) 
+        protected N4CUsersController(Service<TEntity, TRequest, TResponse> service, IModelMetadataProvider modelMetaDataProvider)
             : base(service, modelMetaDataProvider)
         {
         }
@@ -45,7 +45,7 @@ namespace N4C.Users.App.Controllers
             request.Set(ModelState);
             var result = await (Service as N4CUserService).Login(request);
             if (result.Success)
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Home", new { area = "" });
             return View(result);
         }
 
@@ -53,7 +53,7 @@ namespace N4C.Users.App.Controllers
         public virtual async Task<IActionResult> Logout()
         {
             await (Service as N4CUserService).Logout();
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Home", new { area = "" });
         }
 
         [AllowAnonymous, Route("[action]")]

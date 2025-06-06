@@ -4,6 +4,7 @@
     {
         public static string EN => "en-US";
         public static string TR => "tr-TR";
+        public static string Culture => "Culture";
         public static int SystemId => 1;
         public static string System => "system";
         public static int AdminId => 2;

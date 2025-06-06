@@ -30,11 +30,12 @@ namespace N4C.Services
         {
             HttpContextAccessor = httpContextAccessor;
             Logger = logger;
+            Set(null);
         }
 
-        public void Set(string culture, string titleTR, string titleEN)
+        public void Set(string culture, string titleTR = default, string titleEN = default)
         {
-            Config.SetCulture(culture);
+            Config.SetCulture(GetCookie(Defaults.Culture) ?? culture);
             Config.SetTitle(titleTR, titleEN);
             Thread.CurrentThread.CurrentCulture = new CultureInfo(Culture);
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(Culture);

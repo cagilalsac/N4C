@@ -130,7 +130,7 @@ namespace N4C.Users.Web.Controllers
                 SetTempData("Geçersiz pin!", "Invalid pin!");
             }
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Home", new { area = "" });
         }
     }
 }

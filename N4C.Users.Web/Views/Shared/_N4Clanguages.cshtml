@@ -1,0 +1,18 @@
+﻿@using N4C.Models
+@using N4C.Services
+
+@inject Service service
+
+@{
+    var culture = service.GetCookie("Culture");
+    var languageSelectListItems = new List<SelectListItem>()
+    {
+        new SelectListItem(nameof(Defaults.TR), Defaults.TR),
+        new SelectListItem(nameof(Defaults.EN), Defaults.EN)
+    };
+    var languageSelectList = new SelectList(languageSelectListItems, "Value", "Text", culture);
+}
+
+<form asp-area="" asp-action="Index" asp-controller="Languages">
+    <select name="culture" class="form-select" onchange="this.form.submit();" asp-items="languageSelectList"></select>
+</form>
