@@ -10,6 +10,7 @@
 - Optional Soft Delete with automatic update of CreateDate, CreatedBy, UpdateDate and UpdatedBy properties of entities.
 - Multiple files upload with file download.
 - Excel export.
+- Paging and ordering lists.
 - English and Turkish languages support.
 - MVC Account Management with users, roles and statuses (active or inactive).
 - MVC Authentication using cookie.

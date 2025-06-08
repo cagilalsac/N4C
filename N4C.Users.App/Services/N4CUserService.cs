@@ -32,7 +32,11 @@ namespace N4C.Users.App.Services
                     .Map(destination => destination.Active, source => source.StatusId == Defaults.ActiveId)
                     .Map(destination => destination.Active_, source => source.Status.Title)
                     .Map(destination => destination.Active_Html, source => (source.StatusId == Defaults.ActiveId).ToHtml(Config.TrueHtml, Config.FalseHtml, Culture));
+                config.SetEntity()
+                    .Map(destination => destination.FirstName, source => source.FirstName.FirstLetterToUpperOthersToLower())
+                    .Map(destination => destination.LastName, source => source.LastName.FirstLetterToUpperOthersToLower());
                 config.SetTitle("Kullanıcı", "User");
+                config.SetPageOrder(Defaults.RecordsPerPageCounts, entity => entity.StatusId, entity => entity.UserName, entity => entity.CreateDate, entity => entity.UpdateDate);
             });
         }
 

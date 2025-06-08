@@ -25,21 +25,21 @@
             function () { // OK
     @if (ViewContext.RouteData.Values["Area"] is not null)
     {
-        @:window.location.href = '/@ViewContext.RouteData.Values["Area"]/@ViewContext.RouteData.Values["Controller"].ToString()/' + deleteAction;
+        @:window.location.href = '/@ViewContext.RouteData.Values["Area"]/@ViewContext.RouteData.Values["Controller"].ToString()/' + deleteAction + '?pageordersession=true';
     }
     else
     {
-        @:window.location.href = '/@ViewContext.RouteData.Values["Controller"].ToString()/' + deleteAction;
+        @:window.location.href = '/@ViewContext.RouteData.Values["Controller"].ToString()/' + deleteAction + '?pageordersession=true';
     }
             },
             function () { // Cancel
     @if (ViewContext.RouteData.Values["Area"] is not null)
     {
-        @:window.location.href = '/@ViewContext.RouteData.Values["Area"]/@ViewContext.RouteData.Values["Controller"].ToString()/Index?session=true';
+        @:window.location.href = '/@ViewContext.RouteData.Values["Area"]/@ViewContext.RouteData.Values["Controller"].ToString()/Index?pageordersession=true';
     }
     else
     {
-        @:window.location.href = '/@ViewContext.RouteData.Values["Controller"].ToString()/Index?session=true';
+        @:window.location.href = '/@ViewContext.RouteData.Values["Controller"].ToString()/Index?pageordersession=true';
     }
             }
         ).set('labels', { ok: '@yes', cancel: '@no' });

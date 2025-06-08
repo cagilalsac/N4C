@@ -67,6 +67,8 @@
 		        <validation asp-for="Data.LastName" asp-culture="@Model.Culture" class="text-danger"></validation>
 	        </div>
         </div>
+        @if (Model.Data.Id != Defaults.SystemId)
+        {
         <div class="row mb-3">
             <displayname asp-for="Data.StatusId" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
             <div class="col-10">
@@ -76,6 +78,11 @@
 	            <validation asp-for="Data.StatusId" asp-culture="@Model.Culture" class="text-danger"></validation>
             </div>
         </div>
+        }
+        else
+        {
+            <input name="StatusId" type="hidden" value="@Defaults.ActiveId" />
+        }
         <div class="row mb-3">
             <displayname asp-for="Data.MainFormFile" asp-culture="@Model.Culture" class="col-2 col-form-label fw-bold"></displayname>
             <div class="col-10">
@@ -109,12 +116,12 @@
 		        &nbsp;&nbsp;
                 <button type="reset" class="btn btn-outline-primary">@clear</button>
                 &nbsp;&nbsp;
-            @if (isAuthenticated)
+            @if (isAuthenticated && Model.Data.Id != Defaults.SystemId)
             {
                 <a asp-action="Delete" asp-route-id="@Model.Data.Id">@delete</a>
                 @:&nbsp;|&nbsp;
             }
-		        <a asp-action="Index" asp-route-session="true">@backToList</a>
+		        <a asp-action="Index" asp-route-pageordersession="true">@backToList</a>
 	        </div>
         </div>
     </form>

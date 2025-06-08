@@ -17,20 +17,20 @@ namespace N4C.Users.App.Controllers
         {
         }
 
-        public virtual async Task<IActionResult> Deactivate(int id)
+        public virtual async Task<IActionResult> Deactivate(int id, bool pageOrderSession)
         {
             var userService = Service as N4CUserService;
             var result = await userService.Deactivate(id);
             SetTempData(result);
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { pageOrderSession });
         }
 
-        public virtual async Task<IActionResult> Activate(string guid)
+        public virtual async Task<IActionResult> Activate(string guid, bool pageOrderSession)
         {
             var userService = Service as N4CUserService;
             var result = await userService.Activate(guid);
             SetTempData(result);
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { pageOrderSession });
         }
 
         [AllowAnonymous, Route("[action]")]

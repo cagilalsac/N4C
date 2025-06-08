@@ -11,7 +11,9 @@ namespace N4C.Services
     public abstract class Service<TEntity, TRequest, TResponse> : Service, IDisposable
         where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
-        protected ServiceConfig<TEntity, TRequest, TResponse> Config { get; private set; } = new ServiceConfig<TEntity, TRequest, TResponse>();
+        protected override Config Config { get; set; } = new ServiceConfig<TEntity, TRequest, TResponse>();
+
+        protected ServiceConfig<TEntity, TRequest, TResponse> ServiceConfig => Config as ServiceConfig<TEntity, TRequest, TResponse>;
 
         private bool RelationsFound { get; set; }
 
@@ -25,15 +27,15 @@ namespace N4C.Services
 
         protected virtual void Set(Action<ServiceConfig<TEntity, TRequest, TResponse>> config)
         {
-            config.Invoke(Config);
-            Set(Config.Culture, Config.TitleTR, (Config.TitleEN ?? "Record") == "Record" ? typeof(TEntity).Name : Config.TitleEN);
+            config.Invoke(ServiceConfig);
+            Set(ServiceConfig.Culture, ServiceConfig.TitleTR, (ServiceConfig.TitleEN ?? "Record") == "Record" ? typeof(TEntity).Name : ServiceConfig.TitleEN);
         }
 
         protected virtual IQueryable<TEntity> Query()
         {
-            var query = Config.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
+            var query = ServiceConfig.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
             query = query.OrderByDescending(entity => entity.UpdateDate).ThenByDescending(entity => entity.CreateDate);
-            if (Config.SqlServer && Config.SplitQuery)
+            if (ServiceConfig.SqlServer && ServiceConfig.SplitQuery)
                 query = query.AsSplitQuery();
             return query.Where(entity => (EF.Property<bool?>(entity, nameof(Domain.Entity.Deleted)) ?? false) == false);
         }
@@ -62,9 +64,50 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await Query().Map<TEntity, TResponse>(Config).ToListAsync(cancellationToken);
+                list = await Query().Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Found(list);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception, list);
+            }
+        }
+
+        public virtual async Task<Result<List<TResponse>>> GetResponse(PageOrderRequest request, CancellationToken cancellationToken = default)
+        {
+            List<TResponse> list = null;
+            try
+            {
+                if (ServiceConfig.PageOrder)
+                {
+                    var order = new Order() { Expression = request.OrderExpression ?? string.Empty };
+                    if (request.PageOrderSession && Settings.SessionExpirationInMinutes > 0)
+                    {
+                        var pageFromSession = GetSession<Page>(nameof(Page));
+                        if (pageFromSession is not null)
+                        {
+                            request.Page.Number = pageFromSession.Number;
+                            request.Page.RecordsPerPageCount = pageFromSession.RecordsPerPageCount;
+                        }
+                        var orderFromSession = GetSession<Order>(nameof(Order));
+                        if (orderFromSession is not null)
+                        {
+                            order.Expression = orderFromSession.Expression;
+                        }
+                    }
+                    request.Page.RecordsPerPageCounts = ServiceConfig.RecordsPerPageCounts;
+                    order.Expressions = ServiceConfig.OrderExpressions;
+                    list = await Query().OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                    if (Settings.SessionExpirationInMinutes > 0)
+                    {
+                        CreateSession(nameof(Page), request.Page);
+                        CreateSession(nameof(Order), order);
+                    }
+                    GetFiles(list);
+                    return Found(list, request.Page, order);
+                }
+                return await GetResponse(cancellationToken);
             }
             catch (Exception exception)
             {
@@ -77,7 +120,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await Query(predicate).Map<TEntity, TResponse>(Config).ToListAsync(cancellationToken);
+                list = await Query(predicate).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Found(list);
             }
@@ -92,7 +135,7 @@ namespace N4C.Services
             TResponse item = null;
             try
             {
-                item = await Query().Map<TEntity, TResponse>(Config).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                item = await Query().Map<TEntity, TResponse>(ServiceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 GetFiles(item);
                 return Found(item);
             }
@@ -110,7 +153,7 @@ namespace N4C.Services
                 if (id.HasValue)
                 {
                     var entity = await Query().SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
-                    item = entity.Map(Config, item);
+                    item = entity.Map(ServiceConfig, item);
                     GetFiles(item, entity);
                 }
                 else
@@ -131,7 +174,7 @@ namespace N4C.Services
             try
             {
                 var entity = await Query().SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
-                item = entity.Map(Config, item);
+                item = entity.Map(ServiceConfig, item);
                 GetFiles(item, entity);
                 return Found(item);
             }
@@ -155,9 +198,9 @@ namespace N4C.Services
                 string collation = "Turkish_CI_AS";
                 string modelStateErrors = Validate(request.ModelState).Message;
                 string uniquePropertyError = string.Empty;
-                if (Config.SqlServer)
+                if (ServiceConfig.SqlServer)
                 {
-                    foreach (var uniqueProperty in Config.UniqueProperties)
+                    foreach (var uniqueProperty in ServiceConfig.UniqueProperties)
                     {
                         entityProperty = ObjectExtensions.GetProperty<TEntity>(uniqueProperty);
                         requestProperty = ObjectExtensions.GetProperty(uniqueProperty, true, request);
@@ -165,9 +208,9 @@ namespace N4C.Services
                             EF.Functions.Collate(EF.Property<string>(entity, entityProperty.Name), collation) == EF.Functions.Collate((requestProperty.Value ?? "").ToString(), collation).Trim()))
                         {
                             if (Culture == Defaults.TR)
-                                uniquePropertyError = $"{requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} değerine sahip {Config.Title.ToLower()} bulunmaktadır!";
+                                uniquePropertyError = $"{requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} değerine sahip {ServiceConfig.Title.ToLower()} bulunmaktadır!";
                             else
-                                uniquePropertyError = $"{Config.Title} with the same value for {requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} exists!";
+                                uniquePropertyError = $"{ServiceConfig.Title} with the same value for {requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} exists!";
                             break;
                         }
                     }
@@ -196,7 +239,7 @@ namespace N4C.Services
         {
             if (relationalEntities is not null && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
             {
-                if (!Config.SoftDelete)
+                if (!ServiceConfig.SoftDelete)
                     Db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
             }
         }
@@ -208,7 +251,7 @@ namespace N4C.Services
                 var validationResult = Validate(request);
                 if (!validationResult.Success)
                     return Result(validationResult, request);
-                var entity = request.Map<TRequest, TEntity>(Config).Trim();
+                var entity = request.Map<TRequest, TEntity>(ServiceConfig).Trim();
                 entity.Guid = Guid.NewGuid().ToString();
                 entity.CreateDate = DateTime.Now;
                 entity.CreatedBy = GetUserName() ?? Defaults.User;
@@ -240,7 +283,13 @@ namespace N4C.Services
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return NotFound(request);
-                entity = request.Map(Config, entity).Trim();
+                var guid = entity.Guid;
+                var createDate = entity.CreateDate;
+                var createdBy = entity.CreatedBy;
+                entity = request.Map(ServiceConfig, entity).Trim();
+                entity.Guid = guid;
+                entity.CreateDate = createDate;
+                entity.CreatedBy = createdBy;
                 entity.UpdateDate = DateTime.Now;
                 entity.UpdatedBy = GetUserName();
                 var fileResult = UpdateFiles(request, entity);
@@ -275,7 +324,7 @@ namespace N4C.Services
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return NotFound(request);
-                if (Config.SoftDelete)
+                if (ServiceConfig.SoftDelete)
                 {
                     entity.Deleted = true;
                     entity.UpdateDate = DateTime.Now;
@@ -439,7 +488,7 @@ namespace N4C.Services
 
         protected void GetFiles(List<TResponse> list)
         {
-            if (list.Count > 0)
+            if (list.Any())
             {
                 foreach (var item in list)
                 {

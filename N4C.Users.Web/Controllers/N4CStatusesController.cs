@@ -52,12 +52,9 @@ namespace N4C.Users.Web.Controllers
 
         // GET: N4CStatuses
         //[AllowAnonymous]
-        public async Task<IActionResult> Index()
+        public override Task<IActionResult> Index(PageOrderRequest request)
         {
-            // Get collection logic:
-            var result = await Service.GetResponse();
-            
-            return View(result);
+            return base.Index(request);
         }
 
         // GET: N4CStatuses/Details/5
@@ -147,13 +144,13 @@ namespace N4C.Users.Web.Controllers
         }
 
         // GET: N4CStatuses/DeleteByAlertify/5
-        public async Task<IActionResult> DeleteByAlertify(N4CStatusRequest n4CStatusRequest)
+        public async Task<IActionResult> DeleteByAlertify(N4CStatusRequest n4CStatusRequest, bool pageOrderSession)
         {
             // Delete item logic:
             var result = await Service.Delete(n4CStatusRequest);
 
             SetTempData(result);
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { pageOrderSession });
         }
     }
 }

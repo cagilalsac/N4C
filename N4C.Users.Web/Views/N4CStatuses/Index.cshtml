@@ -36,6 +36,7 @@
         </div>
         @if (Model.Data.Any())
         {
+        <partial name="_N4CpageOrder" model="Model" />
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-secondary">
                 <tr>
@@ -70,4 +71,5 @@
 
 @section Scripts {
     <partial name="_N4Calertify" model="Model" />
+    <partial name="_N4CpageOrderScripts" model="Model" />
 }

@@ -11,6 +11,9 @@ namespace N4C.Models
         public string Title { get; }
         public bool Success => (int)HttpStatusCode >= 200 && (int)HttpStatusCode <= 299;
 
+        public Page Page { get; }
+        public Order Order { get; }
+
         public Result(HttpStatusCode httpStatusCode, string message = default, string culture = default, string title = default, int? id = default)
         {
             HttpStatusCode = httpStatusCode;
@@ -26,10 +29,12 @@ namespace N4C.Models
             Title = title is null ? (Culture == Defaults.TR ? "Kayıt" : "Record") : title;
             Id = id;
         }
-    }
 
-    public interface IResult<TData> where TData : class, new()
-    {
-        public TData Data { get; set; }
+        public Result(HttpStatusCode httpStatusCode, Page page, Order order, string message = default, string culture = default, string title = default)
+            : this(httpStatusCode, message, culture, title)
+        {
+            Page = page;
+            Order = order;
+        }
     }
 }

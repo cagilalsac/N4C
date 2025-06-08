@@ -34,7 +34,7 @@
 	    @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Data.Id" />
         <button type="submit" class="btn btn-danger">@save</button>&nbsp;&nbsp;
-        <a asp-action="Index" asp-route-session="true" class="btn btn-outline-danger">@backToList</a>
+        <a asp-action="Index" asp-route-pageordersession="true" class="btn btn-outline-danger">@backToList</a>
     </form>
 }
 </div>

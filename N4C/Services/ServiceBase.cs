@@ -17,7 +17,7 @@ namespace N4C.Services
 {
     public class Service
     {
-        private Config Config { get; set; } = new Config();
+        protected virtual Config Config { get; set; } = new Config();
 
         public string Culture => Config.Culture;
 
@@ -48,9 +48,9 @@ namespace N4C.Services
             return new Result(httpStatusCode, message, Culture, Config.Title, id);
         }
 
-        private Result<TData> Result<TData>(HttpStatusCode httpStatusCode, TData data, string message = default) where TData : class, new()
+        private Result<TData> Result<TData>(HttpStatusCode httpStatusCode, TData data, string message = default, Page page = default, Order order = default) where TData : class, new()
         {
-            return new Result<TData>(httpStatusCode, data, message, Culture, Config.Title);
+            return new Result<TData>(httpStatusCode, data, page, order, message, Culture, Config.Title);
         }
 
         protected Result Result(Result previousResult, string tr = default, string en = default) 
@@ -80,8 +80,8 @@ namespace N4C.Services
         public virtual Result Deleted(int? id = default) => Result(HttpStatusCode.NoContent, id, Config.Deleted);
         public virtual Result Unauthorized(int? id = default) => Result(HttpStatusCode.Unauthorized, id, Config.Unauthorized);
 
-        protected virtual Result<List<TData>> Found<TData>(List<TData> list) where TData : Data, new()
-            => list.Count > 0 ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}") : 
+        protected virtual Result<List<TData>> Found<TData>(List<TData> list, Page page = default, Order order = default) where TData : Data, new()
+            => list.Any() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", page, order) : 
                 Result(HttpStatusCode.NotFound, list, Config.NotFound);
 
         protected virtual Result<TData> NotFound<TData>(TData item) where TData : Data, new()
@@ -139,7 +139,7 @@ namespace N4C.Services
         public Result Validate(ModelStateDictionary modelState)
         {
             var errors = modelState.GetErrors(Culture);
-            if (errors.Count > 0)
+            if (errors.Any())
                 return Result(HttpStatusCode.BadRequest, null, string.Join(";", errors));
             return Result(HttpStatusCode.OK);
         }

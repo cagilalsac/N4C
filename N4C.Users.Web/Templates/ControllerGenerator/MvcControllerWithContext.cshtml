@@ -142,12 +142,9 @@ namespace @Model.ControllerNamespace
 
         // GET: @routePrefix
         //[AllowAnonymous]
-        public async Task<IActionResult> Index()
+        public override Task<IActionResult> Index(Page page, string orderExpression, bool pageOrderSession)
         {
-            // Get collection logic:
-            var result = await @(_serviceAbstractName).GetResponse();
-            
-            return View(result);
+            return base.Index(page, orderExpression, pageOrderSession);
         }
 
         // GET: @routePrefix/Details/5
@@ -241,13 +238,13 @@ namespace @Model.ControllerNamespace
         }
 
         // GET: @routePrefix/DeleteByAlertify/5
-        public async Task<IActionResult> DeleteByAlertify(@requestType @requestVariable)
+        public async Task<IActionResult> DeleteByAlertify(@requestType @requestVariable, bool pageOrderSession)
         {
             // Delete item logic:
             var result = await @(_serviceAbstractName).Delete(@requestVariable);
 
             SetTempData(result);
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { pageOrderSession });
         }
     }
 }

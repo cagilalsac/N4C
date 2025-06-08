@@ -1,0 +1,56 @@
+﻿@using N4C.Models
+
+@model Result
+
+@{
+if (Model.Page is not null && Model.Order is not null)
+{
+var culture = Model.Culture;
+var count = culture == Defaults.TR ? "Sayı" : "Count";
+var page = culture == Defaults.TR ? "Sayfa" : "Page";
+var order = culture == Defaults.TR ? "Sıra" : "Order";
+
+<div class="row mb-3">
+@if (Model.Page is not null)
+{
+    var recordsPerPageCounts = new SelectList(Model.Page.RecordsPerPageCounts);
+    var pageNumbers = new SelectList(Model.Page.Numbers);
+    <div class="col-lg-7">
+        <div class="row">
+            <div class="col-lg-1 pt-1">
+                @count
+            </div>
+            <div class="col-lg-3">
+                <select asp-for="Page.RecordsPerPageCount" class="form-select recordsperpagecount" asp-items="recordsPerPageCounts"></select>
+            </div>
+            <div class="col-lg-1"></div>
+            <div class="col-lg-1 pt-1">
+                @(page)
+            </div>
+            <div class="col-lg-3">
+                <div class="input-group">
+                    <select asp-for="Page.Number" class="form-select pagenumber" asp-items="pageNumbers"></select>
+                    <span class="input-group-text">@(" / " + pageNumbers.Count())</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@if (Model.Order is not null && Model.Order.Expressions.Any())
+{
+    var orderExpressions = new SelectList(Model.Order.Expressions, "Key", "Value", Model.Order.Expression);
+    <div class="col-lg-5">
+        <div class="row">
+            <div class="col-lg-4"></div>
+            <div class="col-lg-1 pt-1">
+                @order
+            </div>
+            <div class="col-lg-7">
+                <select name="OrderExpression" class="form-select orderexpression" asp-items="orderExpressions"></select>
+            </div>
+        </div>
+    </div>
+}
+</div>
+}
+}

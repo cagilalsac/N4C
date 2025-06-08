@@ -40,6 +40,10 @@ namespace N4C.Users.App.Models
         [DisplayName("Roller")]
         public string Roles_ { get; set; }
 
+        [DisplayName("Durum", "Status")]
+        [ExcelIgnore]
+        public int StatusId { get; set; }
+
         [ExcelIgnore]
         public N4CStatusResponse Status { get; set; }
 

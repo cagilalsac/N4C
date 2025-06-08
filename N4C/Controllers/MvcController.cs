@@ -25,6 +25,12 @@ namespace N4C.Controllers
             Set(Config.Culture, Config.ViewData);
         }
 
+        public virtual async Task<IActionResult> Index(PageOrderRequest request)
+        {
+            var result = await Service.GetResponse(request);
+            return View(result);
+        }
+
         public virtual async Task<IActionResult> DeleteFile(int id, string path = null, string redirectToAction = "Details")
         {
             var result = await Service.DeleteFiles(id, path);

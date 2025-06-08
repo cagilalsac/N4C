@@ -17,7 +17,8 @@ namespace N4C.Models
         public void SetSplitQuery(bool splitQuery) => SplitQuery = splitQuery;
         public void SetSqlServer(bool sqlServer) => SqlServer = sqlServer;
         public void SetSoftDelete(bool softDelete) => SoftDelete = softDelete;
-        
+
+        public IMappingExpression<TRequest, TEntity> SetEntity() => CreateMap<TRequest, TEntity>();
         public IMappingExpression<TEntity, TRequest> SetRequest() => CreateMap<TEntity, TRequest>();
 
         public IMappingExpression<TEntity, TResponse> SetResponse() => CreateMap<TEntity, TResponse>()
@@ -47,26 +48,14 @@ namespace N4C.Models
             }
         }
 
-        public void SetPageOrder(bool pageOrder, params int[] recordsPerPageCounts)
+        public void SetPageOrder(int[] recordsPerPageCounts = default, params Expression<Func<TResponse, object>>[] entityProperties)
         {
-            PageOrder = pageOrder;
-            RecordsPerPageCounts.Clear();
-            if (PageOrder)
-            {
-                if (recordsPerPageCounts.Any())
-                    RecordsPerPageCounts.AddRange(recordsPerPageCounts.Select(recordsPerPageCount => recordsPerPageCount.ToString()));
-                else
-                    RecordsPerPageCounts.AddRange(["5", "10", "25", "50", "100"]);
-                RecordsPerPageCounts.Add(Culture == Defaults.TR ? "Tümü" : "All");
-            }
-        }
-
-        public void SetOrderExpressions(params Expression<Func<TResponse, object>>[] entityProperties)
-        {
-            Property property;
-            var entityPropertyList = ObjectExtensions.GetProperties<TEntity>();
+            PageOrder = true;
+            Property property = null;
             var descValue = Culture == Defaults.TR ? "Azalan" : "Descending";
+            var entityPropertyList = ObjectExtensions.GetProperties<TEntity>();
             OrderExpressions.Clear();
+            bool entityPropertyFound = true;
             foreach (var entityProperty in entityProperties)
             {
                 property = entityProperty.GetProperty();
@@ -75,7 +64,22 @@ namespace N4C.Models
                     OrderExpressions.Add(property.Name, property.DisplayName.GetDisplayName(property.Name, Culture));
                     OrderExpressions.Add($"{property.Name}{"DESC"}", $"{property.DisplayName.GetDisplayName(property.Name, Culture)} {descValue}");
                 }
+                else
+                {
+                    entityPropertyFound = false;
+                    break;
+                }
             }
+            if (!entityPropertyFound)
+            {
+                OrderExpressions.Clear();
+                OrderExpressions.Add(string.Empty, Culture == Defaults.TR ? $"{property.Name} sıralanamaz!" : $"{property.Name} can't be ordered!");
+            }
+            RecordsPerPageCounts.Clear();
+            RecordsPerPageCounts.Add(Culture == Defaults.TR ? "Tümü" : "All");
+            if (recordsPerPageCounts is null || !recordsPerPageCounts.Any())
+                recordsPerPageCounts = Defaults.RecordsPerPageCounts;
+            RecordsPerPageCounts.AddRange(recordsPerPageCounts.Select(recordsPerPageCount => recordsPerPageCount.ToString()));
         }
     }
 }

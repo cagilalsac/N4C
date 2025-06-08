@@ -28,12 +28,12 @@ namespace N4C.Models
             { ".gif", "image/gif" }
         };
 
-        public void SetCulture(string culture) => Culture = culture ?? Settings.Culture;
+        public void SetCulture(string culture) => Culture = culture;
 
         public void SetTitle(string titleTR, string titleEN = default)
         {
-            TitleTR = titleTR ?? "Kayıt";
-            TitleEN = titleEN ?? "Record";
+            TitleTR = titleTR;
+            TitleEN = titleEN;
         }
 
         public void SetFilesFolder(string filesFolder) => FilesFolder = filesFolder;

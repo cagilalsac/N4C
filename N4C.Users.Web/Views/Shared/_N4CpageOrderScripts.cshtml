@@ -1,0 +1,28 @@
+﻿@using N4C.Models
+
+@model Result
+
+@if (Model.Page is not null)
+{
+    <script>
+        $(function () {
+            $(document).on('change', '.pagenumber', function () {
+                $('#form').submit();
+            });
+            $(document).on('change', '.recordsperpagecount', function () {
+                $('.pagenumber').val('1');
+                $('#form').submit();
+            });
+        });
+    </script>
+}
+@if (Model.Order is not null)
+{
+    <script>
+        $(function () {
+            $(document).on('change', '.orderexpression', function() {
+                $('#form').submit();
+            });
+         });
+    </script>
+}

@@ -14,6 +14,8 @@
     var edit = Model.Culture == Defaults.TR ? "Düzenle" : "Edit";
     var delete = Model.Culture == Defaults.TR ? "Sil" : "Delete";
     var excel = Model.Culture == Defaults.TR ? "Excel'e Aktar" : "Export to Excel";
+    var activate = Model.Culture == Defaults.TR ? "Etkinleştir" : "Activate";
+    var deactivate = Model.Culture == Defaults.TR ? "Etkisizleştir" : "Deactivate";
     var isAuthenticated = User.Identity.IsAuthenticated;
 }
 @{
@@ -38,6 +40,7 @@
         </div>
         @if (Model.Data.Any())
         {
+        <partial name="_N4CpageOrder" model="Model" />
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-secondary">
                 <tr>
@@ -48,7 +51,7 @@
                         @Html.DisplayNameFor(model => model.Data.First().Roles_, Model.Culture)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Data.First().Active_, Model.Culture)
+                        @Html.DisplayNameFor(model => model.Data.First().Active_Html, Model.Culture)
                     </th>
                     <th>
                         @Html.DisplayNameFor(model => model.Data.First().MainFile, Model.Culture)
@@ -72,7 +75,7 @@
 					    @Html.Raw(item.Roles_)
 				    </td>
 				    <td>
-					    @Html.Raw(item.Active_)
+					    @Html.Raw(item.Active_Html)
 				    </td>
                     <td style="width:10%;">
                         @if (string.IsNullOrWhiteSpace(item.MainFile))
@@ -93,9 +96,24 @@
 				    <td class="text-end w-25">
                     @if (isAuthenticated)
                     {
+                        @if (item.Id != Defaults.SystemId)
+                        {
+                        @if (!item.Active)
+                        {
+                        <a asp-action="Activate" asp-route-guid="@item.Guid" asp-route-pageordersession="true">@activate</a>@:&nbsp;|&nbsp;
+                        }
+                        else
+                        {
+                        <a asp-action="Deactivate" asp-route-id="@item.Id" asp-route-pageordersession="true">@deactivate</a>@:&nbsp;|&nbsp;
+                        }
 					    <a asp-action="Details" asp-route-id="@item.Id">@details</a>@:&nbsp;|&nbsp;
-					    <a asp-action="Edit" asp-route-id="@item.Id">@edit</a>@:&nbsp;|&nbsp;
+                        }
+					    <a asp-action="Edit" asp-route-id="@item.Id">@edit</a>
+                        @if (item.Id != Defaults.SystemId)
+                        {
+                        @:&nbsp;|&nbsp;
                         <a href="#" onclick="deleteRecord(@item.Id);">@delete</a>
+                        }
                     }
 				    </td>
 			    </tr>
@@ -109,4 +127,5 @@
 
 @section Scripts {
     <partial name="_N4Calertify" model="Model" />
+    <partial name="_N4CpageOrderScripts" model="Model" />
 }

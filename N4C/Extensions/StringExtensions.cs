@@ -4,6 +4,36 @@ namespace N4C.Extensions
 {
     public static class StringExtensions
     {
+        public static string FirstLetterToUpperOthersToLower(this string value)
+        {
+            string result = string.Empty;
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                if (value.Contains(' '))
+                {
+                    string[] valueParts = value.Split(' ');
+                    foreach (string valuePart in valueParts)
+                    {
+                        if (!string.IsNullOrWhiteSpace(valuePart))
+                        {
+                            result += valuePart.Substring(0, 1).ToUpper();
+                            if (valuePart.Length > 1)
+                                result += valuePart.Substring(1).ToLower();
+                            result += " ";
+                        }
+                    }
+                    result = result.TrimEnd();
+                }
+                else
+                {
+                    result = value.Substring(0, 1).ToUpper();
+                    if (value.Length > 1)
+                        result += value.Substring(1).ToLower();
+                }
+            }
+            return result;
+        }
+
         public static int GetCount(this string value, char character)
         {
             if (!string.IsNullOrWhiteSpace(value))
