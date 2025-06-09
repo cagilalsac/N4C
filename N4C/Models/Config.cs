@@ -7,6 +7,7 @@ namespace N4C.Models
         public string Culture { get; private set; } = Settings.Culture;
         public string TitleTR { get; private set; } = "Kayıt";
         public string TitleEN { get; private set; } = "Record";
+        public bool ModelStateErrors { get; private set; } = true;
         public string FilesFolder { get; private set; } = "files";
         public double MaximumFileSizeInMb { get; private set; } = 5;
         public byte MaximumOtherFilesCount { get; private set; } = 25;
@@ -34,6 +35,11 @@ namespace N4C.Models
         {
             TitleTR = titleTR;
             TitleEN = titleEN;
+        }
+
+        public void SetModelStateErrors(bool modelStateErrors)
+        {
+            ModelStateErrors = modelStateErrors;
         }
 
         public void SetFilesFolder(string filesFolder) => FilesFolder = filesFolder;

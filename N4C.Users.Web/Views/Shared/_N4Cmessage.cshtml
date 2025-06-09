@@ -29,7 +29,21 @@ if (Model.Success)
 else
 {
 <p class="text-danger fs-5">
+@if (Model.ModelStateErrors)
+{
 	@Html.Raw(Model.Message.Replace(";", "<br>"))
+}
+else
+{
+if (Model.Message.Contains(';')) 
+{
+	@Html.Raw(Model.Message.Remove(Model.Message.IndexOf(';')))
+}
+else
+{
+	@Html.Raw(Model.Message)
+}
+}
 </p>
 }
 }

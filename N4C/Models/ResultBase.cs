@@ -7,6 +7,7 @@ namespace N4C.Models
         public HttpStatusCode HttpStatusCode { get; }
         public string Message { get; }
         public int? Id { get; }
+        public bool ModelStateErrors { get; }
         public string Culture { get; }
         public string Title { get; }
         public bool Success => (int)HttpStatusCode >= 200 && (int)HttpStatusCode <= 299;
@@ -14,7 +15,8 @@ namespace N4C.Models
         public Page Page { get; }
         public Order Order { get; }
 
-        public Result(HttpStatusCode httpStatusCode, string message = default, string culture = default, string title = default, int? id = default)
+        public Result(HttpStatusCode httpStatusCode, string message = default, string culture = default, string title = default, 
+            int? id = default, bool modelStateErrors = true)
         {
             HttpStatusCode = httpStatusCode;
             Message = message ?? string.Empty;
@@ -28,10 +30,11 @@ namespace N4C.Models
             Culture = culture ?? Defaults.TR;
             Title = title is null ? (Culture == Defaults.TR ? "Kayıt" : "Record") : title;
             Id = id;
+            ModelStateErrors = modelStateErrors;
         }
 
-        public Result(HttpStatusCode httpStatusCode, Page page, Order order, string message = default, string culture = default, string title = default)
-            : this(httpStatusCode, message, culture, title)
+        public Result(HttpStatusCode httpStatusCode, Page page, Order order, string message = default, string culture = default, string title = default,
+            bool modelStateErrors = true) : this(httpStatusCode, message, culture, title, null, modelStateErrors)
         {
             Page = page;
             Order = order;

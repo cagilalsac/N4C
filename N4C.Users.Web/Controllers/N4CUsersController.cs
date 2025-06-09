@@ -44,8 +44,6 @@ namespace N4C.Users.Web.Controllers
         {
             base.Set(config => 
             {
-                config.SetModelStateErrors(false);
-
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
                 config.AddViewData("StatusId", new SelectList(_statusService.GetResponse().Result.Data, "Id", "Title"));
 

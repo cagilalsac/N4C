@@ -41,8 +41,6 @@ namespace N4C.Users.Web.Controllers
         {
             base.Set(config => 
             {
-                config.SetModelStateErrors(true);
-
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
 
                 /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */

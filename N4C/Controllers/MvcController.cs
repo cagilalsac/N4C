@@ -20,7 +20,6 @@ namespace N4C.Controllers
         protected virtual void Set(Action<ControllerConfig> config)
         {
             config.Invoke(Config);
-            Service.SetModelStateErrors(Config.ModelStateErrors);
             Config.SetCulture(Service.Culture);
             Set(Config.Culture, Config.ViewData);
         }

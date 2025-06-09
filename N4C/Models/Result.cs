@@ -6,14 +6,8 @@ namespace N4C.Models
     {
         public TData Data { get; set; }
 
-        public Result(HttpStatusCode httpStatusCode, TData data = default, string message = default, string culture = default, string title = default, int? id = default) 
-            : base(httpStatusCode, message, culture, title, id)
-        {
-            Data = data;
-        }
-
-        public Result(HttpStatusCode httpStatusCode, TData data, Page page, Order order, string message = default, string culture = default, string title = default)
-            : base(httpStatusCode, page, order, message, culture, title)
+        public Result(HttpStatusCode httpStatusCode, TData data, Page page, Order order, string message = default, string culture = default, string title = default,
+            bool modelStateErrors = true) : base(httpStatusCode, page, order, message, culture, title, modelStateErrors)
         {
             Data = data;
         }

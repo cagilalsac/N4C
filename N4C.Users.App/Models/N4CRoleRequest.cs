@@ -7,7 +7,7 @@ namespace N4C.Users.App.Models
     {
         [Required]
         [StringLength(50)]
-        [DisplayName("Role Adı", "Role Name")]
+        [DisplayName("Rol Adı", "Role Name")]
         public string Name { get; set; }
     }
 }

@@ -21,8 +21,6 @@ namespace N4C.Services
 
         public string Culture => Config.Culture;
 
-        private bool ModelStateErrors { get; set; } = true;
-
         private IHttpContextAccessor HttpContextAccessor { get; }
         private ILogger<Service> Logger { get; }
 
@@ -41,23 +39,24 @@ namespace N4C.Services
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(Culture);
         }
 
-        public void SetModelStateErrors(bool modelStateErrors) => ModelStateErrors = modelStateErrors;
-
-        private Result Result(HttpStatusCode httpStatusCode, int? id = default, string message = default)
+        private Result Result(HttpStatusCode httpStatusCode, int? id = default, string message = default, bool modelStateErrors = true)
         {
-            return new Result(httpStatusCode, message, Culture, Config.Title, id);
+            return new Result(httpStatusCode, message, Culture, Config.Title, id, modelStateErrors);
         }
 
-        private Result<TData> Result<TData>(HttpStatusCode httpStatusCode, TData data, string message = default, Page page = default, Order order = default) where TData : class, new()
+        private Result<TData> Result<TData>(HttpStatusCode httpStatusCode, TData data, string message = default, bool modelStateErrors = true,
+            Page page = default, Order order = default) where TData : class, new()
         {
-            return new Result<TData>(httpStatusCode, data, page, order, message, Culture, Config.Title);
+            return new Result<TData>(httpStatusCode, data, page, order, message, Culture, Config.Title, modelStateErrors);
         }
 
         protected Result Result(Result previousResult, string tr = default, string en = default) 
-            => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en);
+            => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en,
+                previousResult.ModelStateErrors);
 
         protected Result<TData> Result<TData>(Result previousResult, TData data, string tr = default, string en = default) where TData : class, new()
-            => Result(previousResult.HttpStatusCode, data, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en);
+            => Result(previousResult.HttpStatusCode, data, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en,
+                previousResult.ModelStateErrors);
 
         public virtual Result NotFound(int? id = default) => Result(HttpStatusCode.NotFound, id, Config.NotFound);
 
@@ -81,7 +80,7 @@ namespace N4C.Services
         public virtual Result Unauthorized(int? id = default) => Result(HttpStatusCode.Unauthorized, id, Config.Unauthorized);
 
         protected virtual Result<List<TData>> Found<TData>(List<TData> list, Page page = default, Order order = default) where TData : Data, new()
-            => list.Any() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", page, order) : 
+            => list.Any() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", false, page, order) : 
                 Result(HttpStatusCode.NotFound, list, Config.NotFound);
 
         protected virtual Result<TData> NotFound<TData>(TData item) where TData : Data, new()
@@ -130,10 +129,10 @@ namespace N4C.Services
         {
             var error = modelStateErrors.Length > 0 || (uniquePropertyError ?? string.Empty).Length > 0;
             var errors = Config.Error;
-            if (ModelStateErrors && modelStateErrors.Length > 0)
+            if (modelStateErrors.Length > 0)
                 errors += ";" + modelStateErrors;
             errors += ";" + uniquePropertyError;
-            return error ? Result(HttpStatusCode.BadRequest, item, errors.Trim(';')) : Result(HttpStatusCode.OK, item);
+            return error ? Result(HttpStatusCode.BadRequest, item, errors.Trim(';'), Config.ModelStateErrors) : Result(HttpStatusCode.OK, item);
         }
 
         public Result Validate(ModelStateDictionary modelState)

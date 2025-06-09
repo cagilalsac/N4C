@@ -36,6 +36,7 @@ namespace N4C.Users.App.Services
                     .Map(destination => destination.FirstName, source => source.FirstName.FirstLetterToUpperOthersToLower())
                     .Map(destination => destination.LastName, source => source.LastName.FirstLetterToUpperOthersToLower());
                 config.SetTitle("Kullanıcı", "User");
+                config.SetModelStateErrors(false);
                 config.SetPageOrder(Defaults.RecordsPerPageCounts, entity => entity.StatusId, entity => entity.UserName, entity => entity.CreateDate, entity => entity.UpdateDate);
             });
         }
