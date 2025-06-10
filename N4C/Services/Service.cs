@@ -22,7 +22,7 @@ namespace N4C.Services
         protected Service(DbContext db, IHttpContextAccessor httpContextAccessor, ILogger<Service> logger) : base(httpContextAccessor, logger)
         {
             Db = db;
-            Set(null);
+            GetQuery();
         }
 
         protected virtual IQueryable<TEntity> SetQuery(Action<ServiceConfig<TEntity, TRequest, TResponse>> config)
@@ -39,12 +39,14 @@ namespace N4C.Services
             return query.Where(entity => (EF.Property<bool?>(entity, nameof(Entity.Deleted)) ?? false) == false);
         }
 
+        protected IQueryable<TEntity> GetQuery() => SetQuery(null);
+
         protected TEntity GetEntity(TRequest request, CancellationToken cancellationToken = default)
         {
             TEntity item = null;
             try
             {
-                item = SetQuery(null).SingleOrDefaultAsync(entity => entity.Id == request.Id, cancellationToken)?.Result ?? new TEntity();
+                item = GetQuery().SingleOrDefaultAsync(entity => entity.Id == request.Id, cancellationToken)?.Result ?? new TEntity();
             }
             catch (Exception exception)
             {
@@ -58,7 +60,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await SetQuery(null).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                list = await GetQuery().Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Found(list);
             }
@@ -92,7 +94,7 @@ namespace N4C.Services
                     }
                     request.Page.RecordsPerPageCounts = ServiceConfig.RecordsPerPageCounts;
                     order.Expressions = ServiceConfig.OrderExpressions;
-                    list = await SetQuery(null).OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                    list = await GetQuery().OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                     if (Settings.SessionExpirationInMinutes > 0)
                     {
                         CreateSession(nameof(Page), request.Page);
@@ -114,7 +116,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await SetQuery(null).Where(predicate).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                list = await GetQuery().Where(predicate).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Found(list);
             }
@@ -129,7 +131,7 @@ namespace N4C.Services
             TResponse item = null;
             try
             {
-                item = await SetQuery(null).Map<TEntity, TResponse>(ServiceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                item = await GetQuery().Map<TEntity, TResponse>(ServiceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 GetFiles(item);
                 return Found(item);
             }
@@ -146,7 +148,7 @@ namespace N4C.Services
             {
                 if (id.HasValue)
                 {
-                    var entity = await SetQuery(null).SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
+                    var entity = await GetQuery().SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
                     item = entity.Map(ServiceConfig, item);
                     GetFiles(item, entity);
                 }
@@ -167,7 +169,7 @@ namespace N4C.Services
             TRequest item = null;
             try
             {
-                var entity = await SetQuery(null).SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
+                var entity = await GetQuery().SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
                 item = entity.Map(ServiceConfig, item);
                 GetFiles(item, entity);
                 return Found(item);
@@ -198,7 +200,7 @@ namespace N4C.Services
                     {
                         entityProperty = ObjectExtensions.GetProperty<TEntity>(uniqueProperty);
                         requestProperty = ObjectExtensions.GetProperty(uniqueProperty, true, request);
-                        if (entityProperty is not null && requestProperty is not null && SetQuery(null).Any(entity => entity.Id != request.Id &&
+                        if (entityProperty is not null && requestProperty is not null && GetQuery().Any(entity => entity.Id != request.Id &&
                             EF.Functions.Collate(EF.Property<string>(entity, entityProperty.Name), collation) == EF.Functions.Collate((requestProperty.Value ?? "").ToString(), collation).Trim()))
                         {
                             if (Culture == Defaults.TR)
