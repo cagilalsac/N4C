@@ -15,19 +15,14 @@ namespace N4C.Users.App.Services
         {
         }
 
-        protected override void Set(Action<ServiceConfig<N4CStatus, N4CStatusRequest, N4CStatusResponse>> config)
+        protected override IQueryable<N4CStatus> SetQuery(Action<ServiceConfig<N4CStatus, N4CStatusRequest, N4CStatusResponse>> config)
         {
-            base.Set(config =>
+            return base.SetQuery(config =>
             {
                 config.SetResponse()
                     .Map(destination => destination.Users, source => string.Join("<br>", source.Users.Select(user => user.UserName)));
                 config.SetTitle("Durum", "Status");
-            });
-        }
-
-        protected override IQueryable<N4CStatus> Query()
-        {
-            return base.Query().Include(status => status.Users).OrderBy(status => status.Title);
+            }).Include(status => status.Users).OrderBy(status => status.Title);
         }
 
         public override Task<Result<N4CStatusRequest>> Delete(N4CStatusRequest request, bool save = true, CancellationToken cancellationToken = default)

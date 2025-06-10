@@ -25,24 +25,18 @@ namespace N4C.Services
             Set(null);
         }
 
-        protected virtual void Set(Action<ServiceConfig<TEntity, TRequest, TResponse>> config)
+        protected virtual IQueryable<TEntity> SetQuery(Action<ServiceConfig<TEntity, TRequest, TResponse>> config)
         {
-            config.Invoke(ServiceConfig);
-            Set(ServiceConfig.Culture, ServiceConfig.TitleTR, (ServiceConfig.TitleEN ?? "Record") == "Record" ? typeof(TEntity).Name : ServiceConfig.TitleEN);
-        }
-
-        protected virtual IQueryable<TEntity> Query()
-        {
+            if (config is not null)
+            {
+                config.Invoke(ServiceConfig);
+                Set(ServiceConfig.Culture, ServiceConfig.TitleTR, (ServiceConfig.TitleEN ?? "Record") == "Record" ? typeof(TEntity).Name : ServiceConfig.TitleEN);
+            }
             var query = ServiceConfig.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
             query = query.OrderByDescending(entity => entity.UpdateDate).ThenByDescending(entity => entity.CreateDate);
             if (ServiceConfig.SqlServer && ServiceConfig.SplitQuery)
                 query = query.AsSplitQuery();
-            return query.Where(entity => (EF.Property<bool?>(entity, nameof(Domain.Entity.Deleted)) ?? false) == false);
-        }
-
-        protected IQueryable<TEntity> Query(Expression<Func<TEntity, bool>> predicate)
-        {
-            return Query().Where(predicate);
+            return query.Where(entity => (EF.Property<bool?>(entity, nameof(Entity.Deleted)) ?? false) == false);
         }
 
         protected TEntity GetEntity(TRequest request, CancellationToken cancellationToken = default)
@@ -50,7 +44,7 @@ namespace N4C.Services
             TEntity item = null;
             try
             {
-                item = Query().SingleOrDefaultAsync(entity => entity.Id == request.Id, cancellationToken)?.Result ?? new TEntity();
+                item = SetQuery(null).SingleOrDefaultAsync(entity => entity.Id == request.Id, cancellationToken)?.Result ?? new TEntity();
             }
             catch (Exception exception)
             {
@@ -64,7 +58,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await Query().Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                list = await SetQuery(null).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Found(list);
             }
@@ -98,7 +92,7 @@ namespace N4C.Services
                     }
                     request.Page.RecordsPerPageCounts = ServiceConfig.RecordsPerPageCounts;
                     order.Expressions = ServiceConfig.OrderExpressions;
-                    list = await Query().OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                    list = await SetQuery(null).OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                     if (Settings.SessionExpirationInMinutes > 0)
                     {
                         CreateSession(nameof(Page), request.Page);
@@ -120,7 +114,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await Query(predicate).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                list = await SetQuery(null).Where(predicate).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Found(list);
             }
@@ -135,7 +129,7 @@ namespace N4C.Services
             TResponse item = null;
             try
             {
-                item = await Query().Map<TEntity, TResponse>(ServiceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                item = await SetQuery(null).Map<TEntity, TResponse>(ServiceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 GetFiles(item);
                 return Found(item);
             }
@@ -152,7 +146,7 @@ namespace N4C.Services
             {
                 if (id.HasValue)
                 {
-                    var entity = await Query().SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
+                    var entity = await SetQuery(null).SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
                     item = entity.Map(ServiceConfig, item);
                     GetFiles(item, entity);
                 }
@@ -173,7 +167,7 @@ namespace N4C.Services
             TRequest item = null;
             try
             {
-                var entity = await Query().SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
+                var entity = await SetQuery(null).SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
                 item = entity.Map(ServiceConfig, item);
                 GetFiles(item, entity);
                 return Found(item);
@@ -204,7 +198,7 @@ namespace N4C.Services
                     {
                         entityProperty = ObjectExtensions.GetProperty<TEntity>(uniqueProperty);
                         requestProperty = ObjectExtensions.GetProperty(uniqueProperty, true, request);
-                        if (entityProperty is not null && requestProperty is not null && Query().Any(entity => entity.Id != request.Id &&
+                        if (entityProperty is not null && requestProperty is not null && SetQuery(null).Any(entity => entity.Id != request.Id &&
                             EF.Functions.Collate(EF.Property<string>(entity, entityProperty.Name), collation) == EF.Functions.Collate((requestProperty.Value ?? "").ToString(), collation).Trim()))
                         {
                             if (Culture == Defaults.TR)

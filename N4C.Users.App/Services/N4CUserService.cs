@@ -15,9 +15,9 @@ namespace N4C.Users.App.Services
         {
         }
 
-        protected override void Set(Action<ServiceConfig<N4CUser, N4CUserRequest, N4CUserResponse>> config)
+        protected override IQueryable<N4CUser> SetQuery(Action<ServiceConfig<N4CUser, N4CUserRequest, N4CUserResponse>> config)
         {
-            base.Set(config =>
+            var query = base.SetQuery(config =>
             {
                 config.SetResponse()
                     .Map(destination => destination.FullName, source => $"{source.FirstName} {source.LastName}")
@@ -39,14 +39,10 @@ namespace N4C.Users.App.Services
                 config.SetModelStateErrors(false);
                 config.SetPageOrder(Defaults.RecordsPerPageCounts, entity => entity.StatusId, entity => entity.UserName, entity => entity.CreateDate, entity => entity.UpdateDate);
             });
-        }
-
-        protected override IQueryable<N4CUser> Query()
-        {
             var systemUserId = Defaults.SystemId;
-            var systemUserQuery = base.Query().Where(user => user.Id == systemUserId)
+            var systemUserQuery = query.Where(user => user.Id == systemUserId)
                 .Include(user => user.Status).Include(user => user.UserRoles).ThenInclude(userRole => userRole.Role);
-            var otherUsersQuery = base.Query().Where(user => user.Id != systemUserId)
+            var otherUsersQuery = query.Where(user => user.Id != systemUserId)
                 .Include(user => user.Status).Include(user => user.UserRoles).ThenInclude(userRole => userRole.Role)
                 .OrderByDescending(user => user.UpdateDate).OrderByDescending(user => user.CreateDate).ThenBy(user => user.UserName);
             return systemUserQuery.Union(otherUsersQuery);

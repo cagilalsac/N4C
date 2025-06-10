@@ -15,9 +15,9 @@ namespace N4C.Users.App.Services
         {
         }
 
-        protected override void Set(Action<ServiceConfig<N4CRole, N4CRoleRequest, N4CRoleResponse>> config)
+        protected override IQueryable<N4CRole> SetQuery(Action<ServiceConfig<N4CRole, N4CRoleRequest, N4CRoleResponse>> config)
         {
-            base.Set(config =>
+            var query = base.SetQuery(config =>
             {
                 config.SetResponse()
                     .Map(destination => destination.UsersCount, source => source.UserRoles.Count)
@@ -37,14 +37,10 @@ namespace N4C.Users.App.Services
                     }).ToList());
                 config.SetTitle("Rol", "Role");
             });
-        }
-
-        protected override IQueryable<N4CRole> Query()
-        {
             var systemRoleId = Defaults.SystemId;
-            var systemRoleQuery = base.Query().Where(role => role.Id == systemRoleId)
+            var systemRoleQuery = query.Where(role => role.Id == systemRoleId)
                 .Include(role => role.UserRoles).ThenInclude(userRole => userRole.User).ThenInclude(user => user.Status);
-            var otherRolesQuery = base.Query().Where(role => role.Id != systemRoleId)
+            var otherRolesQuery = query.Where(role => role.Id != systemRoleId)
                 .Include(role => role.UserRoles).ThenInclude(userRole => userRole.User).ThenInclude(user => user.Status).OrderBy(role => role.Name);
             return systemRoleQuery.Union(otherRolesQuery);
         }
