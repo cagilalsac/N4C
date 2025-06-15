@@ -7,6 +7,9 @@ namespace N4C.Models
     public class Request : Data
     {
         [JsonIgnore]
+        public override string Guid { get => base.Guid; set => base.Guid = value; }
+
+        [JsonIgnore]
         public ModelStateDictionary ModelState { get; private set; } = new ModelStateDictionary();
 
         public void Set(ModelStateDictionary modelState)

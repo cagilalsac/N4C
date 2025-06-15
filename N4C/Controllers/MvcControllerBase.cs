@@ -5,10 +5,11 @@ using N4C.Models;
 
 namespace N4C.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public abstract class MvcController : Controller
     {
         protected string Culture { get; private set; }
-
+        
         private Dictionary<string, object> _viewData;
 
         private readonly IModelMetadataProvider _modelMetaDataProvider;

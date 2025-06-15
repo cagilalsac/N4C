@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace N4C.Models
 {
-    public class ServiceConfig<TEntity, TRequest, TResponse> : Config
+    public class ServiceConfig<TEntity, TRequest, TResponse> : ServiceConfig
          where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
         public bool NoTracking { get; private set; } = true;

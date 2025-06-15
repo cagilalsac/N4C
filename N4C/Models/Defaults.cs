@@ -16,5 +16,6 @@
         public static int InactiveId => 2;
         public static string Inactive => "Inactive";
         public static int[] RecordsPerPageCounts => [5, 10, 25, 50, 100];
+        public static string Token => "Token";
     }
 }

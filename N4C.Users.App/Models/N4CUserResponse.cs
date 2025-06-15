@@ -1,5 +1,6 @@
 ﻿using N4C.Attributes;
 using N4C.Models;
+using System.Text.Json.Serialization;
 
 namespace N4C.Users.App.Models
 {
@@ -16,6 +17,7 @@ namespace N4C.Users.App.Models
 
         [DisplayName("Şifre")]
         [ExcelIgnore]
+        [JsonIgnore]
         public string Password { get; set; }
 
         [DisplayName("E-Posta", "E-Mail")]
@@ -28,6 +30,7 @@ namespace N4C.Users.App.Models
         public string LastName { get; set; }
 
         [DisplayName("Tam Adı")]
+        [JsonIgnore]
         public string FullName { get; set; }
 
         [ExcelIgnore]
@@ -38,23 +41,28 @@ namespace N4C.Users.App.Models
         public List<string> Roles { get; set; }
 
         [DisplayName("Roller")]
+        [JsonIgnore]
         public string Roles_ { get; set; }
 
         [DisplayName("Durum", "Status")]
         [ExcelIgnore]
+        [JsonIgnore]
         public int StatusId { get; set; }
 
         [ExcelIgnore]
         public N4CStatusResponse Status { get; set; }
 
         [ExcelIgnore]
+        [JsonIgnore]
         public bool Active { get; set; }
 
         [DisplayName("Durum", "Status")]
+        [JsonIgnore]
         public string Active_ { get; set; }
 
         [DisplayName("Durum", "Status")]
         [ExcelIgnore]
+        [JsonIgnore]
         public string Active_Html { get; set; }
     }
 }

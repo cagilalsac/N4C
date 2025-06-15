@@ -13,7 +13,7 @@ namespace N4C.Extensions
             return mappingExpression.ForMember(destination, options => options.MapFrom(source));
         }
 
-        public static IQueryable<TDestination> Map<TSource, TDestination>(this IQueryable<TSource> query, Config serviceConfig = default)
+        public static IQueryable<TDestination> Map<TSource, TDestination>(this IQueryable<TSource> query, ServiceConfig serviceConfig = default)
             where TSource : class, new() where TDestination : class, new()
         {
             var mapperConfigurationExpression = new MapperConfigurationExpression();
@@ -24,7 +24,7 @@ namespace N4C.Extensions
             return query.ProjectTo<TDestination>(mapperConfiguration);
         }
 
-        public static TDestination Map<TSource, TDestination>(this TSource source, Config serviceConfig = default, TDestination destination = default) 
+        public static TDestination Map<TSource, TDestination>(this TSource source, ServiceConfig serviceConfig = default, TDestination destination = default) 
             where TSource : class, new() where TDestination : class, new()
         {
             var mapperConfigurationExpression = new MapperConfigurationExpression();

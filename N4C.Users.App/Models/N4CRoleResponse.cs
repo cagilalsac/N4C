@@ -1,5 +1,6 @@
 ﻿using N4C.Attributes;
 using N4C.Models;
+using System.Text.Json.Serialization;
 
 namespace N4C.Users.App.Models
 {
@@ -9,6 +10,7 @@ namespace N4C.Users.App.Models
         public string Name { get; set; }
 
         [DisplayName("Kullanıcı Sayısı")]
+        [JsonIgnore]
         public int UsersCount { get; set; }
 
         [DisplayName("Kullanıcılar")]

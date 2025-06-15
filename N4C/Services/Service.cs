@@ -11,15 +11,16 @@ namespace N4C.Services
     public abstract class Service<TEntity, TRequest, TResponse> : Service, IDisposable
         where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
-        protected override Config Config { get; set; } = new ServiceConfig<TEntity, TRequest, TResponse>();
+        protected override ServiceConfig Config { get; set; } = new ServiceConfig<TEntity, TRequest, TResponse>();
 
         protected ServiceConfig<TEntity, TRequest, TResponse> ServiceConfig => Config as ServiceConfig<TEntity, TRequest, TResponse>;
 
-        private bool RelationsFound { get; set; }
+        private bool _relationsFound { get; set; }
 
         private DbContext Db { get; }
 
-        protected Service(DbContext db, IHttpContextAccessor httpContextAccessor, ILogger<Service> logger) : base(httpContextAccessor, logger)
+        protected Service(DbContext db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger) 
+            : base(httpContextAccessor, httpClientFactory, logger)
         {
             Db = db;
             GetQuery();
@@ -62,7 +63,7 @@ namespace N4C.Services
             {
                 list = await GetQuery().Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
-                return Found(list);
+                return Success(list);
             }
             catch (Exception exception)
             {
@@ -101,7 +102,7 @@ namespace N4C.Services
                         CreateSession(nameof(Order), order);
                     }
                     GetFiles(list);
-                    return Found(list, request.Page, order);
+                    return Success(list, request.Page, order);
                 }
                 return await GetResponse(cancellationToken);
             }
@@ -118,7 +119,7 @@ namespace N4C.Services
             {
                 list = await GetQuery().Where(predicate).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
-                return Found(list);
+                return Success(list);
             }
             catch (Exception exception)
             {
@@ -133,7 +134,7 @@ namespace N4C.Services
             {
                 item = await GetQuery().Map<TEntity, TResponse>(ServiceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 GetFiles(item);
-                return Found(item);
+                return Success(item);
             }
             catch (Exception exception)
             {
@@ -156,7 +157,7 @@ namespace N4C.Services
                 {
                     item = new TRequest();
                 }
-                return Found(item);
+                return Success(item);
             }
             catch (Exception exception)
             {
@@ -172,7 +173,7 @@ namespace N4C.Services
                 var entity = await GetQuery().SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
                 item = entity.Map(ServiceConfig, item);
                 GetFiles(item, entity);
-                return Found(item);
+                return Success(item);
             }
             catch (Exception exception)
             {
@@ -222,7 +223,7 @@ namespace N4C.Services
         protected void Validate<TRelationalEntity>(List<TRelationalEntity> relationalEntities) where TRelationalEntity : Entity, new()
         {
             if (relationalEntities is not null)
-                RelationsFound = ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)) && relationalEntities.Any();
+                _relationsFound = ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)) && relationalEntities.Any();
         }
 
         protected void Update<TRelationalEntity>(List<TRelationalEntity> relationalEntities) where TRelationalEntity : Entity, new()
@@ -278,7 +279,7 @@ namespace N4C.Services
                     return Result(validationResult, request);
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
-                    return NotFound(request);
+                    return Error(request, NotFound);
                 var guid = entity.Guid;
                 var createDate = entity.CreateDate;
                 var createdBy = entity.CreatedBy;
@@ -300,7 +301,7 @@ namespace N4C.Services
                     }
                     catch (DbUpdateConcurrencyException)
                     {
-                        return NotFound(request);
+                        return Error(request, NotFound);
                     }
                 }
                 return Updated(request);
@@ -315,11 +316,11 @@ namespace N4C.Services
         {
             try
             {
-                if (RelationsFound)
-                    return RelationsFound(request);
+                if (_relationsFound)
+                    return Error(request, RelationsFound);
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
-                    return NotFound(request);
+                    return Error(request, NotFound);
                 if (ServiceConfig.SoftDelete)
                 {
                     entity.Deleted = true;
@@ -343,6 +344,8 @@ namespace N4C.Services
                 return Error(exception, request);
             }
         }
+
+        public async Task<Result<TRequest>> Delete(int id) => await Delete(new TRequest() { Id = id }); 
 
         protected Result<TRequest> CreateFiles(TRequest request, TEntity entity)
         {
@@ -380,7 +383,7 @@ namespace N4C.Services
                 {
                     entity = Db.Set<TEntity>().Find(request.Id);
                     if (entity is null)
-                        return NotFound(request);
+                        return Error(request, NotFound);
                 }
                 if (entity is FileEntity)
                 {
@@ -468,7 +471,7 @@ namespace N4C.Services
             var request = new TRequest() { Id = id };
             var entity = Db.Set<TEntity>().Find(request.Id);
             if (entity is null)
-                return NotFound(request);
+                return Error(request, NotFound);
             var deleteResult = DeleteFiles(request, entity, filePath);
             if (!deleteResult.Success)
                 return Result(deleteResult, request);

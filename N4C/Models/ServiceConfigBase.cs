@@ -2,7 +2,7 @@
 
 namespace N4C.Models
 {
-    public class Config : Profile
+    public class ServiceConfig : Profile
     {
         public string Culture { get; private set; } = Settings.Culture;
         public string TitleTR { get; private set; } = "Kayıt";
@@ -29,12 +29,12 @@ namespace N4C.Models
             { ".gif", "image/gif" }
         };
 
-        public void SetCulture(string culture) => Culture = culture;
+        public void SetCulture(string culture) => Culture = culture ?? Settings.Culture;
 
         public void SetTitle(string titleTR, string titleEN = default)
         {
-            TitleTR = titleTR;
-            TitleEN = titleEN;
+            TitleTR = titleTR ?? "Kayıt";
+            TitleEN = titleEN ?? "Record";
         }
 
         public void SetModelStateErrors(bool modelStateErrors)

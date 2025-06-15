@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -11,22 +12,28 @@ using Newtonsoft.Json;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Claims;
 
 namespace N4C.Services
 {
     public class Service
     {
-        protected virtual Config Config { get; set; } = new Config();
+        protected virtual ServiceConfig Config { get; set; } = new ServiceConfig();
 
         public string Culture => Config.Culture;
+        public string NotFound => Config.NotFound;
+        public string RelationsFound => Config.RelationsFound;
 
         private IHttpContextAccessor HttpContextAccessor { get; }
+        private IHttpClientFactory HttpClientFactory { get; }
         private ILogger<Service> Logger { get; }
 
-        public Service(IHttpContextAccessor httpContextAccessor, ILogger<Service> logger)
+        public Service(IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger)
         {
             HttpContextAccessor = httpContextAccessor;
+            HttpClientFactory = httpClientFactory;
             Logger = logger;
             Set(null);
         }
@@ -50,20 +57,13 @@ namespace N4C.Services
             return new Result<TData>(httpStatusCode, data, page, order, message, Culture, Config.Title, modelStateErrors);
         }
 
-        protected Result Result(Result previousResult, string tr = default, string en = default) 
+        protected Result Result(Result previousResult, string tr = default, string en = default)
             => Result(previousResult.HttpStatusCode, previousResult.Id, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en,
                 previousResult.ModelStateErrors);
 
         protected Result<TData> Result<TData>(Result previousResult, TData data, string tr = default, string en = default) where TData : class, new()
             => Result(previousResult.HttpStatusCode, data, tr is null && en is null ? previousResult.Message : Culture == Defaults.TR ? tr : en,
                 previousResult.ModelStateErrors);
-
-        public virtual Result NotFound(int? id = default) => Result(HttpStatusCode.NotFound, id, Config.NotFound);
-
-        public virtual Result Found(IEnumerable<int> ids) 
-            => ids.Count() > 1 ? Result(HttpStatusCode.OK, null, $"{ids.Count()} {Config.Found}") :
-                ids.Count() == 1 ? Result(HttpStatusCode.OK, ids.First()) :
-                NotFound();
 
         public virtual Result Success(string tr = default, string en = default, int? id = default)
             => Result(HttpStatusCode.OK, id, string.Empty);
@@ -74,26 +74,25 @@ namespace N4C.Services
         public virtual Result Error(Exception exception, int? id = default)
             => Result(HttpStatusCode.InternalServerError, id, Config.Exception);
 
-        public virtual Result Created(int? id = default) => Result(HttpStatusCode.Created, id, Config.Created);
-        public virtual Result Updated(int? id = default) => Result(HttpStatusCode.NoContent, id, Config.Updated);
-        public virtual Result Deleted(int? id = default) => Result(HttpStatusCode.NoContent, id, Config.Deleted);
-        public virtual Result Unauthorized(int? id = default) => Result(HttpStatusCode.Unauthorized, id, Config.Unauthorized);
+        protected Result Error(HttpResponseMessage httpResponseMessage, int? id = default, string message = default)
+            => Result(httpResponseMessage.StatusCode, id, message ?? httpResponseMessage.Content.ReadAsStringAsync().Result);
 
-        protected virtual Result<List<TData>> Found<TData>(List<TData> list, Page page = default, Order order = default) where TData : Data, new()
-            => list.Any() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", false, page, order) : 
+        public virtual Result Created(int? id = default, string message = default) => Result(HttpStatusCode.Created, id, message ?? Config.Created);
+        public virtual Result Updated(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message ?? Config.Updated);
+        public virtual Result Deleted(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message ?? Config.Deleted);
+
+        protected virtual Result<List<TData>> Success<TData>(List<TData> list, Page page = default, Order order = default) where TData : Data, new()
+            => list.Any() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", false, page, order) :
                 Result(HttpStatusCode.NotFound, list, Config.NotFound);
 
-        protected virtual Result<TData> NotFound<TData>(TData item) where TData : Data, new()
-            => Result(HttpStatusCode.NotFound, item, Config.NotFound);
+        protected virtual Result<TData> Success<TData>(TData item) where TData : Data, new()
+            => Result(item is null ? HttpStatusCode.NotFound : HttpStatusCode.OK, item, item is null ? Config.NotFound : string.Empty);
 
-        protected virtual Result<TData> Found<TData>(TData item) where TData : Data, new()
-            => item is not null ? Result(HttpStatusCode.OK, item) : NotFound(item);
-
-        protected virtual Result<TData> Success<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
-            => Result(HttpStatusCode.OK, item, string.Empty);
-
-        protected virtual Result<TData> Error<TData>(TData item, string tr = default, string en = default) where TData : Data, new()
+        protected virtual Result<TData> Error<TData>(TData item, string tr, string en) where TData : Data, new()
             => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {(Culture == Defaults.TR ? tr : en)}".TrimEnd());
+
+        protected virtual Result<TData> Error<TData>(TData item, string message) where TData : Data, new()
+            => Result(message == NotFound ? HttpStatusCode.NotFound : HttpStatusCode.BadRequest, item, $"{Config.Error} {message}");
 
         protected virtual Result<List<TData>> Error<TData>(Exception exception, List<TData> list) where TData : Data, new()
         {
@@ -103,9 +102,12 @@ namespace N4C.Services
 
         protected virtual Result<TData> Error<TData>(Exception exception, TData item) where TData : Data, new()
         {
-            LogError("ServiceException: Id = " + item.Id + ": " + exception.Message);
+            LogError("ServiceException: " + exception.Message);
             return Result(HttpStatusCode.InternalServerError, item, Config.Exception);
         }
+
+        protected Result<TData> Error<TData>(HttpResponseMessage httpResponseMessage, TData data, string message = default) where TData : class, new()
+            => Result(httpResponseMessage.StatusCode, data, message ?? httpResponseMessage.Content.ReadAsStringAsync().Result);
 
         protected virtual Result<TData> Created<TData>(TData item) where TData : Data, new()
             => Result(HttpStatusCode.Created, item, Config.Created);
@@ -121,9 +123,6 @@ namespace N4C.Services
 
         protected virtual Result<List<TData>> Deleted<TData>(List<TData> list) where TData : Data, new()
             => Result(HttpStatusCode.NoContent, list, Config.Deleted);
-
-        protected virtual Result<TData> RelationsFound<TData>(TData item) where TData : Data, new()
-            => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {Config.RelationsFound}");
 
         protected virtual Result<TData> Validated<TData>(TData item, string modelStateErrors, string uniquePropertyError = default) where TData : Data, new()
         {
@@ -224,7 +223,7 @@ namespace N4C.Services
             await HttpContextAccessor.HttpContext.SignOutAsync(authenticationScheme);
         }
 
-        public void GetResponse(byte[] data, string fileName, string contentType)
+        protected void GetResponse(byte[] data, string fileName, string contentType)
         {
             if (data is not null && data.Length > 0)
             {
@@ -543,11 +542,140 @@ namespace N4C.Services
                         FileName = GetFileName(filePath)
                     };
                 }
-                return Found(fileResponse);
+                return Success(fileResponse);
             }
             catch (Exception exception)
             {
                 return Error(exception, fileResponse);
+            }
+        }
+
+        protected HttpClient CreateHttpClient(string token = default)
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            if (string.IsNullOrWhiteSpace(token))
+                token = HttpContextAccessor.HttpContext?.Request?.Headers?.Authorization.FirstOrDefault() ?? GetCookie(Defaults.Token) ?? string.Empty;
+            else
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
+            if (token.StartsWith(JwtBearerDefaults.AuthenticationScheme))
+                token = token.Remove(0, JwtBearerDefaults.AuthenticationScheme.Length).TrimStart();
+            return httpClient;
+        }
+
+        public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(string uri, string token = default, CancellationToken cancellationToken = default)
+           where TResponse : Data, new()
+        {
+            if (string.IsNullOrWhiteSpace(uri))
+                return null;
+            List<TResponse> list = null;
+            try
+            {
+                Result<List<TResponse>> result = null;
+                var httpResponseMessage = await CreateHttpClient(token).GetAsync(uri, cancellationToken);
+                var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                if (httpResponse.Contains(typeof(Result).ToString()))
+                    result = JsonConvert.DeserializeObject<Result<List<TResponse>>>(httpResponse);
+                if (httpResponseMessage.IsSuccessStatusCode)
+                {
+                    list = result?.Data ?? JsonConvert.DeserializeObject<List<TResponse>>(httpResponse);
+                    return Success(list);
+                }
+                return Error(httpResponseMessage, list, result?.Message);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception, list);
+            }
+        }
+
+        public virtual async Task<Result<TResponse>> GetResponse<TResponse>(string uri, int id, string token = default, CancellationToken cancellationToken = default)
+            where TResponse : Data, new()
+        {
+            if (string.IsNullOrWhiteSpace(uri))
+                return null;
+            TResponse item = null;
+            try
+            {
+                Result<TResponse> result = null;
+                var httpResponseMessage = await CreateHttpClient(token).GetAsync($"{uri}/{id}", cancellationToken);
+                var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                if (httpResponse.Contains(typeof(Result).ToString()))
+                    result = JsonConvert.DeserializeObject<Result<TResponse>>(httpResponse);
+                if (httpResponseMessage.IsSuccessStatusCode)
+                {
+                    item = result?.Data ?? JsonConvert.DeserializeObject<TResponse>(httpResponse);
+                    return Success(item);
+                }
+                return Error(httpResponseMessage, item, result?.Message);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception, item);
+            }
+        }
+
+        public virtual async Task<Result> Create<TRequest>(string uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
+            where TRequest : Data, new()
+        {
+            if (string.IsNullOrWhiteSpace(uri))
+                return null;
+            try
+            {
+                Result result = null;
+                var httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
+                var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                if (httpResponse.Contains(typeof(Result).ToString()))
+                    result = JsonConvert.DeserializeObject<Result>(httpResponse);
+                if (httpResponseMessage.IsSuccessStatusCode)
+                    return Created(result?.Id, result?.Message);
+                return Error(httpResponseMessage, result?.Id, result?.Message);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception);
+            }
+        }
+
+        public virtual async Task<Result> Update<TRequest>(string uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
+            where TRequest : Data, new()
+        {
+            if (string.IsNullOrWhiteSpace(uri))
+                return null;
+            try
+            {
+                Result result = null;
+                var httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
+                var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                if (httpResponse.Contains(typeof(Result).ToString()))
+                    result = JsonConvert.DeserializeObject<Result>(httpResponse);
+                if (httpResponseMessage.IsSuccessStatusCode)
+                    return Updated(result?.Id, result?.Message);
+                return Error(httpResponseMessage, result?.Id, result?.Message);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception);
+            }
+        }
+
+        public virtual async Task<Result> Delete(string uri, int id, string token = default, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(uri))
+                return null;
+            try
+            {
+                Result result = null;
+                var httpResponseMessage = await CreateHttpClient(token).DeleteAsync($"{uri}/{id}", cancellationToken);
+                var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                if (httpResponse.Contains(typeof(Result).ToString()))
+                    result = JsonConvert.DeserializeObject<Result>(httpResponse);
+                if (httpResponseMessage.IsSuccessStatusCode)
+                    return Deleted(result?.Id, result?.Message);
+                return Error(httpResponseMessage, result?.Id, result?.Message);
+            }
+            catch (Exception exception)
+            {
+                return Error(exception);
             }
         }
     }

@@ -4,6 +4,7 @@ using N4C.Services;
 
 namespace N4C.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class LanguagesController : Controller
     {
         private readonly Service _service;

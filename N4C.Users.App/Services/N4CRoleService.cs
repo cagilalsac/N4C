@@ -11,7 +11,8 @@ namespace N4C.Users.App.Services
 {
     public class N4CRoleService : Service<N4CRole, N4CRoleRequest, N4CRoleResponse>
     {
-        public N4CRoleService(N4CUsersDb db, IHttpContextAccessor httpContextAccessor, ILogger<Service> logger) : base(db, httpContextAccessor, logger)
+        public N4CRoleService(N4CUsersDb db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger) 
+            : base(db, httpContextAccessor, httpClientFactory, logger)
         {
         }
 

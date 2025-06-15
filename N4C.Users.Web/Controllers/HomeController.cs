@@ -24,11 +24,11 @@ public class HomeController : Controller
 
     public IActionResult Error()
     {
-        return View("_N4Cmessage", _service.Error("Hata", "Error"));
+        return View("_N4Cmessage", _service.Error());
     }
 
     public IActionResult Exception()
     {
-        return View("_N4Cmessage", _service.Error(new Exception("HomeException")));
+        return View("_N4Cmessage", _service.Error(new Exception("An exception occured during the operation!")));
     }
 }

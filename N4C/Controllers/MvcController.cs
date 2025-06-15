@@ -8,7 +8,7 @@ namespace N4C.Controllers
 {
     public abstract class MvcController<TEntity, TRequest, TResponse> : MvcController where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
-        protected ControllerConfig Config { get; private set; } = new ControllerConfig();
+        protected MvcControllerConfig Config { get; private set; } = new MvcControllerConfig();
 
         protected Service<TEntity, TRequest, TResponse> Service { get; }
 
@@ -17,7 +17,7 @@ namespace N4C.Controllers
             Service = service;
         }
 
-        protected virtual void Set(Action<ControllerConfig> config)
+        protected virtual void Set(Action<MvcControllerConfig> config)
         {
             config.Invoke(Config);
             Config.SetCulture(Service.Culture);

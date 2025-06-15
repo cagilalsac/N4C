@@ -8,16 +8,16 @@ namespace N4C.Models
         [JsonIgnore, ExcelIgnore]
         public Stream FileStream { get; set; }
 
-        [ExcelIgnore]
+        [JsonIgnore, ExcelIgnore]
         public string FileContentType { get; set; }
 
-        [ExcelIgnore]
+        [JsonIgnore, ExcelIgnore]
         public string FileName { get; set; }
 
-        [ExcelIgnore, DisplayName("Dosyalar", "Files")]
+        [JsonIgnore, ExcelIgnore, DisplayName("Dosyalar", "Files")]
         public virtual string MainFile { get; set; }
 
-        [ExcelIgnore]
+        [JsonIgnore, ExcelIgnore]
         public virtual List<string> OtherFiles { get; set; }
     }
 }
