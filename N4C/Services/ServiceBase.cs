@@ -5,16 +5,19 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using N4C.Domain;
 using N4C.Extensions;
 using N4C.Models;
 using Newtonsoft.Json;
 using OfficeOpenXml;
 using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text;
 
 namespace N4C.Services
 {
@@ -548,6 +551,15 @@ namespace N4C.Services
             {
                 return Error(exception, fileResponse);
             }
+        }
+
+        protected string GetToken(List<Claim> claims, DateTime? expiration = default)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Settings.JwtSecurityKey));
+            var signingCredentials = new SigningCredentials(securityKey, Settings.JwtSecurityAlgorithm);
+            var jwtSecurityToken = new JwtSecurityToken(Settings.JwtIssuer, Settings.JwtAudience, claims, DateTime.Now, expiration, signingCredentials);
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            return jwtSecurityTokenHandler.WriteToken(jwtSecurityToken);
         }
 
         protected HttpClient CreateHttpClient(string token = default)

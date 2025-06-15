@@ -9,10 +9,10 @@ using N4C.Users.App.Services;
 
 namespace N4C.Users.App.Controllers
 {
-    public abstract class N4CUsersController<TEntity, TRequest, TResponse> : MvcController<TEntity, TRequest, TResponse>
+    public abstract class N4CUsersMvcController<TEntity, TRequest, TResponse> : MvcController<TEntity, TRequest, TResponse>
         where TEntity : N4CUser, new() where TRequest : N4CUserRequest, new() where TResponse : N4CUserResponse, new()
     {
-        protected N4CUsersController(Service<TEntity, TRequest, TResponse> service, IModelMetadataProvider modelMetaDataProvider)
+        protected N4CUsersMvcController(Service<TEntity, TRequest, TResponse> service, IModelMetadataProvider modelMetaDataProvider)
             : base(service, modelMetaDataProvider)
         {
         }

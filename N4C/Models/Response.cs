@@ -7,14 +7,14 @@ namespace N4C.Models
     public class Response : Data
     {
         [DisplayName("Oluşturulma Tarihi", "Create Date")]
-        public DateTime? CreateDate { get; set; }
+        public virtual DateTime? CreateDate { get; set; }
 
         [DisplayName("Oluşturan", "Created By")]
         [JsonIgnore]
         public virtual string CreateDate_ { get; set; }
 
         [DisplayName("Güncellenme Tarihi", "Update Date")]
-        public DateTime? UpdateDate { get; set; }
+        public virtual DateTime? UpdateDate { get; set; }
 
         [DisplayName("Güncelleyen", "Updated By")]
         [JsonIgnore]

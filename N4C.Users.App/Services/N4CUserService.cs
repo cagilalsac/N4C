@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using N4C.Extensions;
@@ -140,6 +141,31 @@ namespace N4C.Users.App.Services
                 RoleIds = [Defaults.UserId]
             });
             return Result(result, request);
+        }
+
+        public async Task<Result<N4CTokenResponse>> GetToken(N4CUserLoginRequest request)
+        {
+            N4CTokenResponse response = null;
+            var validationResult = Validate(request.ModelState);
+            if (!validationResult.Success)
+                return Result(validationResult, response);
+            var result = await GetResponse(user => user.UserName == request.UserName && user.Password == request.Password && user.StatusId == Defaults.ActiveId);
+            if (result.Success)
+            {
+                var user = result.Data.Single();
+                var claims = GetClaims(user.Id, user.UserName, user.Roles);
+                var expiration = DateTime.Now.AddMinutes(Settings.JwtExpirationInMinutes);
+                var token = GetToken(claims, expiration);
+                return Success(new N4CTokenResponse()
+                {
+                    Id = user.Id,
+                    Guid = user.Guid,
+                    Token = token,
+                    BearerToken = $"{JwtBearerDefaults.AuthenticationScheme} {token}",
+                    CreateDate = DateTime.Now
+                });
+            }
+            return Result(result, response);
         }
     }
 }

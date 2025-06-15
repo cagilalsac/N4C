@@ -27,14 +27,14 @@ namespace N4C.Controllers
         }
 
         [HttpPost]
-        public virtual async Task<IActionResult> Post(TRequest request)
+        public virtual async Task<IActionResult> Post([FromBody] TRequest request)
         {
             request.Set(ModelState);
             return ActionResult(await Service.Create(request));
         }
 
         [HttpPut]
-        public virtual async Task<IActionResult> Put(TRequest request)
+        public virtual async Task<IActionResult> Put([FromBody] TRequest request)
         {
             request.Set(ModelState);
             return ActionResult(await Service.Update(request));

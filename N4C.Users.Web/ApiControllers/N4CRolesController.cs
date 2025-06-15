@@ -1,18 +1,17 @@
 ﻿#nullable disable
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using N4C.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using N4C.Controllers;
-using N4C.Users.App.Models;
+using N4C.Services;
 using N4C.Users.App.Domain;
-using N4C.Models;
+using N4C.Users.App.Models;
 
 // Generated from N4C Template.
 
 namespace N4C.Users.Web.ApiControllers
 {
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "system")]
     public class N4CRolesController : ApiController<N4CRole, N4CRoleRequest, N4CRoleResponse>
     {
         public N4CRolesController(Service<N4CRole, N4CRoleRequest, N4CRoleResponse> service) : base(service)

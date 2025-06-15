@@ -9,12 +9,12 @@ namespace N4C.Users.App
         public static string Title { get; set; }
         public static string DescriptionEN { get; set; }
         public static string DescriptionTR { get; set; }
-        public static int AuthCookieExpirationInMinutes { get; private set; }
 
-        public N4CAppSettings(IConfiguration configuration, string culture = null, int sessionExpirationInMinutes = 20, int authCookieExpirationInMinutes = 30)
-            : base(configuration, culture, sessionExpirationInMinutes)
+        public N4CAppSettings(IConfiguration configuration, string culture = null, int sessionExpirationInMinutes = 30, int authCookieExpirationInMinutes = 60, 
+            int jwtExpirationInMinutes = 5, string jwtAudience = null, string jwtIssuer = null, string jwtSecurityKey = null, string jwtSecurityAlgorithm = null) 
+            : base(configuration, culture, sessionExpirationInMinutes, authCookieExpirationInMinutes, 
+                  jwtExpirationInMinutes, jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
         {
-            AuthCookieExpirationInMinutes = authCookieExpirationInMinutes;
         }
     }
 }

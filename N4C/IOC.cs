@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using N4C.Services;
 
 namespace N4C
@@ -22,6 +24,29 @@ namespace N4C
             // Session:
             if (Settings.SessionExpirationInMinutes > 0)
                 builder.Services.AddSession(config => config.IdleTimeout = TimeSpan.FromMinutes(Settings.SessionExpirationInMinutes));
+
+            // Authentication:
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, config =>
+                {
+                    config.LoginPath = "/Login";
+                    config.AccessDeniedPath = "/Login";
+                    config.SlidingExpiration = true;
+                    config.ExpireTimeSpan = TimeSpan.FromMinutes(Settings.AuthCookieExpirationInMinutes);
+                })
+                .AddJwtBearer(config =>
+                {
+                    config.TokenValidationParameters = new TokenValidationParameters()
+                    {
+                        IssuerSigningKey = Settings.JwtSigningKey,
+                        ValidIssuer = Settings.JwtIssuer,
+                        ValidAudience = Settings.JwtAudience,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true
+                    };
+                });
 
             // API ModelState:
             builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true);
@@ -44,6 +69,9 @@ namespace N4C
             // Session:
             if (Settings.SessionExpirationInMinutes > 0)
                 application.UseSession();
+
+            // Authentication:
+            application.UseAuthentication();
 
             // API CORS:
             application.UseCors();

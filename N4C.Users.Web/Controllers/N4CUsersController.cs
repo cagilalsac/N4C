@@ -15,7 +15,7 @@ using N4C.Users.App.Models;
 namespace N4C.Users.Web.Controllers
 {
     [Authorize(Roles = "system")]
-    public class N4CUsersController : N4CUsersController<N4CUser, N4CUserRequest, N4CUserResponse>
+    public class N4CUsersController : N4CUsersMvcController<N4CUser, N4CUserRequest, N4CUserResponse>
     {
         // Service injections:
         private readonly Service<N4CStatus, N4CStatusRequest, N4CStatusResponse> _statusService;

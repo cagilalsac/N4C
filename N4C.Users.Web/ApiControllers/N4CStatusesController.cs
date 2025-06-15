@@ -11,7 +11,7 @@ using N4C.Users.App.Domain;
 
 namespace N4C.Users.Web.ApiControllers
 {
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "system")]
     public class N4CStatusesController : ApiController<N4CStatus, N4CStatusRequest, N4CStatusResponse>
     {
         public N4CStatusesController(Service<N4CStatus, N4CStatusRequest, N4CStatusResponse> service) : base(service)
