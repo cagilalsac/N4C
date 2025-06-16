@@ -33,6 +33,8 @@ namespace N4C.Users.Web.Controllers
 
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
             //_{Entity}Service = {Entity}Service;
+
+            Set(null);
         }
 
         protected override void Set(Action<MvcControllerConfig> config)

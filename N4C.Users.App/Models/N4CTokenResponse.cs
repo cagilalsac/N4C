@@ -11,5 +11,7 @@ namespace N4C.Users.App.Models
         public string Token { get; set; }
 
         public string BearerToken { get; set; }
+
+        public string RefreshToken { get; set; }
     }
 }

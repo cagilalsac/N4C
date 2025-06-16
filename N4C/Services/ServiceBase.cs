@@ -9,7 +9,6 @@ using Microsoft.IdentityModel.Tokens;
 using N4C.Domain;
 using N4C.Extensions;
 using N4C.Models;
-using Newtonsoft.Json;
 using OfficeOpenXml;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,7 +16,9 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace N4C.Services
 {
@@ -151,14 +152,20 @@ namespace N4C.Services
 
         public int GetUserId() => Convert.ToInt32(HttpContextAccessor.HttpContext?.User.Claims?.SingleOrDefault(claim => claim.Type == nameof(Data.Id))?.Value);
 
+        public int GetUserId(List<Claim> claims) => Convert.ToInt32(claims.SingleOrDefault(claim => claim.Type == nameof(Data.Id))?.Value);
+
         public T GetSession<T>(string key) where T : class
         {
-            return JsonConvert.DeserializeObject<T>(HttpContextAccessor.HttpContext.Session.GetString(key));
+            var value = HttpContextAccessor.HttpContext.Session.GetString(key);
+            if (string.IsNullOrEmpty(value))
+                return null;
+            return JsonSerializer.Deserialize<T>(value);
         }
 
         public void CreateSession<T>(string key, T instance) where T : class
         {
-            HttpContextAccessor.HttpContext.Session.SetString(key, JsonConvert.SerializeObject(instance));
+            var value = JsonSerializer.Serialize(instance);
+            HttpContextAccessor.HttpContext.Session.SetString(key, value);
         }
 
         public void DeleteSession(string key)
@@ -209,6 +216,24 @@ namespace N4C.Services
                 claims.Add(new Claim(ClaimTypes.Role, roleName));
             }
             return claims;
+        }
+
+        protected virtual List<Claim> GetClaims(string token)
+        {
+            SecurityToken securityToken;
+            if (token.StartsWith(JwtBearerDefaults.AuthenticationScheme))
+                token = token.Remove(0, JwtBearerDefaults.AuthenticationScheme.Length).TrimStart();
+            var tokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = Settings.JwtSigningKey
+            };
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            var principal = jwtSecurityTokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+            return securityToken is null ? null : principal?.Claims?.ToList();
         }
 
         protected async Task SignIn(List<Claim> claims, DateTime? expiration = default, bool isPersistent = true, string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
@@ -562,6 +587,16 @@ namespace N4C.Services
             return jwtSecurityTokenHandler.WriteToken(jwtSecurityToken);
         }
 
+        protected string GetRefreshToken()
+        {
+            var bytes = new byte[32];
+            using (var randomNumberGenerator = RandomNumberGenerator.Create())
+            {
+                randomNumberGenerator.GetBytes(bytes);
+            }
+            return Convert.ToBase64String(bytes);
+        }
+
         protected HttpClient CreateHttpClient(string token = default)
         {
             var httpClient = HttpClientFactory.CreateClient();
@@ -586,10 +621,10 @@ namespace N4C.Services
                 var httpResponseMessage = await CreateHttpClient(token).GetAsync(uri, cancellationToken);
                 var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
                 if (httpResponse.Contains(typeof(Result).ToString()))
-                    result = JsonConvert.DeserializeObject<Result<List<TResponse>>>(httpResponse);
+                    result = JsonSerializer.Deserialize<Result<List<TResponse>>>(httpResponse);
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
-                    list = result?.Data ?? JsonConvert.DeserializeObject<List<TResponse>>(httpResponse);
+                    list = result?.Data ?? JsonSerializer.Deserialize<List<TResponse>>(httpResponse);
                     return Success(list);
                 }
                 return Error(httpResponseMessage, list, result?.Message);
@@ -612,10 +647,10 @@ namespace N4C.Services
                 var httpResponseMessage = await CreateHttpClient(token).GetAsync($"{uri}/{id}", cancellationToken);
                 var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
                 if (httpResponse.Contains(typeof(Result).ToString()))
-                    result = JsonConvert.DeserializeObject<Result<TResponse>>(httpResponse);
+                    result = JsonSerializer.Deserialize<Result<TResponse>>(httpResponse);
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
-                    item = result?.Data ?? JsonConvert.DeserializeObject<TResponse>(httpResponse);
+                    item = result?.Data ?? JsonSerializer.Deserialize<TResponse>(httpResponse);
                     return Success(item);
                 }
                 return Error(httpResponseMessage, item, result?.Message);
@@ -637,7 +672,7 @@ namespace N4C.Services
                 var httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
                 var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
                 if (httpResponse.Contains(typeof(Result).ToString()))
-                    result = JsonConvert.DeserializeObject<Result>(httpResponse);
+                    result = JsonSerializer.Deserialize<Result>(httpResponse);
                 if (httpResponseMessage.IsSuccessStatusCode)
                     return Created(result?.Id, result?.Message);
                 return Error(httpResponseMessage, result?.Id, result?.Message);
@@ -659,7 +694,7 @@ namespace N4C.Services
                 var httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
                 var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
                 if (httpResponse.Contains(typeof(Result).ToString()))
-                    result = JsonConvert.DeserializeObject<Result>(httpResponse);
+                    result = JsonSerializer.Deserialize<Result>(httpResponse);
                 if (httpResponseMessage.IsSuccessStatusCode)
                     return Updated(result?.Id, result?.Message);
                 return Error(httpResponseMessage, result?.Id, result?.Message);
@@ -680,7 +715,7 @@ namespace N4C.Services
                 var httpResponseMessage = await CreateHttpClient(token).DeleteAsync($"{uri}/{id}", cancellationToken);
                 var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
                 if (httpResponse.Contains(typeof(Result).ToString()))
-                    result = JsonConvert.DeserializeObject<Result>(httpResponse);
+                    result = JsonSerializer.Deserialize<Result>(httpResponse);
                 if (httpResponseMessage.IsSuccessStatusCode)
                     return Deleted(result?.Id, result?.Message);
                 return Error(httpResponseMessage, result?.Id, result?.Message);

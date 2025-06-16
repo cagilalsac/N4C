@@ -12,7 +12,7 @@ namespace N4C.Users.App.Services
 {
     public class N4CUserService : Service<N4CUser, N4CUserRequest, N4CUserResponse>
     {
-        public N4CUserService(N4CUsersDb db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger) 
+        public N4CUserService(N4CUsersDb db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger)
             : base(db, httpContextAccessor, httpClientFactory, logger)
         {
         }
@@ -123,7 +123,7 @@ namespace N4C.Users.App.Services
             await SignOut();
         }
 
-        public async Task<Result<N4CUserRegisterRequest>> Register(N4CUserRegisterRequest request)
+        public async Task<Result<N4CUserRegisterRequest>> Register(N4CUserRegisterRequest request, CancellationToken cancellationToken = default)
         {
             var validationResult = Validate(request.ModelState);
             if (!validationResult.Success)
@@ -139,33 +139,68 @@ namespace N4C.Users.App.Services
                 LastName = request.LastName?.Trim(),
                 StatusId = Defaults.ActiveId,
                 RoleIds = [Defaults.UserId]
-            });
+            }, true, cancellationToken);
             return Result(result, request);
         }
 
-        public async Task<Result<N4CTokenResponse>> GetToken(N4CUserLoginRequest request)
+        public async Task<Result<N4CTokenResponse>> GetToken(N4CTokenRequest request, CancellationToken cancellationToken = default)
         {
             N4CTokenResponse response = null;
             var validationResult = Validate(request.ModelState);
             if (!validationResult.Success)
                 return Result(validationResult, response);
-            var result = await GetResponse(user => user.UserName == request.UserName && user.Password == request.Password && user.StatusId == Defaults.ActiveId);
-            if (result.Success)
+            var user = await GetQuery().SingleOrDefaultAsync(user =>
+                user.UserName == request.UserName && user.Password == request.Password && user.StatusId == Defaults.ActiveId, cancellationToken);
+            if (user is null)
+                return Error(response, NotFound);
+            user.RefreshToken = GetRefreshToken();
+            user.RefreshTokenExpiration = DateTime.Now.AddMinutes(N4CAppSettings.RefreshTokenExpirationInMinutes);
+            var result = await Update(user, true, cancellationToken);
+            if (!result.Success)
+                return Result(result, response);
+            var claims = GetClaims(user.Id, user.UserName, user.UserRoles.Select(userRole => userRole.Role.Name));
+            var expiration = DateTime.Now.AddMinutes(N4CAppSettings.JwtExpirationInMinutes);
+            var token = GetToken(claims, expiration);
+            return Success(new N4CTokenResponse()
             {
-                var user = result.Data.Single();
-                var claims = GetClaims(user.Id, user.UserName, user.Roles);
-                var expiration = DateTime.Now.AddMinutes(Settings.JwtExpirationInMinutes);
-                var token = GetToken(claims, expiration);
-                return Success(new N4CTokenResponse()
-                {
-                    Id = user.Id,
-                    Guid = user.Guid,
-                    Token = token,
-                    BearerToken = $"{JwtBearerDefaults.AuthenticationScheme} {token}",
-                    CreateDate = DateTime.Now
-                });
-            }
-            return Result(result, response);
+                Id = user.Id,
+                Guid = user.Guid,
+                Token = token,
+                BearerToken = $"{JwtBearerDefaults.AuthenticationScheme} {token}",
+                RefreshToken = user.RefreshToken,
+                CreateDate = DateTime.Now
+            });
+        }
+
+        public async Task<Result<N4CTokenResponse>> GetRefreshToken(N4CRefreshTokenRequest request, CancellationToken cancellationToken = default)
+        {
+            N4CTokenResponse response = null;
+            var claims = GetClaims(request.Token);
+            if (claims is null)
+                return Error(response, NotFound);
+            var userId = GetUserId(claims);
+            var user = await GetQuery().SingleOrDefaultAsync(user => user.Id == userId && user.RefreshToken == request.RefreshToken && user.RefreshTokenExpiration >= DateTime.Now
+                , cancellationToken);
+            if (user is null)
+                return Error(response, NotFound);
+            user.RefreshToken = GetRefreshToken();
+            if (request.SlidingExpiration)
+                user.RefreshTokenExpiration = DateTime.Now.AddMinutes(N4CAppSettings.RefreshTokenExpirationInMinutes);
+            var result = await Update(user, true, cancellationToken);
+            if (!result.Success)
+                return Result(result, response);
+            claims = GetClaims(user.Id, user.UserName, user.UserRoles.Select(userRole => userRole.Role.Name));
+            var expiration = DateTime.Now.AddMinutes(N4CAppSettings.JwtExpirationInMinutes);
+            var token = GetToken(claims, expiration);
+            return Success(new N4CTokenResponse()
+            {
+                Id = user.Id,
+                Guid = user.Guid,
+                Token = token,
+                BearerToken = $"{JwtBearerDefaults.AuthenticationScheme} {token}",
+                RefreshToken = user.RefreshToken,
+                CreateDate = DateTime.Now
+            });
         }
     }
 }

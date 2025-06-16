@@ -1,5 +1,6 @@
 ﻿namespace N4C.Attributes
 {
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class RequiredAttribute : System.ComponentModel.DataAnnotations.RequiredAttribute
     {
         public RequiredAttribute()

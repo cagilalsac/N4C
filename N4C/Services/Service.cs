@@ -270,6 +270,23 @@ namespace N4C.Services
             }
         }
 
+        protected async Task<Result<TEntity>> Update(TEntity entity, bool save = true, CancellationToken cancellationToken = default)
+        {
+            Db.Set<TEntity>().Update(entity);
+            if (save)
+            {
+                try
+                {
+                    await Save(cancellationToken);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return Error(entity, NotFound);
+                }
+            }
+            return Updated(entity);
+        }
+
         public virtual async Task<Result<TRequest>> Update(TRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             try
@@ -292,19 +309,7 @@ namespace N4C.Services
                 var fileResult = UpdateFiles(request, entity);
                 if (!fileResult.Success)
                     return Result(fileResult, request);
-                Db.Set<TEntity>().Update(entity);
-                if (save)
-                {
-                    try
-                    {
-                        await Save(cancellationToken);
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                        return Error(request, NotFound);
-                    }
-                }
-                return Updated(request);
+                return Result(await Update(entity, save, cancellationToken), request);
             }
             catch (Exception exception)
             {

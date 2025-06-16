@@ -1,5 +1,6 @@
 ﻿namespace N4C.Attributes
 {
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class StringLengthAttribute : System.ComponentModel.DataAnnotations.StringLengthAttribute
     {
         public StringLengthAttribute(int maximumLength) : base(maximumLength)

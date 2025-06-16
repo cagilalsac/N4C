@@ -11,9 +11,10 @@ namespace N4C.Users.App
         public static string DescriptionTR { get; set; }
 
         public N4CAppSettings(IConfiguration configuration, string culture = null, int sessionExpirationInMinutes = 30, int authCookieExpirationInMinutes = 60, 
-            int jwtExpirationInMinutes = 5, string jwtAudience = null, string jwtIssuer = null, string jwtSecurityKey = null, string jwtSecurityAlgorithm = null) 
+            int jwtExpirationInMinutes = 5, int refreshTokenExpirationInMinutes = 1440, string jwtAudience = null, string jwtIssuer = null, 
+            string jwtSecurityKey = null, string jwtSecurityAlgorithm = null) 
             : base(configuration, culture, sessionExpirationInMinutes, authCookieExpirationInMinutes, 
-                  jwtExpirationInMinutes, jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
+                  jwtExpirationInMinutes, refreshTokenExpirationInMinutes, jwtAudience, jwtIssuer, jwtSecurityKey, jwtSecurityAlgorithm)
         {
         }
     }

@@ -22,12 +22,14 @@ namespace N4C
 
         public static SecurityKey JwtSigningKey => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecurityKey));
 
+        public static int RefreshTokenExpirationInMinutes { get; private set; }
+
         public static bool Development { get; internal set; }
 
         private readonly IConfiguration _configuration;
 
         protected Settings(IConfiguration configuration, string culture = default, int sessionExpirationInMinutes = 30, int authCookieExpirationInMinutes = 60,
-            int jwtExpirationInMinutes = 5, string jwtAudience = default, string jwtIssuer = default, string jwtSecurityKey = default, string jwtSecurityAlgorithm = default)
+            int jwtExpirationInMinutes = 5, int refreshTokenExpirationInMinutes = 1440, string jwtAudience = default, string jwtIssuer = default, string jwtSecurityKey = default, string jwtSecurityAlgorithm = default)
         {
             _configuration = configuration;
             Culture = culture ?? Defaults.TR;
@@ -38,6 +40,7 @@ namespace N4C
             JwtIssuer = jwtIssuer ?? "https://need4code.com";
             JwtSecurityKey = jwtSecurityKey ?? "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf";
             JwtSecurityAlgorithm = jwtSecurityAlgorithm ?? SecurityAlgorithms.HmacSha256Signature;
+            RefreshTokenExpirationInMinutes = refreshTokenExpirationInMinutes;
         }
 
         public void Bind() => _configuration.GetSection(AppSettingsSection).Bind(this);

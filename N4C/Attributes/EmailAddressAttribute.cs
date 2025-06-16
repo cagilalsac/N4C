@@ -2,6 +2,7 @@
 
 namespace N4C.Attributes
 {
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class EmailAddressAttribute : DataTypeAttribute
     {
         public EmailAddressAttribute() : base(DataType.EmailAddress)
