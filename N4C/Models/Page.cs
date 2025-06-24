@@ -1,4 +1,6 @@
-﻿namespace N4C.Models
+﻿using N4C.Extensions;
+
+namespace N4C.Models
 {
     public class Page
     {
@@ -35,7 +37,7 @@
             set
             {
                 _recordsPerPageCounts = value;
-                RecordsPerPageCount = string.IsNullOrWhiteSpace(RecordsPerPageCount) ? _recordsPerPageCounts?.FirstOrDefault() ?? string.Empty : RecordsPerPageCount;
+                RecordsPerPageCount = RecordsPerPageCount.HasNotAny() ? _recordsPerPageCounts?.FirstOrDefault().HasNotAny(string.Empty) : RecordsPerPageCount;
             }
         }
 

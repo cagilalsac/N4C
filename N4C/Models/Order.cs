@@ -1,4 +1,6 @@
-﻿namespace N4C.Models
+﻿using N4C.Extensions;
+
+namespace N4C.Models
 {
     public class Order
     {
@@ -14,7 +16,7 @@
             set
             {
                 _expressions = value;
-                Expression = string.IsNullOrWhiteSpace(Expression) ? _expressions?.FirstOrDefault().Key ?? string.Empty : Expression;
+                Expression = Expression.HasNotAny() ? _expressions?.FirstOrDefault().Key.HasNotAny(string.Empty) : Expression;
             }
         }
 

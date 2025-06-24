@@ -7,7 +7,7 @@
 @model Result
 
 @{
-    var culture = Model?.Culture ?? Defaults.TR;
+    var culture = Model?.Culture ?? Settings.Culture;
     var isAuthenticated = User.Identity.IsAuthenticated;
     var isInRoleSystem = User.IsInRole("system");
 }

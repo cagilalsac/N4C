@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using N4C.Extensions;
+using System.Net;
 using System.Text.Json.Serialization;
 
 namespace N4C.Models
@@ -33,16 +34,16 @@ namespace N4C.Models
             int? id = default, bool modelStateErrors = true)
         {
             HttpStatusCode = httpStatusCode;
-            Message = message ?? string.Empty;
-            if (Message != string.Empty)
+            Message = message.HasNotAny(string.Empty);
+            if (Message.HasAny())
             {
                 if (Success && !message.EndsWith("."))
                     Message += ".";
                 else if (!Success && !message.EndsWith("!"))
                     Message += "!";
             }
-            Culture = culture ?? Defaults.TR;
-            Title = title is null ? (Culture == Defaults.TR ? "Kayıt" : "Record") : title;
+            Culture = culture.HasNotAny(Settings.Culture);
+            Title = title.HasNotAny() ? (Culture == Defaults.TR ? "Kayıt" : "Record") : title;
             Id = id;
             ModelStateErrors = modelStateErrors;
         }

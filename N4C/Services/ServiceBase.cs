@@ -81,12 +81,12 @@ namespace N4C.Services
         protected Result Error(HttpResponseMessage httpResponseMessage, int? id = default, string message = default)
             => Result(httpResponseMessage.StatusCode, id, message ?? httpResponseMessage.Content.ReadAsStringAsync().Result);
 
-        public virtual Result Created(int? id = default, string message = default) => Result(HttpStatusCode.Created, id, message ?? Config.Created);
-        public virtual Result Updated(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message ?? Config.Updated);
-        public virtual Result Deleted(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message ?? Config.Deleted);
+        public virtual Result Created(int? id = default, string message = default) => Result(HttpStatusCode.Created, id, message.HasNotAny(Config.Created));
+        public virtual Result Updated(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message.HasNotAny(Config.Updated));
+        public virtual Result Deleted(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message.HasNotAny(Config.Deleted));
 
         protected virtual Result<List<TData>> Success<TData>(List<TData> list, Page page = default, Order order = default) where TData : Data, new()
-            => list.Any() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", false, page, order) :
+            => list.HasAny() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", false, page, order) :
                 Result(HttpStatusCode.NotFound, list, Config.NotFound);
 
         protected virtual Result<TData> Success<TData>(TData item) where TData : Data, new()
@@ -130,7 +130,7 @@ namespace N4C.Services
 
         protected virtual Result<TData> Validated<TData>(TData item, string modelStateErrors, string uniquePropertyError = default) where TData : Data, new()
         {
-            var error = modelStateErrors.Length > 0 || (uniquePropertyError ?? string.Empty).Length > 0;
+            var error = modelStateErrors.HasAny() || uniquePropertyError.HasAny();
             var errors = Config.Error;
             if (modelStateErrors.Length > 0)
                 errors += ";" + modelStateErrors;
@@ -141,7 +141,7 @@ namespace N4C.Services
         public Result Validate(ModelStateDictionary modelState)
         {
             var errors = modelState.GetErrors(Culture);
-            if (errors.Any())
+            if (errors.HasAny())
                 return Result(HttpStatusCode.BadRequest, null, string.Join(";", errors));
             return Result(HttpStatusCode.OK);
         }
@@ -283,7 +283,7 @@ namespace N4C.Services
 
         protected string GetFilePath(string filePath, bool wwwroot = false)
         {
-            return string.IsNullOrWhiteSpace(filePath) ? null : wwwroot ? $"wwwroot{filePath}" : filePath.Substring(7).Replace(@"\", "/");
+            return filePath.HasNotAny() ? null : wwwroot ? $"wwwroot{filePath}" : filePath.Substring(7).Replace(@"\", "/");
         }
 
         protected string GetFileContentType(string filePath, bool data = false, bool base64 = false)
@@ -299,7 +299,7 @@ namespace N4C.Services
 
         protected string GetFileFolder(string filePath = default)
         {
-            return string.IsNullOrWhiteSpace(filePath) ? Config.FilesFolder : filePath.Split('/')[1];
+            return filePath.HasNotAny() ? Config.FilesFolder : filePath.Split('/')[1];
         }
 
         protected string GetFileName(string filePath, bool extension = true)
@@ -318,7 +318,7 @@ namespace N4C.Services
         protected List<string> GetOtherFilePaths(List<FileResponse> otherFiles, int orderInitialValue, int orderPaddingTotalWidth = 3)
         {
             List<string> otherFilePaths = null;
-            if (otherFiles is not null && otherFiles.Any())
+            if (otherFiles.HasAny())
             {
                 otherFilePaths = new List<string>();
                 string orderValue;
@@ -333,7 +333,7 @@ namespace N4C.Services
 
         protected void GetOtherFilePaths(List<string> otherFilePaths)
         {
-            if (otherFilePaths is not null && otherFilePaths.Any())
+            if (otherFilePaths.HasAny())
             {
                 for (int i = 0; i < otherFilePaths.Count; i++)
                 {
@@ -411,7 +411,7 @@ namespace N4C.Services
             FileResponse fileResponse = null;
             try
             {
-                if (!string.IsNullOrWhiteSpace(filePath))
+                if (filePath.HasAny())
                 {
                     filePath = GetFilePath(filePath, true);
                     if (File.Exists(filePath))
@@ -482,7 +482,7 @@ namespace N4C.Services
             FileResponse fileResponse = null;
             Result<FileResponse> result;
             Result validationResult = Success();
-            if (formFiles is not null && formFiles.Any())
+            if (formFiles.HasAny())
             {
                 fileResponseList = new List<FileResponse>();
                 foreach (var formFile in formFiles)
@@ -517,7 +517,7 @@ namespace N4C.Services
             List<FileResponse> fileResponseList = null;
             FileResponse fileResponse = null;
             Result<FileResponse> result = Success(fileResponse);
-            if (filePaths is not null && filePaths.Any())
+            if (filePaths.HasAny())
             {
                 fileResponseList = new List<FileResponse>();
                 foreach (var filePath in filePaths)
@@ -538,7 +538,7 @@ namespace N4C.Services
             try
             {
                 var dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss").Replace("-", "").Replace(":", "").Replace(" ", "_");
-                fileName = !string.IsNullOrWhiteSpace(fileName) ? $"{fileName}.xlsx" : (Culture == Defaults.TR ? $"Rapor_{dateTime}.xlsx" : $"Report_{dateTime}.xlsx");
+                fileName = fileName.HasAny() ? $"{fileName}.xlsx" : (Culture == Defaults.TR ? $"Rapor_{dateTime}.xlsx" : $"Report_{dateTime}.xlsx");
                 var worksheet = Culture == Defaults.TR ? "Sayfa1" : "Sheet1";
                 var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 ExcelPackage.LicenseContext = Config.ExcelLicenseCommercial ? LicenseContext.Commercial : LicenseContext.NonCommercial;
@@ -561,7 +561,7 @@ namespace N4C.Services
             FileResponse fileResponse = null;
             try
             {
-                if (!string.IsNullOrWhiteSpace(filePath))
+                if (filePath.HasAny())
                 {
                     fileResponse = new FileResponse()
                     {
@@ -600,8 +600,8 @@ namespace N4C.Services
         protected HttpClient CreateHttpClient(string token = default)
         {
             var httpClient = HttpClientFactory.CreateClient();
-            if (string.IsNullOrWhiteSpace(token))
-                token = HttpContextAccessor.HttpContext?.Request?.Headers?.Authorization.FirstOrDefault() ?? GetCookie(Defaults.Token) ?? string.Empty;
+            if (token.HasNotAny())
+                token = HttpContextAccessor.HttpContext?.Request?.Headers?.Authorization.FirstOrDefault().HasNotAny(GetCookie(".N4C.Token")).HasNotAny(string.Empty);
             else
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
             if (token.StartsWith(JwtBearerDefaults.AuthenticationScheme))
@@ -612,7 +612,7 @@ namespace N4C.Services
         public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(string uri, string token = default, CancellationToken cancellationToken = default)
            where TResponse : Data, new()
         {
-            if (string.IsNullOrWhiteSpace(uri))
+            if (uri.HasNotAny())
                 return null;
             List<TResponse> list = null;
             try
@@ -638,7 +638,7 @@ namespace N4C.Services
         public virtual async Task<Result<TResponse>> GetResponse<TResponse>(string uri, int id, string token = default, CancellationToken cancellationToken = default)
             where TResponse : Data, new()
         {
-            if (string.IsNullOrWhiteSpace(uri))
+            if (uri.HasNotAny())
                 return null;
             TResponse item = null;
             try
@@ -664,7 +664,7 @@ namespace N4C.Services
         public virtual async Task<Result> Create<TRequest>(string uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
             where TRequest : Data, new()
         {
-            if (string.IsNullOrWhiteSpace(uri))
+            if (uri.HasNotAny())
                 return null;
             try
             {
@@ -686,7 +686,7 @@ namespace N4C.Services
         public virtual async Task<Result> Update<TRequest>(string uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
             where TRequest : Data, new()
         {
-            if (string.IsNullOrWhiteSpace(uri))
+            if (uri.HasNotAny())
                 return null;
             try
             {
@@ -707,7 +707,7 @@ namespace N4C.Services
 
         public virtual async Task<Result> Delete(string uri, int id, string token = default, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(uri))
+            if (uri.HasNotAny())
                 return null;
             try
             {

@@ -17,7 +17,7 @@ namespace N4C.Extensions.TagHelpers
         {
             ModelMetadata aspForMetadata = AspFor.Metadata;
             string propertyName = aspForMetadata.Name;
-            if (!string.IsNullOrWhiteSpace(aspForMetadata.PropertyName))
+            if (aspForMetadata.PropertyName.HasAny())
                 propertyName = aspForMetadata.PropertyName;
             string displayName = aspForMetadata.DisplayName.GetDisplayName(propertyName, AspCulture);
             output.TagName = "label";

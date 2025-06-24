@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using N4C.Extensions;
 using N4C.Models;
 
 namespace N4C.Controllers
@@ -22,7 +23,7 @@ namespace N4C.Controllers
 
         protected void Set(string culture, Dictionary<string, object> viewData = default)
         {
-            Culture = culture ?? Defaults.TR;
+            Culture = culture.HasNotAny(Settings.Culture);
             _viewData = viewData ?? new Dictionary<string, object>();
         }
 
@@ -40,7 +41,7 @@ namespace N4C.Controllers
 
         protected void SetTempData(string tr, string en = default, string key = "Message")
         {
-            TempData[key] = Culture == Defaults.TR ? tr : en ?? string.Empty;
+            TempData[key] = Culture == Defaults.TR ? tr : en.HasNotAny(string.Empty);
         }
 
         protected void SetTempData(Result result, string key = "Message")

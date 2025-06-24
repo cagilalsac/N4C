@@ -78,7 +78,7 @@
 					    @Html.Raw(item.Active_Html)
 				    </td>
                     <td style="width:10%;">
-                        @if (string.IsNullOrWhiteSpace(item.MainFile))
+                        @if (item.MainFile.HasNotAny())
                         {
                             <span><i class="bx bx-image" style="font-size:x-large;"></i></span>
                         }

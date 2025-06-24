@@ -23,11 +23,11 @@ namespace N4C.Models
 
         public IMappingExpression<TEntity, TResponse> SetResponse() => CreateMap<TEntity, TResponse>()
             .Map(destination => destination.CreateDate_, source =>
-                source.CreateDate.HasValue && !string.IsNullOrWhiteSpace(source.CreatedBy) ? 
+                source.CreateDate.HasValue && source.CreatedBy.HasAny() ? 
                     $"{source.CreatedBy} @ {source.CreateDate.Value.ToShortDateString()} {source.CreateDate.Value.ToLongTimeString()}" : 
                     string.Empty)
             .Map(destination => destination.UpdateDate_, source => 
-                source.UpdateDate.HasValue && !string.IsNullOrWhiteSpace(source.UpdatedBy) ? 
+                source.UpdateDate.HasValue && source.UpdatedBy.HasAny() ? 
                     $"{source.UpdatedBy} @ {source.UpdateDate.Value.ToShortDateString()} {source.UpdateDate.Value.ToLongTimeString()}" : 
                     string.Empty);
 

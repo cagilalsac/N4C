@@ -85,7 +85,7 @@
             @Html.DisplayNameFor(model => model.Data.MainFile, Model.Culture)
         </div>
         <div class="col-5">
-            @if (string.IsNullOrWhiteSpace(Model.Data.MainFile) && (Model.Data.OtherFiles == null || !Model.Data.OtherFiles.Any()))
+            @if (Model.Data.MainFile.HasNotAny() && Model.Data.OtherFiles.HasNotAny())
             {
             <span><i class="bx bx-image" style="font-size:xx-large;"></i></span>
             }
@@ -93,7 +93,7 @@
             {
             <div id="files" class="carousel slide" data-bs-interval="false">
                 <div class="carousel-inner">
-                    @if (!string.IsNullOrWhiteSpace(Model.Data.MainFile))
+                    @if (Model.Data.MainFile.HasAny())
                     {
                     <div class="carousel-item active">
                         <div class="d-flex flex-column align-items-center">
@@ -109,7 +109,7 @@
                     }
                     @if (Model.Data.OtherFiles != null && Model.Data.OtherFiles.Any())
                     {
-                    var isFirst = string.IsNullOrWhiteSpace(Model.Data.MainFile);
+                    var isFirst = Model.Data.MainFile.HasNotAny();
                     var active = isFirst ? "active" : "";
                     foreach (var otherFile in Model.Data.OtherFiles)
                     {

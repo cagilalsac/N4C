@@ -1,4 +1,6 @@
-﻿namespace N4C.Models
+﻿using N4C.Extensions;
+
+namespace N4C.Models
 {
     public class MvcControllerConfig
     {
@@ -7,7 +9,7 @@
 
         public void SetCulture(string culture)
         {
-            Culture = culture;
+            Culture = culture.HasNotAny(Settings.Culture);
         }
 
         public void AddViewData(string key, object item)

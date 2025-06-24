@@ -4,17 +4,32 @@ namespace N4C.Extensions
 {
     public static class StringExtensions
     {
+        public static string HasNotAny(this string value, string defaultValue)
+        {
+            return HasNotAny(value) ? defaultValue : value;
+        }
+
+        public static bool HasNotAny(this string value)
+        {
+            return string.IsNullOrWhiteSpace(value);
+        }
+
+        public static bool HasAny(this string value)
+        {
+            return !HasNotAny(value);
+        }
+
         public static string FirstLetterToUpperOthersToLower(this string value)
         {
             string result = string.Empty;
-            if (!string.IsNullOrWhiteSpace(value))
+            if (value.HasAny())
             {
                 if (value.Contains(' '))
                 {
                     string[] valueParts = value.Split(' ');
                     foreach (string valuePart in valueParts)
                     {
-                        if (!string.IsNullOrWhiteSpace(valuePart))
+                        if (valuePart.HasAny())
                         {
                             result += valuePart.Substring(0, 1).ToUpper();
                             if (valuePart.Length > 1)
@@ -36,7 +51,7 @@ namespace N4C.Extensions
 
         public static int GetCount(this string value, char character)
         {
-            if (!string.IsNullOrWhiteSpace(value))
+            if (value.HasAny())
                 return value.Count(v => v == character);
             return 0;
         }
@@ -44,7 +59,7 @@ namespace N4C.Extensions
         public static string SeperateUpperCaseCharacters(this string value, char seperator = ' ')
         {
             string result = string.Empty;
-            if (string.IsNullOrWhiteSpace(value))
+            if (value.HasNotAny())
                 return result;
             result += value[0];
             for (int i = 1; i < value.Length; i++)
@@ -59,7 +74,7 @@ namespace N4C.Extensions
         public static string GetDisplayName(this string value, string propertyName, string culture)
         {
             string result = string.Empty;
-            if (string.IsNullOrWhiteSpace(value))
+            if (value.HasNotAny())
                 result = propertyName;
             if (value.GetCount('{') == 1 && value.GetCount('}') == 1 && value.GetCount(';') == 1)
             {
@@ -72,7 +87,7 @@ namespace N4C.Extensions
                 else
                 {
                     result = valueParts.Last();
-                    if (string.IsNullOrWhiteSpace(result) && !string.IsNullOrWhiteSpace(propertyName))
+                    if (result.HasNotAny() && propertyName.HasAny())
                     {
                         result = propertyName;
                         if (result.Contains('.'))
@@ -89,7 +104,7 @@ namespace N4C.Extensions
             string result = string.Empty;
             string displayName;
             string[] valueParts;
-            if (!string.IsNullOrWhiteSpace(value))
+            if (value.HasAny())
             {
                 if (value.Contains("not valid", StringComparison.OrdinalIgnoreCase) || value.Contains("invalid", StringComparison.OrdinalIgnoreCase))
                 {

@@ -29,10 +29,9 @@ namespace N4C.Services
         protected virtual IQueryable<TEntity> SetQuery(Action<ServiceConfig<TEntity, TRequest, TResponse>> config)
         {
             if (config is not null)
-            {
                 config.Invoke(ServiceConfig);
-                Set(ServiceConfig.Culture, ServiceConfig.TitleTR, (ServiceConfig.TitleEN ?? "Record") == "Record" ? typeof(TEntity).Name : ServiceConfig.TitleEN);
-            }
+            Set(ServiceConfig.Culture, ServiceConfig.TitleTR,
+                ServiceConfig.TitleEN.HasNotAny("Record") == "Record" ? typeof(TEntity).Name : ServiceConfig.TitleEN);
             var query = ServiceConfig.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
             query = query.OrderByDescending(entity => entity.UpdateDate).ThenByDescending(entity => entity.CreateDate);
             if (ServiceConfig.SqlServer && ServiceConfig.SplitQuery)
@@ -78,7 +77,7 @@ namespace N4C.Services
             {
                 if (ServiceConfig.PageOrder)
                 {
-                    var order = new Order() { Expression = request.OrderExpression ?? string.Empty };
+                    var order = new Order() { Expression = request.OrderExpression.HasNotAny(string.Empty) };
                     if (request.PageOrderSession && Settings.SessionExpirationInMinutes > 0)
                     {
                         var pageFromSession = GetSession<Page>(nameof(Page));
@@ -222,19 +221,19 @@ namespace N4C.Services
 
         protected void Validate<TRelationalEntity>(List<TRelationalEntity> relationalEntities) where TRelationalEntity : Entity, new()
         {
-            if (relationalEntities is not null)
+            if (relationalEntities.HasAny())
                 _relationsFound = ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)) && relationalEntities.Any();
         }
 
         protected void Update<TRelationalEntity>(List<TRelationalEntity> relationalEntities) where TRelationalEntity : Entity, new()
         {
-            if (relationalEntities is not null && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
+            if (relationalEntities.HasAny() && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
                 Db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
         }
 
         protected void Delete<TRelationalEntity>(List<TRelationalEntity> relationalEntities) where TRelationalEntity : Entity, new()
         {
-            if (relationalEntities is not null && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
+            if (relationalEntities.HasAny() && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
             {
                 if (!ServiceConfig.SoftDelete)
                     Db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
@@ -251,7 +250,7 @@ namespace N4C.Services
                 var entity = request.Map<TRequest, TEntity>(ServiceConfig).Trim();
                 entity.Guid = Guid.NewGuid().ToString();
                 entity.CreateDate = DateTime.Now;
-                entity.CreatedBy = GetUserName() ?? Defaults.User;
+                entity.CreatedBy = GetUserName().HasNotAny(Defaults.User);
                 var fileResult = CreateFiles(request, entity);
                 if (!fileResult.Success)
                     return Result(fileResult, request);
@@ -402,7 +401,7 @@ namespace N4C.Services
                         {
                             fileEntity.MainFile = mainFileResult.Data.MainFile;
                             var orderInitialValue = 1;
-                            if (fileEntity.OtherFiles is not null && fileEntity.OtherFiles.Any())
+                            if (fileEntity.OtherFiles.HasAny())
                             {
                                 var lastOtherFile = fileEntity.OtherFiles.Order().Last();
                                 orderInitialValue = GetFileOrder(lastOtherFile) + 1;
@@ -410,7 +409,7 @@ namespace N4C.Services
                             var otherFilesResult = CreateFiles(fileRequest.OtherFormFiles);
                             if (otherFilesResult.Success)
                             {
-                                if (otherFilesResult.Data is not null && otherFilesResult.Data.Any())
+                                if (otherFilesResult.Data.HasAny())
                                     fileEntity.OtherFiles = GetOtherFilePaths(otherFilesResult.Data, orderInitialValue);
                             }
                             else
@@ -435,7 +434,7 @@ namespace N4C.Services
             if (request is FileRequest && entity is FileEntity)
             {
                 var fileEntity = entity as FileEntity;
-                if (string.IsNullOrWhiteSpace(filePath))
+                if (filePath.HasNotAny())
                 {
                     mainFileResult = DeleteFile(fileEntity.MainFile);
                     if (!mainFileResult.Success)
@@ -459,10 +458,10 @@ namespace N4C.Services
                     if (!mainFileResult.Success)
                         return Result(mainFileResult, request);
                     filePath = fileEntity.OtherFiles.SingleOrDefault(otherFile => $"/{GetFileFolder(otherFile)}/{GetFileName(otherFile)}" == filePath);
-                    if (!string.IsNullOrWhiteSpace(filePath))
+                    if (filePath.HasAny())
                     {
                         fileEntity.OtherFiles.Remove(filePath);
-                        if (!fileEntity.OtherFiles.Any())
+                        if (!fileEntity.OtherFiles.HasAny())
                             fileEntity.OtherFiles = null;
                     }
                 }
@@ -492,7 +491,7 @@ namespace N4C.Services
 
         protected void GetFiles(List<TResponse> list)
         {
-            if (list.Any())
+            if (list.HasAny())
             {
                 foreach (var item in list)
                 {

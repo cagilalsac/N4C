@@ -1,4 +1,6 @@
-﻿namespace N4C.Models
+﻿using N4C.Extensions;
+
+namespace N4C.Models
 {
     public class Property
     {
@@ -10,7 +12,7 @@
         {
             Name = name;
             Value = value;
-            DisplayName = string.IsNullOrWhiteSpace(displayName) ? string.Empty : displayName;
+            DisplayName = displayName.HasNotAny(string.Empty);
         }
     }
 }

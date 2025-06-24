@@ -61,7 +61,7 @@ namespace N4C.Extensions
             List<Property> properties = null;
             Property property;
             var propertyInfoList = GetPropertyInfo<T>();
-            if (propertyInfoList is not null && propertyInfoList.Any())
+            if (propertyInfoList.HasAny())
             {
                 properties = new List<Property>();
                 foreach (var propertyInfoItem in propertyInfoList)

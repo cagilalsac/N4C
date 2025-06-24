@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using N4C.Extensions;
 using N4C.Models;
 using System.Text;
 
@@ -32,14 +33,14 @@ namespace N4C
             int jwtExpirationInMinutes = 5, int refreshTokenExpirationInMinutes = 1440, string jwtAudience = default, string jwtIssuer = default, string jwtSecurityKey = default, string jwtSecurityAlgorithm = default)
         {
             _configuration = configuration;
-            Culture = culture ?? Defaults.TR;
+            Culture = culture.HasNotAny(Defaults.TR);
             SessionExpirationInMinutes = sessionExpirationInMinutes;
             AuthCookieExpirationInMinutes = authCookieExpirationInMinutes;
             JwtExpirationInMinutes = jwtExpirationInMinutes;
-            JwtAudience = jwtAudience ?? "https://need4code.com";
-            JwtIssuer = jwtIssuer ?? "https://need4code.com";
-            JwtSecurityKey = jwtSecurityKey ?? "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf";
-            JwtSecurityAlgorithm = jwtSecurityAlgorithm ?? SecurityAlgorithms.HmacSha256Signature;
+            JwtAudience = jwtAudience.HasNotAny("https://need4code.com");
+            JwtIssuer = jwtIssuer.HasNotAny("https://need4code.com");
+            JwtSecurityKey = jwtSecurityKey.HasNotAny("4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf");
+            JwtSecurityAlgorithm = jwtSecurityAlgorithm.HasNotAny(SecurityAlgorithms.HmacSha256Signature);
             RefreshTokenExpirationInMinutes = refreshTokenExpirationInMinutes;
         }
 

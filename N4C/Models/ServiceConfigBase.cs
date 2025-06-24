@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using N4C.Extensions;
 
 namespace N4C.Models
 {
@@ -29,12 +30,12 @@ namespace N4C.Models
             { ".gif", "image/gif" }
         };
 
-        public void SetCulture(string culture) => Culture = culture ?? Settings.Culture;
+        public void SetCulture(string culture) => Culture = culture.HasNotAny(Settings.Culture);
 
         public void SetTitle(string titleTR, string titleEN = default)
         {
-            TitleTR = titleTR ?? "Kayıt";
-            TitleEN = titleEN ?? "Record";
+            TitleTR = titleTR.HasNotAny("Kayıt");
+            TitleEN = titleEN.HasNotAny("Record");
         }
 
         public void SetModelStateErrors(bool modelStateErrors)
@@ -68,7 +69,7 @@ namespace N4C.Models
             }
         }
 
-        public string Title => Culture == Defaults.TR ? TitleTR : TitleEN ?? "Record";
+        public string Title => Culture == Defaults.TR ? TitleTR : TitleEN.HasNotAny("Record");
 
         public string NotFound => Culture == Defaults.TR ? $"{Title} bulunamadı" : $"{Title} not found";
 

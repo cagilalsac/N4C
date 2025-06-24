@@ -14,7 +14,7 @@ namespace N4C.Extensions
                 .GetService(typeof(ModelExpressionProvider));
             ModelExpression modelExpression = modelExpressionProvider.CreateModelExpression(helper.ViewData, expression);
             string propertyName = modelExpression.Metadata.Name;
-            if (!string.IsNullOrWhiteSpace(modelExpression.Metadata.PropertyName))
+            if (modelExpression.Metadata.PropertyName.HasAny())
                 propertyName = modelExpression.Metadata.PropertyName;
             string displayName = modelExpression.Metadata.DisplayName.GetDisplayName(propertyName, culture);
             TagBuilder labelTag = new TagBuilder("label");
