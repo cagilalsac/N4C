@@ -20,6 +20,7 @@ using N4C.Controllers;
     {
 @:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Models");
 @:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Domain");
+@:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Controllers");
     }
 }
 
@@ -78,12 +79,14 @@ namespace @Model.ControllerNamespace
     var requestType = Model.ModelTypeName + "Request";
     var responseType = Model.ModelTypeName + "Response";
     var controllerAbstractType = "MvcController<" + Model.ModelTypeName + ", " + requestType + ", " + responseType + ">";
+    if (Model.ModelTypeName == "N4CUser")
+        controllerAbstractType = "N4CUsersMvcController";
     var serviceAbstractType = "Service<" + Model.ModelTypeName + ", " + requestType + ", " + responseType + ">";
     var requestVariable = Model.ModelVariable + "Request";
     var serviceAbstractName = "service";
     var _serviceAbstractName = "Service";
 }
-    //[Authorize]
+    //[Authorize(Roles = "system,admin,user")]
     public class @Model.ControllerName : @controllerAbstractType
     {
         // Service injections:
@@ -115,10 +118,10 @@ namespace @Model.ControllerNamespace
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
             //_{Entity}Service = {Entity}Service;
 
-            Set(null);
+            Set();
         }
 
-        protected override void Set(Action<MvcControllerConfig> config)
+        protected override void Set(Action<MvcControllerConfig> config = default)
         {
             base.Set(config => 
             {
@@ -140,13 +143,16 @@ namespace @Model.ControllerNamespace
 
         // GET: @routePrefix
         //[AllowAnonymous]
-        public override Task<IActionResult> Index(Page page, string orderExpression, bool pageOrderSession)
+        public override async Task<IActionResult> Index(PageOrderRequest request)
         {
-            return base.Index(page, orderExpression, pageOrderSession);
+            // Get collection logic:
+            var result = await Service.GetResponse(request);
+
+            return View(result);
         }
 
         // GET: @routePrefix/Details/5
-        public async Task<IActionResult> Details(@primaryKeyShortTypeName id)
+        public override async Task<IActionResult> Details(@primaryKeyShortTypeName id)
         {
             // Get item logic:
             var result = await @(_serviceAbstractName).GetResponse(id);
@@ -155,7 +161,7 @@ namespace @Model.ControllerNamespace
         }
 
         // GET: @routePrefix/Create
-        public async Task<IActionResult> Create()
+        public override async Task<IActionResult> Create()
         {
             // Get item for create logic:
             var result = await @(_serviceAbstractName).GetRequest();
@@ -165,8 +171,7 @@ namespace @Model.ControllerNamespace
         }
 
         // POST: @routePrefix/Create
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(@requestType @requestVariable)
+        public override async Task<IActionResult> Create(@requestType @requestVariable)
         {
             @(requestVariable).Set(ModelState);
 
@@ -185,7 +190,7 @@ namespace @Model.ControllerNamespace
         }
 
         // GET: @routePrefix/Edit/5
-        public async Task<IActionResult> Edit(@primaryKeyShortTypeName id)
+        public override async Task<IActionResult> Edit(@primaryKeyShortTypeName id)
         {
             // Get item for edit logic:
             var result = await @(_serviceAbstractName).GetRequest(id);
@@ -195,8 +200,7 @@ namespace @Model.ControllerNamespace
         }
 
         // POST: @routePrefix/Edit
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(@requestType @requestVariable)
+        public override async Task<IActionResult> Edit(@requestType @requestVariable)
         {
             @(requestVariable).Set(ModelState);
 
@@ -215,8 +219,7 @@ namespace @Model.ControllerNamespace
         }
 
         // GET: @routePrefix/Delete/5
-        [HttpGet, Route("[controller]/[action]/{id}")]
-        public async Task<IActionResult> Delete(@primaryKeyShortTypeName id)
+        public override async Task<IActionResult> Delete(@primaryKeyShortTypeName id)
         {
             // Get item for delete logic:
             var result = await @(_serviceAbstractName).GetResponse(id);
@@ -225,8 +228,7 @@ namespace @Model.ControllerNamespace
         }
 
         // POST: @routePrefix/Delete
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(@requestType @requestVariable)
+        public override async Task<IActionResult> DeleteConfirmed(@requestType @requestVariable)
         {
             // Delete item logic:
             var result = await @(_serviceAbstractName).Delete(@requestVariable);
@@ -236,7 +238,7 @@ namespace @Model.ControllerNamespace
         }
 
         // GET: @routePrefix/DeleteByAlertify/5
-        public async Task<IActionResult> DeleteByAlertify(@requestType @requestVariable, bool pageOrderSession)
+        public override async Task<IActionResult> DeleteByAlertify(@requestType @requestVariable, bool pageOrderSession)
         {
             // Delete item logic:
             var result = await @(_serviceAbstractName).Delete(@requestVariable);

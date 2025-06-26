@@ -19,39 +19,39 @@ namespace N4C.Users.Web.ApiControllers
         }
 
         // GET: N4CRoles
-        [HttpGet]
-        public override async Task<IActionResult> Get()
+        public override async Task<IActionResult> Get(string culture)
         {
+            Set(culture);
             return ActionResult(await Service.GetResponse());
         }
 
         // GET: N4CRoles/5
-        [HttpGet("{id}")]
-        public override async Task<IActionResult> Get(int id)
+        public override async Task<IActionResult> Get(int id, string culture)
         {
+            Set(culture);
             return ActionResult(await Service.GetResponse(id));
         }
 
 		// POST: N4CRoles
-        [HttpPost]
-        public override async Task<IActionResult> Post([FromBody] N4CRoleRequest request)
+        public override async Task<IActionResult> Post([FromBody] N4CRoleRequest request, string culture)
         {
+            Set(culture);
             request.Set(ModelState);
             return ActionResult(await Service.Create(request));
         }
 
         // PUT: N4CRoles
-        [HttpPut]
-        public override async Task<IActionResult> Put([FromBody] N4CRoleRequest request)
+        public override async Task<IActionResult> Put([FromBody] N4CRoleRequest request, string culture)
         {
+            Set(culture);
             request.Set(ModelState);
             return ActionResult(await Service.Update(request));
         }
 
         // DELETE: N4CRoles/5
-        [HttpDelete("{id}")]
-        public override async Task<IActionResult> Delete(int id)
+        public override async Task<IActionResult> Delete(int id, string culture)
         {
+            Set(culture);
             return ActionResult(await Service.Delete(id));
         }
 	}

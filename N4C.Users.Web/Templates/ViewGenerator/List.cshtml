@@ -82,7 +82,7 @@
 
                 foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
                 {
-                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreatedBy" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
+                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreatedBy" && item.Name != "UpdatedBy" && item.Name != "OtherFiles" && item.Name != "RefreshToken" && item.Name != "RefreshTokenExpiration")
                     {
                     if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
                         && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)
@@ -116,7 +116,7 @@
 			    @:<tr>
 			    foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
 			    {
-                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreatedBy" && item.Name != "UpdatedBy" && item.Name != "OtherFiles")
+                    if (item.Name != "Guid" && item.Name != "Deleted" && item.Name != "CreatedBy" && item.Name != "UpdatedBy" && item.Name != "OtherFiles" && item.Name != "RefreshToken" && item.Name != "RefreshTokenExpiration")
                     {
 				    if (propertyLookup.TryGetValue(item.Name, out IPropertyMetadata property)
 					    && property.Scaffold && !property.IsForeignKey && !property.IsPrimaryKey)

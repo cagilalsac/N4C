@@ -9,26 +9,23 @@ using N4C.Users.App.Services;
 
 namespace N4C.Users.App.Controllers
 {
-    public abstract class N4CUsersMvcController<TEntity, TRequest, TResponse> : MvcController<TEntity, TRequest, TResponse>
-        where TEntity : N4CUser, new() where TRequest : N4CUserRequest, new() where TResponse : N4CUserResponse, new()
+    public abstract class N4CUsersMvcController : MvcController<N4CUser, N4CUserRequest, N4CUserResponse>
     {
-        protected N4CUsersMvcController(Service<TEntity, TRequest, TResponse> service, IModelMetadataProvider modelMetaDataProvider)
+        protected N4CUsersMvcController(Service<N4CUser, N4CUserRequest, N4CUserResponse> service, IModelMetadataProvider modelMetaDataProvider)
             : base(service, modelMetaDataProvider)
         {
         }
 
         public virtual async Task<IActionResult> Deactivate(int id, bool pageOrderSession)
         {
-            var userService = Service as N4CUserService;
-            var result = await userService.Deactivate(id);
+            var result = await (Service as N4CUserService).Deactivate(id);
             SetTempData(result);
             return RedirectToAction(nameof(Index), new { pageOrderSession });
         }
 
         public virtual async Task<IActionResult> Activate(string guid, bool pageOrderSession)
         {
-            var userService = Service as N4CUserService;
-            var result = await userService.Activate(guid);
+            var result = await (Service as N4CUserService).Activate(guid);
             SetTempData(result);
             return RedirectToAction(nameof(Index), new { pageOrderSession });
         }
@@ -52,7 +49,7 @@ namespace N4C.Users.App.Controllers
         [AllowAnonymous, Route("[action]")]
         public virtual async Task<IActionResult> Logout()
         {
-            await (Service as N4CUserService).Logout();
+            await Service.Logout();
             return RedirectToAction("Index", "Home", new { area = "" });
         }
 

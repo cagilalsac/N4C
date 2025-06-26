@@ -65,7 +65,7 @@
 	    @:@@Html.AntiForgeryToken()
 foreach (PropertyMetadata property in Model.ModelMetadata.Properties)
 {
-    if (property.PropertyName != "Guid" && property.PropertyName != "Deleted" && property.PropertyName != "CreateDate" && property.PropertyName != "CreatedBy" && property.PropertyName != "UpdateDate" && property.PropertyName != "UpdatedBy" && property.PropertyName != "OtherFiles")
+    if (property.PropertyName != "Guid" && property.PropertyName != "Deleted" && property.PropertyName != "CreateDate" && property.PropertyName != "CreatedBy" && property.PropertyName != "UpdateDate" && property.PropertyName != "UpdatedBy" && property.PropertyName != "OtherFiles" && property.PropertyName != "RefreshToken" && property.PropertyName != "RefreshTokenExpiration")
     {
     if (property.IsPrimaryKey)
     {

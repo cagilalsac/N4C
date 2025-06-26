@@ -16,7 +16,7 @@ namespace N4C.Users.App.Services
         {
         }
 
-        protected override IQueryable<N4CRole> SetQuery(Action<ServiceConfig<N4CRole, N4CRoleRequest, N4CRoleResponse>> config)
+        protected override IQueryable<N4CRole> SetQuery(Action<ServiceConfig<N4CRole, N4CRoleRequest, N4CRoleResponse>> config = default)
         {
             var query = base.SetQuery(config =>
             {

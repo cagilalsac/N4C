@@ -10,7 +10,7 @@
 @model Result
 
 @{
-    var culture = Model?.Culture ?? Settings.Culture;
+    var culture = Model.Culture;
     var title = culture == Defaults.TR ? "Uyarı!" : "Warning!";
     var message = culture == Defaults.TR ? "Bu kaydı silmek istediğinize emin misiniz?" : "Are you sure you want to delete this record?";
     var yes = culture == Defaults.TR ? "Evet" : "Yes";

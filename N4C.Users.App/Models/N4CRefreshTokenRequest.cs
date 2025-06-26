@@ -14,7 +14,5 @@ namespace N4C.Users.App.Models
 
         [Required]
         public string RefreshToken { get; set; }
-
-        public bool SlidingExpiration { get; set; } = true;
     }
 }

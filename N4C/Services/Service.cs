@@ -26,11 +26,10 @@ namespace N4C.Services
             GetQuery();
         }
 
-        protected virtual IQueryable<TEntity> SetQuery(Action<ServiceConfig<TEntity, TRequest, TResponse>> config)
+        protected virtual IQueryable<TEntity> SetQuery(Action<ServiceConfig<TEntity, TRequest, TResponse>> config = default)
         {
-            if (config is not null)
-                config.Invoke(ServiceConfig);
-            Set(ServiceConfig.Culture, ServiceConfig.TitleTR,
+            config?.Invoke(ServiceConfig);
+            Set(Api, ServiceConfig.Culture, ServiceConfig.TitleTR,
                 ServiceConfig.TitleEN.HasNotAny("Record") == "Record" ? typeof(TEntity).Name : ServiceConfig.TitleEN);
             var query = ServiceConfig.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
             query = query.OrderByDescending(entity => entity.UpdateDate).ThenByDescending(entity => entity.CreateDate);
@@ -39,7 +38,7 @@ namespace N4C.Services
             return query.Where(entity => (EF.Property<bool?>(entity, nameof(Entity.Deleted)) ?? false) == false);
         }
 
-        protected IQueryable<TEntity> GetQuery() => SetQuery(null);
+        protected IQueryable<TEntity> GetQuery() => SetQuery();
 
         protected TEntity GetEntity(TRequest request, CancellationToken cancellationToken = default)
         {
@@ -66,7 +65,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, list);
+                return Result(exception, list);
             }
         }
 
@@ -75,7 +74,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                if (ServiceConfig.PageOrder)
+                if (!Api && ServiceConfig.PageOrder)
                 {
                     var order = new Order() { Expression = request.OrderExpression.HasNotAny(string.Empty) };
                     if (request.PageOrderSession && Settings.SessionExpirationInMinutes > 0)
@@ -107,7 +106,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, list);
+                return Result(exception, list);
             }
         }
 
@@ -122,7 +121,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, list);
+                return Result(exception, list);
             }
         }
 
@@ -137,7 +136,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, item);
+                return Result(exception, item);
             }
         }
 
@@ -160,7 +159,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, item);
+                return Result(exception, item);
             }
         }
 
@@ -176,7 +175,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, item);
+                return Result(exception, item);
             }
         }
 
@@ -215,7 +214,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, request);
+                return Result(exception, request);
             }
         }
 
@@ -265,7 +264,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, request);
+                return Result(exception, request);
             }
         }
 
@@ -312,7 +311,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, request);
+                return Result(exception, request);
             }
         }
 
@@ -330,7 +329,7 @@ namespace N4C.Services
                     entity.Deleted = true;
                     entity.UpdateDate = DateTime.Now;
                     entity.UpdatedBy = GetUserName();
-                    Db.Set<TEntity>().Update(entity);
+                    await Update(entity, false, cancellationToken);
                 }
                 else
                 {
@@ -345,7 +344,7 @@ namespace N4C.Services
             }
             catch (Exception exception)
             {
-                return Error(exception, request);
+                return Result(exception, request);
             }
         }
 

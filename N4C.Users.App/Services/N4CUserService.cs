@@ -17,7 +17,7 @@ namespace N4C.Users.App.Services
         {
         }
 
-        protected override IQueryable<N4CUser> SetQuery(Action<ServiceConfig<N4CUser, N4CUserRequest, N4CUserResponse>> config)
+        protected override IQueryable<N4CUser> SetQuery(Action<ServiceConfig<N4CUser, N4CUserRequest, N4CUserResponse>> config = default)
         {
             var query = base.SetQuery(config =>
             {
@@ -114,13 +114,8 @@ namespace N4C.Users.App.Services
             var result = await GetResponse(user => user.UserName == request.UserName &&
                 user.Password == request.Password && user.StatusId == Defaults.ActiveId, cancellationToken);
             if (result.Success)
-                await SignIn(GetClaims(result.Data.Single().Id, result.Data.Single().UserName, result.Data.Single().Roles));
+                await Login(GetClaims(result.Data.Single().Id, result.Data.Single().UserName, result.Data.Single().Roles));
             return Result(result, request);
-        }
-
-        public async Task Logout()
-        {
-            await SignOut();
         }
 
         public async Task<Result<N4CUserRegisterRequest>> Register(N4CUserRegisterRequest request, CancellationToken cancellationToken = default)
@@ -184,7 +179,7 @@ namespace N4C.Users.App.Services
             if (user is null)
                 return Error(response, NotFound);
             user.RefreshToken = GetRefreshToken();
-            if (request.SlidingExpiration)
+            if (N4CAppSettings.RefreshTokenSlidingExpiration)
                 user.RefreshTokenExpiration = DateTime.Now.AddMinutes(N4CAppSettings.RefreshTokenExpirationInMinutes);
             var result = await Update(user, true, cancellationToken);
             if (!result.Success)

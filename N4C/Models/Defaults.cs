@@ -4,7 +4,6 @@
     {
         public static string EN => "en-US";
         public static string TR => "tr-TR";
-        public static string Culture => "Culture";
         public static int SystemId => 1;
         public static string System => "system";
         public static int AdminId => 2;
@@ -16,6 +15,5 @@
         public static int InactiveId => 2;
         public static string Inactive => "Inactive";
         public static int[] RecordsPerPageCounts => [5, 10, 25, 50, 100];
-        public static string Token => "Token";
     }
 }

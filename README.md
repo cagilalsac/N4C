@@ -15,3 +15,5 @@
 - MVC Account Management with users, roles and statuses (active or inactive).
 - MVC Authentication using cookie.
 - Customized scaffolding for MVC controllers with MVC views.
+- JWT Authentication.
+- Customized scaffolding for API controllers.

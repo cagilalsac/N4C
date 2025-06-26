@@ -13,13 +13,10 @@ namespace N4C.Models
         [JsonIgnore]
         public bool ModelStateErrors { get; }
 
-        [JsonIgnore]
         public string Culture { get; }
 
-        [JsonIgnore]
         public string Title { get; }
 
-        [JsonIgnore]
         public bool Success => (int)HttpStatusCode >= 200 && (int)HttpStatusCode <= 299;
 
         [JsonIgnore]

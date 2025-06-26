@@ -7,7 +7,7 @@
 @model Result
 
 @{
-    var culture = Model?.Culture ?? Settings.Culture;
+    var culture = Model.Culture;
     var isAuthenticated = User.Identity.IsAuthenticated;
     var isInRoleSystem = User.IsInRole("system");
 }
@@ -153,7 +153,7 @@
                         <ul class="navbar-nav flex-row align-items-center ms-auto">
 
                             <li class="nav-item pe-5">
-                                <partial name="_N4Clanguages" />
+                                <partial name="_N4Clanguages" model="Model" />
                             </li>
 
                             <!-- User -->

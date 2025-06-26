@@ -1,14 +1,13 @@
 ﻿#nullable disable
 
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using N4C.Controllers;
 using N4C.Models;
 using N4C.Services;
-using N4C.Controllers;
-using N4C.Users.App.Models;
 using N4C.Users.App.Domain;
+using N4C.Users.App.Models;
 
 // Generated from N4C Template.
 
@@ -34,10 +33,10 @@ namespace N4C.Users.Web.Controllers
             /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
             //_{Entity}Service = {Entity}Service;
 
-            Set(null);
+            Set();
         }
 
-        protected override void Set(Action<MvcControllerConfig> config)
+        protected override void Set(Action<MvcControllerConfig> config = default)
         {
             base.Set(config => 
             {
@@ -50,13 +49,16 @@ namespace N4C.Users.Web.Controllers
 
         // GET: N4CStatuses
         //[AllowAnonymous]
-        public override Task<IActionResult> Index(PageOrderRequest request)
+        public override async Task<IActionResult> Index(PageOrderRequest request)
         {
-            return base.Index(request);
+            // Get collection logic:
+            var result = await Service.GetResponse(request);
+
+            return View(result);
         }
 
         // GET: N4CStatuses/Details/5
-        public async Task<IActionResult> Details(int id)
+        public override async Task<IActionResult> Details(int id)
         {
             // Get item logic:
             var result = await Service.GetResponse(id);
@@ -65,7 +67,7 @@ namespace N4C.Users.Web.Controllers
         }
 
         // GET: N4CStatuses/Create
-        public async Task<IActionResult> Create()
+        public override async Task<IActionResult> Create()
         {
             // Get item for create logic:
             var result = await Service.GetRequest();
@@ -75,8 +77,7 @@ namespace N4C.Users.Web.Controllers
         }
 
         // POST: N4CStatuses/Create
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(N4CStatusRequest n4CStatusRequest)
+        public override async Task<IActionResult> Create(N4CStatusRequest n4CStatusRequest)
         {
             n4CStatusRequest.Set(ModelState);
 
@@ -93,7 +94,7 @@ namespace N4C.Users.Web.Controllers
         }
 
         // GET: N4CStatuses/Edit/5
-        public async Task<IActionResult> Edit(int id)
+        public override async Task<IActionResult> Edit(int id)
         {
             // Get item for edit logic:
             var result = await Service.GetRequest(id);
@@ -103,8 +104,7 @@ namespace N4C.Users.Web.Controllers
         }
 
         // POST: N4CStatuses/Edit
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(N4CStatusRequest n4CStatusRequest)
+        public override async Task<IActionResult> Edit(N4CStatusRequest n4CStatusRequest)
         {
             n4CStatusRequest.Set(ModelState);
 
@@ -121,8 +121,7 @@ namespace N4C.Users.Web.Controllers
         }
 
         // GET: N4CStatuses/Delete/5
-        [HttpGet, Route("[controller]/[action]/{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public override async Task<IActionResult> Delete(int id)
         {
             // Get item for delete logic:
             var result = await Service.GetResponse(id);
@@ -130,9 +129,8 @@ namespace N4C.Users.Web.Controllers
             return View(result);
         }
 
-        // POST: N4CStatuses/Delete
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(N4CStatusRequest n4CStatusRequest)
+        // POST: N4CStatuses/DeleteConfirmed
+        public override async Task<IActionResult> DeleteConfirmed(N4CStatusRequest n4CStatusRequest)
         {
             // Delete item logic:
             var result = await Service.Delete(n4CStatusRequest);
@@ -142,7 +140,7 @@ namespace N4C.Users.Web.Controllers
         }
 
         // GET: N4CStatuses/DeleteByAlertify/5
-        public async Task<IActionResult> DeleteByAlertify(N4CStatusRequest n4CStatusRequest, bool pageOrderSession)
+        public override async Task<IActionResult> DeleteByAlertify(N4CStatusRequest n4CStatusRequest, bool pageOrderSession)
         {
             // Delete item logic:
             var result = await Service.Delete(n4CStatusRequest);

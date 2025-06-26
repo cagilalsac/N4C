@@ -30,9 +30,9 @@
     </div>
     <hr />
     <h5 class="text-danger">@question</h5>
-    <form asp-action="Delete">
+    <form asp-action="DeleteConfirmed">
 	    @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="Data.Id" />
+        <input type="hidden" asp-for="Data.Id" name="Id" />
         <button type="submit" class="btn btn-danger">@save</button>&nbsp;&nbsp;
         <a asp-action="Index" asp-route-pageordersession="true" class="btn btn-outline-danger">@backToList</a>
     </form>

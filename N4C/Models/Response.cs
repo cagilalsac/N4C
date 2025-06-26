@@ -7,6 +7,7 @@ namespace N4C.Models
     public class Response : Data
     {
         [DisplayName("Oluşturulma Tarihi", "Create Date")]
+        [ExcelIgnore]
         public virtual DateTime? CreateDate { get; set; }
 
         [DisplayName("Oluşturan", "Created By")]
@@ -14,6 +15,7 @@ namespace N4C.Models
         public virtual string CreateDate_ { get; set; }
 
         [DisplayName("Güncellenme Tarihi", "Update Date")]
+        [ExcelIgnore]
         public virtual DateTime? UpdateDate { get; set; }
 
         [DisplayName("Güncelleyen", "Updated By")]

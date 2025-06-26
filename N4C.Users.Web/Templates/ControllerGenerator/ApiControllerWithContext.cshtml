@@ -16,6 +16,7 @@ using N4C.Controllers;
     {
 @:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Models");
 @:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Domain");
+@:using @(namespaceName.Remove(namespaceName.LastIndexOf('.')) + ".Controllers");
     }
 }
 
@@ -34,11 +35,13 @@ namespace @Model.ControllerNamespace
     var requestType = Model.ModelTypeName + "Request";
     var responseType = Model.ModelTypeName + "Response";
     var controllerAbstractType = "ApiController<" + Model.ModelTypeName + ", " + requestType + ", " + responseType + ">";
+    if (Model.ModelTypeName == "N4CUser")
+        controllerAbstractType = "N4CUsersApiController";
     var serviceAbstractType = "Service<" + Model.ModelTypeName + ", " + requestType + ", " + responseType + ">";
     var serviceAbstractName = "service";
     var _serviceAbstractName = "Service";
 }
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "system,admin,user")]
     public class @Model.ControllerName : @controllerAbstractType
     {
         public @(Model.ControllerName + "(" + serviceAbstractType + " " + serviceAbstractName + ")") : base(@serviceAbstractName)
@@ -46,39 +49,39 @@ namespace @Model.ControllerNamespace
         }
 
         // GET: @routePrefix
-        [HttpGet]
-        public override async Task<IActionResult> Get()
+        public override async Task<IActionResult> Get(string culture)
         {
+            Set(culture);
             return ActionResult(await @(_serviceAbstractName).GetResponse());
         }
 
         // GET: @routePrefix/5
-        [HttpGet("{id}")]
-        public override async Task<IActionResult> Get(@primaryKeyShortTypeName id)
+        public override async Task<IActionResult> Get(@primaryKeyShortTypeName id, string culture)
         {
+            Set(culture);
             return ActionResult(await @(_serviceAbstractName).GetResponse(id));
         }
 
 		// POST: @routePrefix
-        [HttpPost]
-        public override async Task<IActionResult> Post([FromBody] @requestType request)
+        public override async Task<IActionResult> Post([FromBody] @requestType request, string culture)
         {
+            Set(culture);
             request.Set(ModelState);
             return ActionResult(await @(_serviceAbstractName).Create(request));
         }
 
         // PUT: @routePrefix
-        [HttpPut]
-        public override async Task<IActionResult> Put([FromBody] @requestType request)
+        public override async Task<IActionResult> Put([FromBody] @requestType request, string culture)
         {
+            Set(culture);
             request.Set(ModelState);
             return ActionResult(await @(_serviceAbstractName).Update(request));
         }
 
         // DELETE: @routePrefix/5
-        [HttpDelete("{id}")]
-        public override async Task<IActionResult> Delete(@primaryKeyShortTypeName id)
+        public override async Task<IActionResult> Delete(@primaryKeyShortTypeName id, string culture)
         {
+            Set(culture);
             return ActionResult(await @(_serviceAbstractName).Delete(id));
         }
 	}

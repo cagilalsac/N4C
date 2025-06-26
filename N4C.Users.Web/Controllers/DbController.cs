@@ -1,22 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
-using N4C.Controllers;
 using N4C.Models;
 using N4C.Users.App.Domain;
 
 namespace N4C.Users.Web.Controllers
 {
-    public class DbController : MvcController
+    public class DbController : Controller
     {
         const int PIN = 2025;
 
         private readonly N4CUsersDb _db;
 
-        public DbController(N4CUsersDb db, IModelMetadataProvider modelMetaDataProvider) : base(modelMetaDataProvider)
+        public DbController(N4CUsersDb db)
         {
             _db = db;
-            Set(Defaults.EN);
         }
 
         public IActionResult Seed(int pin)
@@ -114,6 +111,19 @@ namespace N4C.Users.Web.Controllers
                     },
                     StatusId = _db.Statuses.SingleOrDefault(s => s.Title == Defaults.Active).Id
                 });
+                _db.Users.Add(new N4CUser()
+                {
+                    Guid = Guid.NewGuid().ToString(),
+                    UserName = "string",
+                    Password = "string",
+                    CreateDate = DateTime.Now,
+                    CreatedBy = Defaults.System,
+                    RoleIds = new List<int>()
+                    {
+                        _db.Roles.SingleOrDefault(r => r.Name == Defaults.System).Id
+                    },
+                    StatusId = _db.Statuses.SingleOrDefault(s => s.Title == Defaults.Active).Id
+                });
 
                 _db.SaveChanges();
 
@@ -123,11 +133,11 @@ namespace N4C.Users.Web.Controllers
                     System.IO.File.Delete(file);
                 }
 
-                SetTempData("İlk veriler başarıyla oluşturuldu.", "Database seed successful.");
+                TempData["Message"] = "Database seed successful.";
             }
             else
             {
-                SetTempData("Geçersiz pin!", "Invalid pin!");
+                TempData["Message"] = "Invalid pin!";
             }
 
             return RedirectToAction("Index", "Home", new { area = "" });

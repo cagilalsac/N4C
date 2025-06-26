@@ -16,7 +16,7 @@ namespace N4C.Users.App.Services
         {
         }
 
-        protected override IQueryable<N4CStatus> SetQuery(Action<ServiceConfig<N4CStatus, N4CStatusRequest, N4CStatusResponse>> config)
+        protected override IQueryable<N4CStatus> SetQuery(Action<ServiceConfig<N4CStatus, N4CStatusRequest, N4CStatusResponse>> config = default)
         {
             return base.SetQuery(config =>
             {

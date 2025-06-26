@@ -26,7 +26,7 @@ namespace N4C.Users.App
 
             // AppSettings:
             var appSettings = new N4CAppSettings(builder.Configuration, Defaults.TR, 30, 60,
-                5, 24 * 60, "https://need4code.com", "https://need4code.com", "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf", SecurityAlgorithms.HmacSha256Signature);
+                5, 24 * 60, true, "https://need4code.com", "https://need4code.com", "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf", SecurityAlgorithms.HmacSha256Signature);
             appSettings.Bind();
 
             // Authentication:
@@ -48,7 +48,8 @@ namespace N4C.Users.App
                         ValidateIssuer = true,
                         ValidateAudience = true,
                         ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true
+                        ValidateIssuerSigningKey = true,
+                        ClockSkew = TimeSpan.Zero
                     };
                 });
 
