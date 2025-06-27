@@ -23,7 +23,7 @@ namespace N4C.Controllers
         {
             config?.Invoke(Config);
             Config.SetCulture(Service.Culture);
-            Set(Config.Culture, Service.TitleTR, Service.TitleEN, Config.ViewData);
+            Set(Service.Culture, Service.TitleTR, Service.TitleEN, Config.ViewData);
         }
 
         public virtual async Task<IActionResult> Index(PageOrderRequest request)

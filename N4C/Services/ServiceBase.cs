@@ -48,7 +48,7 @@ namespace N4C.Services
         public void Set(bool api, string culture = default, string titleTR = default, string titleEN = default)
         {
             Api = api;
-            Config.SetCulture(Api ? culture : GetCookie(".N4C.Culture"));
+            Config.SetCulture(Api ? culture : culture.HasNotAny(GetCookie(".N4C.Culture")));
             Config.SetTitle(titleTR, titleEN);
             Thread.CurrentThread.CurrentCulture = new CultureInfo(Culture);
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(Culture);

@@ -15,7 +15,7 @@ namespace N4C.Services
 
         protected ServiceConfig<TEntity, TRequest, TResponse> ServiceConfig => Config as ServiceConfig<TEntity, TRequest, TResponse>;
 
-        private bool _relationsFound { get; set; }
+        private bool _relationsFound;
 
         private DbContext Db { get; }
 

@@ -23,7 +23,7 @@ namespace N4C.Controllers
         {
             if (culture.HasAny())
                 Culture = culture.Split('-').First().ToLower() == Defaults.TR.Split('-').First() ? Defaults.TR : Defaults.EN;
-            Service?.Set(true, Culture.HasNotAny(Settings.Culture));
+            Service?.Set(true, Culture);
         }
 
         protected ObjectResult ActionResult(Result result)

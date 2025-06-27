@@ -5,7 +5,7 @@ namespace N4C.Models
 {
     public class ServiceConfig : Profile
     {
-        public string Culture { get; private set; } = Settings.Culture;
+        public string Culture { get; private set; }
         public string TitleTR { get; private set; } = "Kayıt";
         public string TitleEN { get; private set; } = "Record";
         public bool ModelStateErrors { get; private set; } = true;
