@@ -13,13 +13,14 @@ namespace N4C.Controllers
         public ApiController(Service<TEntity, TRequest, TResponse> service) : base(service)
         {
             Service = service;
+            Service.SetApi(true);
             Set();
         }
 
-        protected override void Set(string culture = default)
+        protected override void Set(string culture = default, string titleTR = default, string titleEN = default)
         {
-            base.Set(culture);
-            Service.Set(true, Culture);
+            base.Set(culture, titleTR, titleEN);
+            Service.Set(Culture, titleTR, titleEN);
         }
 
         [HttpGet]
@@ -40,16 +41,14 @@ namespace N4C.Controllers
         public virtual async Task<IActionResult> Post([FromBody] TRequest request, string culture)
         {
             Set(culture);
-            request.Set(ModelState);
-            return ActionResult(await Service.Create(request));
+            return ActionResult(await Service.Create(request, ModelState));
         }
 
         [HttpPut]
         public virtual async Task<IActionResult> Put([FromBody] TRequest request, string culture)
         {
             Set(culture);
-            request.Set(ModelState);
-            return ActionResult(await Service.Update(request));
+            return ActionResult(await Service.Update(request, ModelState));
         }
 
         [HttpDelete("{id}")]

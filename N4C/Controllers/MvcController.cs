@@ -1,19 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using N4C.Domain;
+using N4C.Extensions;
 using N4C.Models;
 using N4C.Services;
 
 namespace N4C.Controllers
 {
-    public abstract class MvcController<TEntity, TRequest, TResponse> : MvcController 
+    public abstract class MvcController<TEntity, TRequest, TResponse> : MvcController
         where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
         protected MvcControllerConfig Config { get; private set; } = new MvcControllerConfig();
 
+        protected string ApiUri => Config.ApiUri;
+
         protected override Service<TEntity, TRequest, TResponse> Service { get; }
 
-        protected MvcController(Service<TEntity, TRequest, TResponse> service, IModelMetadataProvider modelMetaDataProvider) 
+        protected MvcController(Service<TEntity, TRequest, TResponse> service, IModelMetadataProvider modelMetaDataProvider)
             : base(service, modelMetaDataProvider)
         {
             Service = service;
@@ -21,9 +24,16 @@ namespace N4C.Controllers
 
         protected virtual void Set(Action<MvcControllerConfig> config = default)
         {
-            config?.Invoke(Config);
-            Config.SetCulture(Service.Culture);
-            Set(Service.Culture, Service.TitleTR, Service.TitleEN, Config.ViewData);
+            Set(Service.Culture, Service.TitleTR, Service.TitleEN);
+            if (config is not null)
+            {
+                config.Invoke(Config);
+                SetViewData(Config.ViewData);
+                if (Config.RefreshTokenUri is not null && Config.RefreshTokenUri.AbsoluteUri.HasAny())
+                    Set(Config.Uri, Config.RefreshTokenUri, Config.TokenUri);
+                else
+                    Set(Config.Uri, Config.Token);
+            }
         }
 
         public virtual async Task<IActionResult> Index(PageOrderRequest request)
@@ -48,8 +58,7 @@ namespace N4C.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public virtual async Task<IActionResult> Create(TRequest request)
         {
-            request.Set(ModelState);
-            var result = await Service.Create(request);
+            var result = await Service.Create(request, ModelState);
             if (result.Success)
             {
                 SetTempData(result);
@@ -69,8 +78,7 @@ namespace N4C.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public virtual async Task<IActionResult> Edit(TRequest request)
         {
-            request.Set(ModelState);
-            var result = await Service.Update(request);
+            var result = await Service.Update(request, ModelState);
             if (result.Success)
             {
                 SetTempData(result);

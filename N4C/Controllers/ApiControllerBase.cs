@@ -17,13 +17,14 @@ namespace N4C.Controllers
         protected ApiController(Service service)
         {
             Service = service;
+            Service?.SetApi(true);
         }
 
-        protected virtual void Set(string culture = default)
+        protected virtual void Set(string culture = default, string titleTR = default, string titleEN = default)
         {
             if (culture.HasAny())
                 Culture = culture.Split('-').First().ToLower() == Defaults.TR.Split('-').First() ? Defaults.TR : Defaults.EN;
-            Service?.Set(true, Culture);
+            Service?.Set(Culture, titleTR, titleEN);
         }
 
         protected ObjectResult ActionResult(Result result)

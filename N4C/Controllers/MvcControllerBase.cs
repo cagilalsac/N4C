@@ -14,6 +14,12 @@ namespace N4C.Controllers
 
         private Dictionary<string, object> _viewData;
 
+        protected Uri Uri { get; private set; }
+        protected Uri TokenUri { get; private set; }
+        protected Uri RefreshTokenUri { get; private set; }
+        protected string RefreshToken { get; private set; }
+        protected string Token { get; private set; }
+
         protected virtual Service Service { get; }
 
         private readonly IModelMetadataProvider _modelMetaDataProvider;
@@ -24,10 +30,36 @@ namespace N4C.Controllers
             _modelMetaDataProvider = modelMetaDataProvider;
         }
 
-        protected void Set(string culture, string titleTR = default, string titleEN = default, Dictionary<string, object> viewData = default)
+        protected void Set(string culture, string titleTR, string titleEN)
         {
             Culture = culture.HasNotAny(Settings.Culture);
-            Service?.Set(false, Culture, titleTR, titleEN);
+            Service?.Set(Culture, titleTR, titleEN);
+        }
+
+        protected void Set(Uri uri)
+        {
+            Uri = uri is not null ? new Uri($"{uri.AbsoluteUri}?culture={Culture}") : null;
+            TokenUri = null;
+            RefreshTokenUri = null;
+            RefreshToken = null;
+            Token = null;
+        }
+
+        protected void Set(Uri uri, Uri refreshTokenUri, Uri tokenUri = default)
+        {
+            Set(uri);
+            RefreshTokenUri = new Uri($"{refreshTokenUri.AbsoluteUri}?culture={Culture}");
+            TokenUri = tokenUri is not null ? new Uri($"{tokenUri.AbsoluteUri}?culture={Culture}") : null;
+        }
+
+        protected void Set(Uri uri, string token)
+        {
+            Set(uri);
+            Token = token;
+        }
+
+        protected void SetViewData(Dictionary<string, object> viewData)
+        {
             _viewData = viewData;
         }
 

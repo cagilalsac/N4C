@@ -14,7 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\N4C.Users.Web\N4C.Users.Web.csproj" />
+		<ProjectReference Include="..\N4C.User.Web\N4C.User.Web.csproj" />
 	</ItemGroup>
 
 </Project>

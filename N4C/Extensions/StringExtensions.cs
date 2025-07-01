@@ -1,4 +1,5 @@
 ﻿using N4C.Models;
+using System.Web;
 
 namespace N4C.Extensions
 {
@@ -134,6 +135,19 @@ namespace N4C.Extensions
                     result += "!";
             }
             return result;
+        }
+
+        public static string GetQueryStringValue(this string uri, string key)
+        {
+            var queryString = HttpUtility.ParseQueryString(new Uri(uri).Query);
+            return queryString[key];
+        }
+
+        public static Uri GetUri(this string value)
+        {
+            Uri uri = null;
+            bool result = value.HasAny() && Uri.TryCreate(value, UriKind.Absolute, out uri);
+            return result ? uri : null;
         }
     }
 }

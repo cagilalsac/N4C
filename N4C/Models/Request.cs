@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using N4C.Domain;
+﻿using N4C.Domain;
 using System.Text.Json.Serialization;
 
 namespace N4C.Models
@@ -8,18 +7,5 @@ namespace N4C.Models
     {
         [JsonIgnore]
         public override string Guid { get => base.Guid; set => base.Guid = value; }
-
-        [JsonIgnore]
-        public ModelStateDictionary ModelState { get; private set; } = new ModelStateDictionary();
-
-        public void Set(ModelStateDictionary modelState)
-        {
-            ModelState = modelState;
-        }
-
-        public void Add(string tr, string en = default)
-        {
-            ModelState.AddModelError(string.Empty, tr + ";" + en);
-        }
     }
 }

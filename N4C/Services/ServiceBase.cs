@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -25,13 +26,15 @@ namespace N4C.Services
     {
         protected virtual ServiceConfig Config { get; set; } = new ServiceConfig();
 
+        protected JsonSerializerOptions JsonSerializerOptions { get; private set; }
+
         public string Culture => Config.Culture;
         public string TitleTR => Config.TitleTR;
         public string TitleEN => Config.TitleEN;
         protected string NotFound => Config.NotFound;
         protected string RelationsFound => Config.RelationsFound;
 
-        protected bool Api { get; private set; }
+        private bool _api;
 
         private IHttpContextAccessor HttpContextAccessor { get; }
         private IHttpClientFactory HttpClientFactory { get; }
@@ -42,16 +45,21 @@ namespace N4C.Services
             HttpContextAccessor = httpContextAccessor;
             HttpClientFactory = httpClientFactory;
             Logger = logger;
-            Set(false);
+            JsonSerializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+            Set();
         }
 
-        public void Set(bool api, string culture = default, string titleTR = default, string titleEN = default)
+        public void Set(string culture = default, string titleTR = default, string titleEN = default)
         {
-            Api = api;
-            Config.SetCulture(Api ? culture : culture.HasNotAny(GetCookie(".N4C.Culture")));
+            Config.SetCulture(culture.HasNotAny(GetCookie(".N4C.Culture")));
             Config.SetTitle(titleTR, titleEN);
             Thread.CurrentThread.CurrentCulture = new CultureInfo(Culture);
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(Culture);
+        }
+
+        internal void SetApi(bool api)
+        {
+            _api = api;
         }
 
         private Result Result(HttpStatusCode httpStatusCode, int? id = default, string message = default, bool modelStateErrors = true)
@@ -76,11 +84,8 @@ namespace N4C.Services
                 previousResult.ModelStateErrors);
 
         protected Result Result(HttpResponseMessage httpResponseMessage, int? id = default)
-            => Result(httpResponseMessage.StatusCode, id, (httpResponseMessage.StatusCode == HttpStatusCode.NotFound ? Config.NotFound
-                : httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ? Config.Error
-                : httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ? Config.Unauthorized
-                : httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError ? Config.Exception
-                : string.Empty + " " + httpResponseMessage.Content.ReadAsStringAsync().Result).TrimEnd());
+            => Result(httpResponseMessage.StatusCode, id, httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ?
+                Config.Unauthorized : JsonSerializer.Deserialize<Result>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message);
 
         protected Result<TData> Result<TData>(Exception exception, TData data) where TData : class, new()
         {
@@ -93,18 +98,12 @@ namespace N4C.Services
                 previousResult.ModelStateErrors);
 
         protected Result<List<TData>> Result<TData>(HttpResponseMessage httpResponseMessage, List<TData> list) where TData : class, new()
-            => Result(httpResponseMessage.StatusCode, list, (httpResponseMessage.StatusCode == HttpStatusCode.NotFound ? Config.NotFound
-                : httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ? Config.Error
-                : httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ? Config.Unauthorized
-                : httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError ? Config.Exception
-                : string.Empty + " " + httpResponseMessage.Content.ReadAsStringAsync().Result).TrimEnd());
+            => Result(httpResponseMessage.StatusCode, list, httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ?
+                Config.Unauthorized : JsonSerializer.Deserialize<Result<List<TData>>>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message);
 
         protected Result<TData> Result<TData>(HttpResponseMessage httpResponseMessage, TData item) where TData : class, new()
-            => Result(httpResponseMessage.StatusCode, item, (httpResponseMessage.StatusCode == HttpStatusCode.NotFound ? Config.NotFound
-                : httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ? Config.Error
-                : httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ? Config.Unauthorized
-                : httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError ? Config.Exception
-                : string.Empty + " " + httpResponseMessage.Content.ReadAsStringAsync().Result).TrimEnd());
+            => Result(httpResponseMessage.StatusCode, item, httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ?
+                Config.Unauthorized : JsonSerializer.Deserialize<Result<TData>>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message);
 
         public virtual Result Success(string tr = default, string en = default, int? id = default)
             => Result(HttpStatusCode.OK, id, string.Empty);
@@ -148,15 +147,16 @@ namespace N4C.Services
         {
             var error = modelStateErrors.HasAny() || uniquePropertyError.HasAny();
             var errors = Config.Error;
-            errors += " " + uniquePropertyError;
-            if (modelStateErrors.Length > 0)
+            if (uniquePropertyError.HasAny())
+                errors += " " + uniquePropertyError;
+            if (modelStateErrors.HasAny())
                 errors += ";" + modelStateErrors;
             return error ? Result(HttpStatusCode.BadRequest, item, errors.Trim(';'), Config.ModelStateErrors) : Result(HttpStatusCode.OK, item);
         }
 
         public Result Validate(ModelStateDictionary modelState)
         {
-            var errors = modelState.GetErrors(Culture);
+            var errors = modelState?.GetErrors(Culture);
             if (errors.HasAny())
                 return Result(HttpStatusCode.BadRequest, null, string.Join(";", errors));
             return Result(HttpStatusCode.OK);
@@ -172,6 +172,8 @@ namespace N4C.Services
 
         public T GetSession<T>(string key) where T : class
         {
+            if (_api)
+                return null;
             var value = HttpContextAccessor.HttpContext.Session.GetString(key);
             if (string.IsNullOrEmpty(value))
                 return null;
@@ -180,44 +182,57 @@ namespace N4C.Services
 
         public void CreateSession<T>(string key, T instance) where T : class
         {
-            var value = JsonSerializer.Serialize(instance);
-            HttpContextAccessor.HttpContext.Session.SetString(key, value);
+            if (!_api)
+            {
+                var value = JsonSerializer.Serialize(instance);
+                HttpContextAccessor.HttpContext.Session.SetString(key, value);
+            }
         }
 
         public void DeleteSession(string key)
         {
-            HttpContextAccessor.HttpContext.Session.Remove(key);
+            if (!_api)
+                HttpContextAccessor.HttpContext.Session.Remove(key);
         }
 
         public string GetCookie(string key)
         {
+            if (_api)
+                return null;
             return HttpContextAccessor.HttpContext.Request.Cookies[key];
         }
 
         public void CreateCookie(string key, string value, CookieOptions cookieOptions)
         {
-            HttpContextAccessor.HttpContext.Response.Cookies.Append(key, value, cookieOptions);
+            if (!_api)
+                HttpContextAccessor.HttpContext.Response.Cookies.Append(key, value, cookieOptions);
         }
 
         public void CreateCookie(string key, string value, bool httpOnly = true, int? expirationInMinutes = default)
         {
-            var cookieOptions = new CookieOptions()
+            if (!_api)
             {
-                Expires = expirationInMinutes.HasValue ?
-                    DateTime.SpecifyKind(DateTime.Now.AddMinutes(expirationInMinutes.Value), DateTimeKind.Utc) : DateTimeOffset.MaxValue,
-                HttpOnly = httpOnly
-            };
-            CreateCookie(key, value, cookieOptions);
+                var cookieOptions = new CookieOptions()
+                {
+                    Expires = expirationInMinutes.HasValue ?
+                        DateTime.SpecifyKind(DateTime.Now.AddMinutes(expirationInMinutes.Value), DateTimeKind.Utc) : DateTimeOffset.MaxValue,
+                    HttpOnly = httpOnly
+                };
+                CreateCookie(key, value, cookieOptions);
+            }
         }
 
         public void DeleteCookie(string key, bool httpOnly = true)
         {
-            var cookieOptions = new CookieOptions()
+            if (!_api)
             {
-                Expires = DateTime.SpecifyKind(DateTime.Now.AddDays(-1), DateTimeKind.Utc),
-                HttpOnly = httpOnly
-            };
-            CreateCookie(key, string.Empty, cookieOptions);
+                var cookieOptions = new CookieOptions()
+                {
+                    Expires = DateTime.SpecifyKind(DateTime.Now.AddDays(-1), DateTimeKind.Utc),
+                    HttpOnly = httpOnly
+                };
+                CreateCookie(key, string.Empty, cookieOptions);
+            }
         }
 
         protected virtual List<Claim> GetClaims(int userId, string userName, IEnumerable<string> roleNames)
@@ -265,6 +280,8 @@ namespace N4C.Services
         public async Task Logout(string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
         {
             await HttpContextAccessor.HttpContext.SignOutAsync(authenticationScheme);
+            DeleteCookie(".N4C.Token");
+            DeleteCookie(".N4C.RefreshToken");
         }
 
         protected void GetResponse(byte[] data, string fileName, string contentType)
@@ -603,8 +620,18 @@ namespace N4C.Services
             return jwtSecurityTokenHandler.WriteToken(jwtSecurityToken);
         }
 
-        protected string GetRefreshToken()
+        protected string GetToken()
         {
+            var token = HttpContextAccessor.HttpContext?.Request?.Headers?.Authorization.FirstOrDefault().HasNotAny(GetCookie(".N4C.Token")).HasNotAny(string.Empty);
+            if (token.StartsWith(JwtBearerDefaults.AuthenticationScheme))
+                token = token.Remove(0, JwtBearerDefaults.AuthenticationScheme.Length).TrimStart();
+            return token;
+        }
+
+        protected string GetRefreshToken(bool cookie = false)
+        {
+            if (cookie)
+                return GetCookie(".N4C.RefreshToken");
             var bytes = new byte[32];
             using (var randomNumberGenerator = RandomNumberGenerator.Create())
             {
@@ -621,15 +648,316 @@ namespace N4C.Services
         protected HttpClient CreateHttpClient(string token)
         {
             var httpClient = CreateHttpClient();
-            if (token.HasNotAny() && !Api)
-                token = HttpContextAccessor.HttpContext?.Request?.Headers?.Authorization.FirstOrDefault().HasNotAny(GetCookie(".N4C.Token")).HasNotAny(string.Empty);
             if (token.HasAny())
-            {
-                if (token.StartsWith(JwtBearerDefaults.AuthenticationScheme))
-                    token = token.Remove(0, JwtBearerDefaults.AuthenticationScheme.Length).TrimStart();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
-            }
             return httpClient;
+        }
+
+        public async Task<Result<TokenResponse>> GetToken(Uri tokenUri, string userName, string password, CancellationToken cancellationToken = default)
+        {
+            TokenResponse response = null;
+            try
+            {
+                Result<TokenResponse> result;
+                Set(tokenUri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient().PostAsJsonAsync(tokenUri,
+                    new TokenRequest() { UserName = userName, Password = password }, cancellationToken);
+                if (!httpResponseMessage.IsSuccessStatusCode)
+                    return Result(httpResponseMessage, response);
+                var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                if (httpResponse.Contains(typeof(Result).ToString()))
+                {
+                    result = JsonSerializer.Deserialize<Result<TokenResponse>>(httpResponse, JsonSerializerOptions);
+                    response = result.Data;
+                }
+                else
+                {
+                    response = JsonSerializer.Deserialize<TokenResponse>(httpResponse, JsonSerializerOptions);
+                    result = Result(httpResponseMessage, response);
+                }
+                if (result.Success)
+                {
+                    CreateCookie(".N4C.Token", response.Token);
+                    CreateCookie(".N4C.RefreshToken", response.RefreshToken);
+                }
+                return result;
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, response);
+            }
+        }
+
+        public async Task<Result<TokenResponse>> GetRefreshToken(Uri refreshTokenUri, string token, string refreshToken, CancellationToken cancellationToken = default)
+        {
+            TokenResponse response = null;
+            try
+            {
+                Result<TokenResponse> result;
+                Set(refreshTokenUri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient().PostAsJsonAsync(refreshTokenUri,
+                    new RefreshTokenRequest() { RefreshToken = refreshToken, Token = token }, cancellationToken);
+                if (!httpResponseMessage.IsSuccessStatusCode)
+                    return Result(httpResponseMessage, response);
+                var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+                if (httpResponse.Contains(typeof(Result).ToString()))
+                {
+                    result = JsonSerializer.Deserialize<Result<TokenResponse>>(httpResponse, JsonSerializerOptions);
+                    response = result.Data;
+                }
+                else
+                {
+                    response = JsonSerializer.Deserialize<TokenResponse>(httpResponse, JsonSerializerOptions);
+                    result = Result(httpResponseMessage, response);
+                }
+                if (result.Success)
+                {
+                    CreateCookie(".N4C.Token", response.Token);
+                    CreateCookie(".N4C.RefreshToken", response.RefreshToken);
+                }
+                return result;
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, response);
+            }
+        }
+
+        protected async Task<Result<TData>> GetResponse<TData>(HttpResponseMessage httpResponseMessage, TData data, CancellationToken cancellationToken = default) where TData : class, new()
+        {
+            if (!httpResponseMessage.IsSuccessStatusCode)
+                return Result(httpResponseMessage, data);
+            var httpResponse = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+            if (httpResponse.Contains(typeof(Result).ToString()))
+                return JsonSerializer.Deserialize<Result<TData>>(httpResponse, JsonSerializerOptions);
+            return Result(httpResponseMessage, JsonSerializer.Deserialize<TData>(httpResponse, JsonSerializerOptions));
+        }
+
+        public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, string token = default, CancellationToken cancellationToken = default)
+           where TResponse : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            List<TResponse> list = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient(token.HasNotAny(GetToken())).GetAsync(uri.AbsoluteUri, cancellationToken);
+                return await GetResponse(httpResponseMessage, list, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, list);
+            }
+        }
+
+        public async Task<Result<List<TResponse>>> GetResponse<TResponse>(string uri, string token = default, CancellationToken cancellationToken = default)
+            where TResponse : class, new()
+        {
+            return await GetResponse<TResponse>(uri.GetUri(), token, cancellationToken);
+        }
+
+        public async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, CancellationToken cancellationToken = default)
+           where TResponse : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            List<TResponse> list = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var token = GetToken();
+                var httpResponseMessage = await CreateHttpClient(token).GetAsync(uri.AbsoluteUri, cancellationToken);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, list);
+                    token = tokenResult.Data.Token;
+                    return await GetResponse<TResponse>(uri, token, cancellationToken);
+                }
+                return await GetResponse(httpResponseMessage, list, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, list);
+            }
+        }
+
+        public virtual async Task<Result<TResponse>> GetResponse<TResponse>(Uri uri, int id, string token = default, CancellationToken cancellationToken = default)
+            where TResponse : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            TResponse item = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient(token).GetAsync($"{uri.GetLeftPart(UriPartial.Path)}/{id}{uri.Query}", cancellationToken);
+                return await GetResponse(httpResponseMessage, item, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, item);
+            }
+        }
+
+        public async Task<Result<TResponse>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
+            where TResponse : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            TResponse item = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var token = GetToken();
+                var httpResponseMessage = await CreateHttpClient(token).GetAsync($"{uri.GetLeftPart(UriPartial.Path)}/{id}{uri.Query}", cancellationToken);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, item);
+                    token = tokenResult.Data.Token;
+                    return await GetResponse<TResponse>(uri, id, token, cancellationToken);
+                }
+                return await GetResponse(httpResponseMessage, item, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, item);
+            }
+        }
+
+        public virtual async Task<Result<TRequest>> Create<TRequest>(Uri uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public async Task<Result<TRequest>> Create<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var token = GetToken();
+                var httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, request);
+                    token = tokenResult.Data.Token;
+                    return await Create(uri, request, token, cancellationToken);
+                }
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public virtual async Task<Result<TRequest>> Update<TRequest>(Uri uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public async Task<Result<TRequest>> Update<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var token = GetToken();
+                var httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, request);
+                    token = tokenResult.Data.Token;
+                    return await Update(uri, request, token, cancellationToken);
+                }
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public virtual async Task<Result<TRequest>> Delete<TRequest>(Uri uri, int id, string token = default, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            TRequest request = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient(token).DeleteAsync($"{uri.GetLeftPart(UriPartial.Path)}/{id}{uri.Query}", cancellationToken);
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public async Task<Result<TRequest>> Delete<TRequest>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            TRequest request = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var token = GetToken();
+                var httpResponseMessage = await CreateHttpClient(token).DeleteAsync($"{uri.GetLeftPart(UriPartial.Path)}/{id}{uri.Query}", cancellationToken);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, request);
+                    token = tokenResult.Data.Token;
+                    return await Delete<TRequest>(uri, id, token, cancellationToken);
+                }
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
         }
     }
 }

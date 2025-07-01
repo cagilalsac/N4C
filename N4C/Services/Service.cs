@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using N4C.Domain;
@@ -13,39 +14,53 @@ namespace N4C.Services
     {
         protected override ServiceConfig Config { get; set; } = new ServiceConfig<TEntity, TRequest, TResponse>();
 
-        protected ServiceConfig<TEntity, TRequest, TResponse> ServiceConfig => Config as ServiceConfig<TEntity, TRequest, TResponse>;
+        private ServiceConfig<TEntity, TRequest, TResponse> _serviceConfig;
 
         private bool _relationsFound;
+        private bool _validated;
+        private bool _querySet;
 
         private DbContext Db { get; }
 
-        protected Service(DbContext db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger) 
+        protected Service(DbContext db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger)
             : base(httpContextAccessor, httpClientFactory, logger)
         {
             Db = db;
-            GetQuery();
+            _serviceConfig = Config as ServiceConfig<TEntity, TRequest, TResponse>;
+            Query();
         }
 
-        protected virtual IQueryable<TEntity> SetQuery(Action<ServiceConfig<TEntity, TRequest, TResponse>> config = default)
+        protected virtual IQueryable<TEntity> Query(Action<ServiceConfig<TEntity, TRequest, TResponse>> config = default)
         {
-            config?.Invoke(ServiceConfig);
-            Set(Api, ServiceConfig.Culture, ServiceConfig.TitleTR,
-                ServiceConfig.TitleEN.HasNotAny("Record") == "Record" ? typeof(TEntity).Name : ServiceConfig.TitleEN);
-            var query = ServiceConfig.NoTracking ? Db.Set<TEntity>().AsNoTracking() : Db.Set<TEntity>();
-            query = query.OrderByDescending(entity => entity.UpdateDate).ThenByDescending(entity => entity.CreateDate);
-            if (ServiceConfig.SqlServer && ServiceConfig.SplitQuery)
-                query = query.AsSplitQuery();
-            return query.Where(entity => (EF.Property<bool?>(entity, nameof(Entity.Deleted)) ?? false) == false);
+            if (config is not null)
+            {
+                config.Invoke(_serviceConfig);
+                Set(_serviceConfig.Culture, _serviceConfig.TitleTR, _serviceConfig.TitleEN.HasNotAny("Record") == "Record" ? typeof(TEntity).Name : _serviceConfig.TitleEN);
+            }
+            var query = Db.Set<TEntity>().AsQueryable();
+            if (_querySet)
+            {
+                query = query.OrderByDescending(entity => entity.UpdateDate).ThenByDescending(entity => entity.CreateDate)
+                    .Where(entity => (EF.Property<bool?>(entity, nameof(Entity.Deleted)) ?? false) == false);
+                if (_serviceConfig.NoTracking)
+                    query = query.AsNoTracking();
+                if (_serviceConfig.SqlServer && _serviceConfig.SplitQuery)
+                    query = query.AsSplitQuery();
+            }
+            _querySet = true;
+            return query;
         }
 
-        protected IQueryable<TEntity> GetQuery() => SetQuery();
+        protected List<TEntity> GetEntities(Expression<Func<TEntity, bool>> predicate = default) => predicate is null ? Query().ToList() : Query().Where(predicate).ToList();
 
-        protected TEntity GetEntity(TRequest request, CancellationToken cancellationToken = default)
+        protected TEntity GetEntity(Expression<Func<TEntity, bool>> predicate) => GetEntities(predicate).SingleOrDefault();
+
+        protected TEntity GetEntity(TRequest request)
         {
             TEntity item = null;
             try
             {
-                item = GetQuery().SingleOrDefaultAsync(entity => entity.Id == request.Id, cancellationToken)?.Result ?? new TEntity();
+                item = GetEntity(entity => entity.Id == request.Id) ?? new TEntity();
             }
             catch (Exception exception)
             {
@@ -59,7 +74,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await GetQuery().Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                list = await Query().Map<TEntity, TResponse>(_serviceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Success(list);
             }
@@ -72,9 +87,10 @@ namespace N4C.Services
         public virtual async Task<Result<List<TResponse>>> GetResponse(PageOrderRequest request, CancellationToken cancellationToken = default)
         {
             List<TResponse> list = null;
+            var query = Query();
             try
             {
-                if (!Api && ServiceConfig.PageOrder)
+                if (_serviceConfig.PageOrder)
                 {
                     var order = new Order() { Expression = request.OrderExpression.HasNotAny(string.Empty) };
                     if (request.PageOrderSession && Settings.SessionExpirationInMinutes > 0)
@@ -91,9 +107,9 @@ namespace N4C.Services
                             order.Expression = orderFromSession.Expression;
                         }
                     }
-                    request.Page.RecordsPerPageCounts = ServiceConfig.RecordsPerPageCounts;
-                    order.Expressions = ServiceConfig.OrderExpressions;
-                    list = await GetQuery().OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                    request.Page.RecordsPerPageCounts = _serviceConfig.RecordsPerPageCounts;
+                    order.Expressions = _serviceConfig.OrderExpressions;
+                    list = await query.OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(_serviceConfig).ToListAsync(cancellationToken);
                     if (Settings.SessionExpirationInMinutes > 0)
                     {
                         CreateSession(nameof(Page), request.Page);
@@ -115,7 +131,7 @@ namespace N4C.Services
             List<TResponse> list = null;
             try
             {
-                list = await GetQuery().Where(predicate).Map<TEntity, TResponse>(ServiceConfig).ToListAsync(cancellationToken);
+                list = await Query().Where(predicate).Map<TEntity, TResponse>(_serviceConfig).ToListAsync(cancellationToken);
                 GetFiles(list);
                 return Success(list);
             }
@@ -130,7 +146,7 @@ namespace N4C.Services
             TResponse item = null;
             try
             {
-                item = await GetQuery().Map<TEntity, TResponse>(ServiceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
+                item = await Query().Map<TEntity, TResponse>(_serviceConfig).SingleOrDefaultAsync(response => response.Id == id, cancellationToken);
                 GetFiles(item);
                 return Success(item);
             }
@@ -145,10 +161,11 @@ namespace N4C.Services
             TRequest item = null;
             try
             {
+                var query = Query();
                 if (id.HasValue)
                 {
-                    var entity = await GetQuery().SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
-                    item = entity.Map(ServiceConfig, item);
+                    var entity = await query.SingleOrDefaultAsync(entity => entity.Id == id.Value, cancellationToken);
+                    item = entity.Map(_serviceConfig, item);
                     GetFiles(item, entity);
                 }
                 else
@@ -168,8 +185,8 @@ namespace N4C.Services
             TRequest item = null;
             try
             {
-                var entity = await GetQuery().SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
-                item = entity.Map(ServiceConfig, item);
+                var entity = await Query().SingleOrDefaultAsync(entity => entity.Guid == guid, cancellationToken);
+                item = entity.Map(_serviceConfig, item);
                 GetFiles(item, entity);
                 return Success(item);
             }
@@ -185,27 +202,28 @@ namespace N4C.Services
             return Success(item);
         }
 
-        protected virtual Result<TRequest> Validate(TRequest request)
+        protected virtual Result<TRequest> Validate(TRequest request, ModelStateDictionary modelState = default)
         {
             try
             {
+                var query = Query();
                 Property entityProperty, requestProperty;
                 string collation = "Turkish_CI_AS";
-                string modelStateErrors = Validate(request.ModelState).Message;
+                string modelStateErrors = Validate(modelState).Message;
                 string uniquePropertyError = string.Empty;
-                if (ServiceConfig.SqlServer)
+                if (_serviceConfig.SqlServer)
                 {
-                    foreach (var uniqueProperty in ServiceConfig.UniqueProperties)
+                    foreach (var uniqueProperty in _serviceConfig.UniqueProperties)
                     {
                         entityProperty = ObjectExtensions.GetProperty<TEntity>(uniqueProperty);
                         requestProperty = ObjectExtensions.GetProperty(uniqueProperty, true, request);
-                        if (entityProperty is not null && requestProperty is not null && GetQuery().Any(entity => entity.Id != request.Id &&
+                        if (entityProperty is not null && requestProperty is not null && query.Any(entity => entity.Id != request.Id &&
                             EF.Functions.Collate(EF.Property<string>(entity, entityProperty.Name), collation) == EF.Functions.Collate((requestProperty.Value ?? "").ToString(), collation).Trim()))
                         {
                             if (Culture == Defaults.TR)
-                                uniquePropertyError = $"{requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} değerine sahip {ServiceConfig.Title.ToLower()} bulunmaktadır!";
+                                uniquePropertyError = $"{requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} değerine sahip {_serviceConfig.Title.ToLower()} bulunmaktadır!";
                             else
-                                uniquePropertyError = $"{ServiceConfig.Title} with the same value for {requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} exists!";
+                                uniquePropertyError = $"{_serviceConfig.Title} with the same value for {requestProperty.DisplayName.GetDisplayName(requestProperty.Name, Culture)} exists!";
                             break;
                         }
                     }
@@ -234,19 +252,22 @@ namespace N4C.Services
         {
             if (relationalEntities.HasAny() && ObjectExtensions.GetPropertyInfo<TRelationalEntity>().Any(property => property.PropertyType == typeof(TEntity)))
             {
-                if (!ServiceConfig.SoftDelete)
+                if (!_serviceConfig.SoftDelete)
                     Db.Set<TRelationalEntity>().RemoveRange(relationalEntities);
             }
         }
 
-        public virtual async Task<Result<TRequest>> Create(TRequest request, bool save = true, CancellationToken cancellationToken = default)
+        protected virtual async Task<Result<TRequest>> Create(TRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             try
             {
-                var validationResult = Validate(request);
-                if (!validationResult.Success)
-                    return Result(validationResult, request);
-                var entity = request.Map<TRequest, TEntity>(ServiceConfig).Trim();
+                if (!_validated)
+                {
+                    var validationResult = Validate(request);
+                    if (!validationResult.Success)
+                        return Result(validationResult, request);
+                }
+                var entity = request.Map<TRequest, TEntity>(_serviceConfig).Trim();
                 entity.Guid = Guid.NewGuid().ToString();
                 entity.CreateDate = DateTime.Now;
                 entity.CreatedBy = GetUserName().HasNotAny(Defaults.User);
@@ -268,6 +289,15 @@ namespace N4C.Services
             }
         }
 
+        public async Task<Result<TRequest>> Create(TRequest request, ModelStateDictionary modelState, bool save = true, CancellationToken cancellationToken = default)
+        {
+            var validationResult = Validate(request, modelState);
+            if (!validationResult.Success)
+                return Result(validationResult, request);
+            _validated = true;
+            return await Create(request, save, cancellationToken);
+        }
+
         protected async Task<Result<TEntity>> Update(TEntity entity, bool save = true, CancellationToken cancellationToken = default)
         {
             Db.Set<TEntity>().Update(entity);
@@ -285,20 +315,23 @@ namespace N4C.Services
             return Updated(entity);
         }
 
-        public virtual async Task<Result<TRequest>> Update(TRequest request, bool save = true, CancellationToken cancellationToken = default)
+        protected virtual async Task<Result<TRequest>> Update(TRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             try
             {
-                var validationResult = Validate(request);
-                if (!validationResult.Success)
-                    return Result(validationResult, request);
+                if (!_validated)
+                {
+                    var validationResult = Validate(request);
+                    if (!validationResult.Success)
+                        return Result(validationResult, request);
+                }
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return Error(request, NotFound);
                 var guid = entity.Guid;
                 var createDate = entity.CreateDate;
                 var createdBy = entity.CreatedBy;
-                entity = request.Map(ServiceConfig, entity).Trim();
+                entity = request.Map(_serviceConfig, entity).Trim();
                 entity.Guid = guid;
                 entity.CreateDate = createDate;
                 entity.CreatedBy = createdBy;
@@ -315,6 +348,15 @@ namespace N4C.Services
             }
         }
 
+        public async Task<Result<TRequest>> Update(TRequest request, ModelStateDictionary modelState, bool save = true, CancellationToken cancellationToken = default)
+        {
+            var validationResult = Validate(request, modelState);
+            if (!validationResult.Success)
+                return Result(validationResult, request);
+            _validated = true;
+            return await Update(request, save, cancellationToken);
+        }
+
         public virtual async Task<Result<TRequest>> Delete(TRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             try
@@ -324,7 +366,7 @@ namespace N4C.Services
                 var entity = Db.Set<TEntity>().Find(request.Id);
                 if (entity is null)
                     return Error(request, NotFound);
-                if (ServiceConfig.SoftDelete)
+                if (_serviceConfig.SoftDelete)
                 {
                     entity.Deleted = true;
                     entity.UpdateDate = DateTime.Now;
@@ -348,7 +390,7 @@ namespace N4C.Services
             }
         }
 
-        public async Task<Result<TRequest>> Delete(int id) => await Delete(new TRequest() { Id = id }); 
+        public async Task<Result<TRequest>> Delete(int id) => await Delete(new TRequest() { Id = id });
 
         protected Result<TRequest> CreateFiles(TRequest request, TEntity entity)
         {
