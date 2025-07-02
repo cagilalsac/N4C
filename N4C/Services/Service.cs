@@ -92,29 +92,21 @@ namespace N4C.Services
             {
                 if (_serviceConfig.PageOrder)
                 {
-                    var order = new Order() { Expression = request.OrderExpression.HasNotAny(string.Empty) };
-                    if (request.PageOrderSession && Settings.SessionExpirationInMinutes > 0)
-                    {
-                        var pageFromSession = GetSession<Page>(nameof(Page));
-                        if (pageFromSession is not null)
-                        {
-                            request.Page.Number = pageFromSession.Number;
-                            request.Page.RecordsPerPageCount = pageFromSession.RecordsPerPageCount;
-                        }
-                        var orderFromSession = GetSession<Order>(nameof(Order));
-                        if (orderFromSession is not null)
-                        {
-                            order.Expression = orderFromSession.Expression;
-                        }
-                    }
+                    GetPageOrderSession(request);
                     request.Page.RecordsPerPageCounts = _serviceConfig.RecordsPerPageCounts;
-                    order.Expressions = _serviceConfig.OrderExpressions;
-                    list = await query.OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(_serviceConfig).ToListAsync(cancellationToken);
-                    if (Settings.SessionExpirationInMinutes > 0)
+                    var order = new Order()
                     {
-                        CreateSession(nameof(Page), request.Page);
-                        CreateSession(nameof(Order), order);
-                    }
+                        Expression = request.OrderExpression.HasNotAny(string.Empty),
+                        Expressions = _serviceConfig.OrderExpressions
+                    };
+                    if (!request.Page.RecordsPerPageCounts.Contains(request.Page.RecordsPerPageCount.HasNotAny(Culture == Defaults.TR ? "Tümü" : "All")))
+                        return Error(list, $"Geçersiz sayfadaki kayıt sayısı değeri! Geçerli değerler: {string.Join(", ", request.Page.RecordsPerPageCounts)}",
+                            $"Invalid records per page count value! Valid values: {string.Join(", ", request.Page.RecordsPerPageCounts)}");
+                    if (order.Expression.HasAny() && order.Expressions.Any() && !order.Expressions.ContainsKey(order.Expression))
+                        return Error(list, $"Geçersiz sıralama değeri! Geçerli değerler: {string.Join(", ", order.Expressions.Keys)}",
+                            $"Invalid order value! Valid values: {string.Join(", ", order.Expressions.Keys)}");
+                    list = await query.OrderBy(order.Expression).Paginate(request.Page).Map<TEntity, TResponse>(_serviceConfig).ToListAsync(cancellationToken);
+                    SetPageOrderSession(request.Page, order);
                     GetFiles(list);
                     return Success(list, request.Page, order);
                 }
@@ -124,6 +116,24 @@ namespace N4C.Services
             {
                 return Result(exception, list);
             }
+        }
+
+        public async Task<Result<List<TResponse>>> GetResponse(string pageNumber, string recordsPerPageCount, string orderExpression = default, CancellationToken cancellationToken = default)
+        {
+            int pageOrderRequestPageNumber;
+            if (int.TryParse(pageNumber, out pageOrderRequestPageNumber))
+            {
+                return await GetResponse(new PageOrderRequest()
+                {
+                    Page = new Page()
+                    {
+                        Number = pageOrderRequestPageNumber,
+                        RecordsPerPageCount = recordsPerPageCount
+                    },
+                    OrderExpression = orderExpression
+                }, cancellationToken);
+            }
+            return await GetResponse(cancellationToken);
         }
 
         public virtual async Task<Result<List<TResponse>>> GetResponse(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)

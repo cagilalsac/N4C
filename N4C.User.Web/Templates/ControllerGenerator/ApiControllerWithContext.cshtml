@@ -49,10 +49,10 @@ namespace @Model.ControllerNamespace
         }
 
         // GET: @routePrefix
-        public override async Task<IActionResult> Get(string culture)
+        public override async Task<IActionResult> Get(string pageNumber, string recordsPerPageCount, string orderExpression, string culture = default)
         {
             Set(culture);
-            return ActionResult(await @(_serviceAbstractName).GetResponse());
+            return ActionResult(await @(_serviceAbstractName).GetResponse(await Service.GetResponse(pageNumber, recordsPerPageCount, orderExpression)));
         }
 
         // GET: @routePrefix/5
@@ -66,16 +66,14 @@ namespace @Model.ControllerNamespace
         public override async Task<IActionResult> Post([FromBody] @requestType request, string culture)
         {
             Set(culture);
-            request.Set(ModelState);
-            return ActionResult(await @(_serviceAbstractName).Create(request));
+            return ActionResult(await @(_serviceAbstractName).Create(request, ModelState));
         }
 
         // PUT: @routePrefix
         public override async Task<IActionResult> Put([FromBody] @requestType request, string culture)
         {
             Set(culture);
-            request.Set(ModelState);
-            return ActionResult(await @(_serviceAbstractName).Update(request));
+            return ActionResult(await @(_serviceAbstractName).Update(request, ModelState));
         }
 
         // DELETE: @routePrefix/5

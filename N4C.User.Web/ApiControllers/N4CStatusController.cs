@@ -19,10 +19,10 @@ namespace N4C.User.Web.ApiControllers
         }
 
         // GET: N4CStatus
-        public override async Task<IActionResult> Get(string culture)
+        public override async Task<IActionResult> Get(string pageNumber, string recordsPerPageCount, string orderExpression, string culture = default)
         {
             Set(culture);
-            return ActionResult(await Service.GetResponse());
+            return ActionResult(await Service.GetResponse(pageNumber, recordsPerPageCount, orderExpression));
         }
 
         // GET: N4CStatus/5

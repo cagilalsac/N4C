@@ -1,6 +1,5 @@
 ﻿using N4C.Extensions;
 using System.Net;
-using System.Text.Json.Serialization;
 
 namespace N4C.Models
 {
@@ -10,7 +9,6 @@ namespace N4C.Models
         public string Message { get; }
         public int? Id { get; }
 
-        [JsonIgnore]
         public bool ModelStateErrors { get; }
 
         public string Culture { get; }
@@ -19,10 +17,8 @@ namespace N4C.Models
 
         public bool Success => (int)HttpStatusCode >= 200 && (int)HttpStatusCode <= 299;
 
-        [JsonIgnore]
         public Page Page { get; }
 
-        [JsonIgnore]
         public Order Order { get; }
 
         public string Type => typeof(Result).ToString();

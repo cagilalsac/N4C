@@ -51,7 +51,7 @@ namespace N4C.Services
 
         public void Set(string culture = default, string titleTR = default, string titleEN = default)
         {
-            Config.SetCulture(culture.HasNotAny(GetCookie(".N4C.Culture")));
+            Config.SetCulture(_api ? culture.HasNotAny(Settings.Culture) : culture.HasNotAny(GetCookie(".N4C.Culture")));
             Config.SetTitle(titleTR, titleEN);
             Thread.CurrentThread.CurrentCulture = new CultureInfo(Culture);
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(Culture);
@@ -115,12 +115,19 @@ namespace N4C.Services
         public virtual Result Updated(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message.HasNotAny(Config.Updated));
         public virtual Result Deleted(int? id = default, string message = default) => Result(HttpStatusCode.NoContent, id, message.HasNotAny(Config.Deleted));
 
-        protected virtual Result<List<TData>> Success<TData>(List<TData> list, Page page = default, Order order = default) where TData : Data, new()
-            => list.HasAny() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", false, page, order) :
+        protected virtual Result<List<TData>> Success<TData>(List<TData> list) where TData : Data, new()
+            => list.HasAny() ? Result(HttpStatusCode.OK, list, $"{list.Count} {Config.Found}", false) :
+                Result(HttpStatusCode.NotFound, list, Config.NotFound);
+
+        protected virtual Result<List<TData>> Success<TData>(List<TData> list, Page page, Order order) where TData : Data, new()
+            => page.TotalRecordsCount > 0 ? Result(HttpStatusCode.OK, list, $"{page.TotalRecordsCount} {Config.Found}", false, page, order) :
                 Result(HttpStatusCode.NotFound, list, Config.NotFound);
 
         protected virtual Result<TData> Success<TData>(TData item) where TData : Data, new()
             => Result(item is null ? HttpStatusCode.NotFound : HttpStatusCode.OK, item, item is null ? Config.NotFound : string.Empty);
+
+        protected virtual Result<List<TData>> Error<TData>(List<TData> list, string tr, string en) where TData : Data, new()
+            => Result(HttpStatusCode.BadRequest, list, $"{Config.Error} {(Culture == Defaults.TR ? tr : en)}".TrimEnd());
 
         protected virtual Result<TData> Error<TData>(TData item, string tr, string en) where TData : Data, new()
             => Result(HttpStatusCode.BadRequest, item, $"{Config.Error} {(Culture == Defaults.TR ? tr : en)}".TrimEnd());
@@ -172,7 +179,7 @@ namespace N4C.Services
 
         public T GetSession<T>(string key) where T : class
         {
-            if (_api)
+            if (_api || Settings.SessionExpirationInMinutes <= 0)
                 return null;
             var value = HttpContextAccessor.HttpContext.Session.GetString(key);
             if (string.IsNullOrEmpty(value))
@@ -182,7 +189,7 @@ namespace N4C.Services
 
         public void CreateSession<T>(string key, T instance) where T : class
         {
-            if (!_api)
+            if (!_api && Settings.SessionExpirationInMinutes > 0)
             {
                 var value = JsonSerializer.Serialize(instance);
                 HttpContextAccessor.HttpContext.Session.SetString(key, value);
@@ -191,7 +198,7 @@ namespace N4C.Services
 
         public void DeleteSession(string key)
         {
-            if (!_api)
+            if (!_api && Settings.SessionExpirationInMinutes > 0)
                 HttpContextAccessor.HttpContext.Session.Remove(key);
         }
 
@@ -282,6 +289,30 @@ namespace N4C.Services
             await HttpContextAccessor.HttpContext.SignOutAsync(authenticationScheme);
             DeleteCookie(".N4C.Token");
             DeleteCookie(".N4C.RefreshToken");
+        }
+
+        protected void GetPageOrderSession(PageOrderRequest pageOrderRequest)
+        {
+            if (pageOrderRequest.PageOrderSession)
+            {
+                var pageFromSession = GetSession<Page>(nameof(Page));
+                if (pageFromSession is not null)
+                {
+                    pageOrderRequest.Page.Number = pageFromSession.Number;
+                    pageOrderRequest.Page.RecordsPerPageCount = pageFromSession.RecordsPerPageCount;
+                }
+                var orderFromSession = GetSession<Order>(nameof(Order));
+                if (orderFromSession is not null)
+                {
+                    pageOrderRequest.OrderExpression = orderFromSession.Expression;
+                }
+            }
+        }
+
+        protected void SetPageOrderSession(Page page, Order order)
+        {
+            CreateSession(nameof(Page), page);
+            CreateSession(nameof(Order), order);
         }
 
         protected void GetResponse(byte[] data, string fileName, string contentType)
@@ -743,6 +774,57 @@ namespace N4C.Services
             {
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
                 var httpResponseMessage = await CreateHttpClient(token.HasNotAny(GetToken())).GetAsync(uri.AbsoluteUri, cancellationToken);
+                return await GetResponse(httpResponseMessage, list, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, list);
+            }
+        }
+
+        public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, PageOrderRequest pageOrderRequest, string token = default, CancellationToken cancellationToken = default)
+            where TResponse : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            List<TResponse> list = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                GetPageOrderSession(pageOrderRequest);
+                var httpResponseMessage = await CreateHttpClient(token.HasNotAny(GetToken()))
+                    .GetAsync($"{uri.AbsoluteUri}&pageNumber={pageOrderRequest.Page.Number}&recordsPerPageCount={pageOrderRequest.Page.RecordsPerPageCount}&orderExpression={pageOrderRequest.OrderExpression}", cancellationToken);
+                SetPageOrderSession(pageOrderRequest.Page, new Order() { Expression = pageOrderRequest.OrderExpression });
+                return await GetResponse(httpResponseMessage, list, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, list);
+            }
+        }
+
+        public async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, PageOrderRequest pageOrderRequest, CancellationToken cancellationToken = default)
+            where TResponse : class, new()
+        {
+            if (uri is null || uri.AbsoluteUri.HasNotAny())
+                return null;
+            List<TResponse> list = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var token = GetToken();
+                GetPageOrderSession(pageOrderRequest);
+                var httpResponseMessage = await CreateHttpClient(token)
+                    .GetAsync($"{uri.AbsoluteUri}&pageNumber={pageOrderRequest.Page.Number}&recordsPerPageCount={pageOrderRequest.Page.RecordsPerPageCount}&orderExpression={pageOrderRequest.OrderExpression}", cancellationToken);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, list);
+                    token = tokenResult.Data.Token;
+                    return await GetResponse<TResponse>(uri, pageOrderRequest, token, cancellationToken);
+                }
+                SetPageOrderSession(pageOrderRequest.Page, new Order() { Expression = pageOrderRequest.OrderExpression });
                 return await GetResponse(httpResponseMessage, list, cancellationToken);
             }
             catch (Exception exception)

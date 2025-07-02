@@ -12,32 +12,21 @@ namespace N4C.Models
         public Uri RefreshTokenUri { get; private set; }
         public string Token { get; private set; }
 
-        public void SetUri(string path, string origin, string token = default)
+        public void SetUri(string uriPath, string uriOrigin, string token = default)
         {
-            ApiUri = origin;
+            ApiUri = uriOrigin;
+            Token = token;
             if (ApiUri.HasAny())
+                Uri = new Uri($"{ApiUri}/{uriPath}");
+        }
+
+        public void SetTokenUri(string tokenUriOrigin)
+        {
+            if (tokenUriOrigin.HasAny())
             {
-                Uri = new Uri($"{ApiUri}/{path}");
-                Token = token;
-                if (Token.HasNotAny())
-                    SetRefreshTokenUri();
+                TokenUri = new Uri($"{tokenUriOrigin}/Token");
+                RefreshTokenUri = new Uri($"{tokenUriOrigin}/RefreshToken");
             }
-        }
-
-        public void SetRefreshTokenUri(string path = default, string origin = default)
-        {
-            path = path.HasNotAny("RefreshToken");
-            origin = origin.HasNotAny(ApiUri);
-            if (origin.HasAny())
-                RefreshTokenUri = new Uri($"{origin}/{path}");
-        }
-
-        public void SetTokenUri(string path = default, string origin = default)
-        {
-            path = path.HasNotAny("Token");
-            origin = origin.HasNotAny(ApiUri);
-            if (origin.HasAny())
-                TokenUri = new Uri($"{origin}/{path}");
         }
 
         public void AddViewData(string key, object item)

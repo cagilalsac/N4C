@@ -48,7 +48,7 @@ namespace N4C.Models
             }
         }
 
-        public void SetPageOrder(int[] recordsPerPageCounts = default, params Expression<Func<TResponse, object>>[] entityProperties)
+        public void SetPageOrder(int[] recordsPerPageCounts = default, params Expression<Func<TResponse, object>>[] orderEntityProperties)
         {
             PageOrder = true;
             Property property = null;
@@ -56,7 +56,7 @@ namespace N4C.Models
             var entityPropertyList = ObjectExtensions.GetProperties<TEntity>();
             OrderExpressions.Clear();
             bool entityPropertyFound = true;
-            foreach (var entityProperty in entityProperties)
+            foreach (var entityProperty in orderEntityProperties)
             {
                 property = entityProperty.GetProperty();
                 if (entityPropertyList.Any(entityPropertyItem => entityPropertyItem.Name == property.Name))

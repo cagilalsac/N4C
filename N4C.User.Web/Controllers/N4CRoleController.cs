@@ -39,6 +39,9 @@ namespace N4C.User.Web.Controllers
         {
             base.Set(config => 
             {
+                // API Uri Path, Origin and optionally token can be provided as parameters to consume the related API.
+                // If no API Uri Origin parameter is provided, CRUD operations will be performed by the related services using the database. 
+                // ApiUri will be set as API Uri Origin parameter if provided and can be used for other Uri parameters.
                 config.SetUri("N4CRole", "https://localhost:7000/api");
 
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):

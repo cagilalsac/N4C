@@ -24,35 +24,35 @@ namespace N4C.Controllers
         }
 
         [HttpGet]
-        public virtual async Task<IActionResult> Get(string culture)
+        public virtual async Task<IActionResult> Get(string pageNumber, string recordsPerPageCount, string orderExpression, string culture = default)
         {
             Set(culture);
-            return ActionResult(await Service.GetResponse());
+            return ActionResult(await Service.GetResponse(pageNumber, recordsPerPageCount, orderExpression));
         }
 
         [HttpGet("{id}")]
-        public virtual async Task<IActionResult> Get(int id, string culture)
+        public virtual async Task<IActionResult> Get(int id, string culture = default)
         {
             Set(culture);
             return ActionResult(await Service.GetResponse(id));
         }
 
         [HttpPost]
-        public virtual async Task<IActionResult> Post([FromBody] TRequest request, string culture)
+        public virtual async Task<IActionResult> Post([FromBody] TRequest request, string culture = default)
         {
             Set(culture);
             return ActionResult(await Service.Create(request, ModelState));
         }
 
         [HttpPut]
-        public virtual async Task<IActionResult> Put([FromBody] TRequest request, string culture)
+        public virtual async Task<IActionResult> Put([FromBody] TRequest request, string culture = default)
         {
             Set(culture);
             return ActionResult(await Service.Update(request, ModelState));
         }
 
         [HttpDelete("{id}")]
-        public virtual async Task<IActionResult> Delete(int id, string culture)
+        public virtual async Task<IActionResult> Delete(int id, string culture = default)
         {
             Set(culture);
             return ActionResult(await Service.Delete(id));

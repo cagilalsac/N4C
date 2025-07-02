@@ -44,9 +44,13 @@ namespace N4C.User.Web.Controllers
         {
             base.Set(config => 
             {
+                // API Uri Path, Origin and optionally token can be provided as parameters to consume the related API.
+                // If no API Uri Origin parameter is provided, CRUD operations will be performed by the related services using the database. 
+                // ApiUri will be set as API Uri Origin parameter if provided and can be used for other Uri parameters.
                 config.SetUri("N4CUser", "https://localhost:7000/api");
-                
-                config.SetTokenUri();
+
+                // For getting the token and refresh token to be used with other APIs provided by the API Uri Origin parameter.
+                config.SetTokenUri(ApiUri);
 
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
                 config.AddViewData("StatusId", new SelectList(_statusService.GetResponse<N4CStatusResponse>($"{ApiUri}/N4CStatus").Result?.Data ?? 
@@ -63,7 +67,7 @@ namespace N4C.User.Web.Controllers
         public override async Task<IActionResult> Index(PageOrderRequest request)
         {
             // Get collection logic:
-            var result = await Service.GetResponse<N4CUserResponse>(Uri, RefreshTokenUri) ?? await Service.GetResponse(request);
+            var result = await Service.GetResponse<N4CUserResponse>(Uri, RefreshTokenUri, request) ?? await Service.GetResponse(request);
 
             return View(result);
         }
