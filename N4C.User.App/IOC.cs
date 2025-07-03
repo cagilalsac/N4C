@@ -26,7 +26,7 @@ namespace N4C.User.App
 
             // AppSettings:
             var appSettings = new N4CAppSettings(builder.Configuration, Defaults.TR, 30, 60,
-                1, 24 * 60, true, "https://need4code.com", "https://need4code.com", "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf", SecurityAlgorithms.HmacSha256Signature);
+                5, 24 * 60, true, "https://need4code.com", "https://need4code.com", "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf", SecurityAlgorithms.HmacSha256Signature);
             appSettings.Bind();
 
             // Authentication:

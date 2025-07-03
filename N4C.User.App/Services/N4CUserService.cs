@@ -40,7 +40,7 @@ namespace N4C.User.App.Services
                     .Map(destination => destination.LastName, source => source.LastName.FirstLetterToUpperOthersToLower());
                 config.SetTitle("Kullanıcı", "User");
                 config.SetModelStateErrors(false);
-                config.SetPageOrder([1, 2, 3], entity => entity.StatusId, entity => entity.UserName, entity => entity.CreateDate, entity => entity.UpdateDate);
+                config.SetPageOrder(Defaults.RecordsPerPageCounts, entity => entity.StatusId, entity => entity.UserName, entity => entity.CreateDate, entity => entity.UpdateDate);
             });
             var systemUserQuery = query.Where(user => user.Id == Defaults.SystemId)
                 .Include(user => user.Status).Include(user => user.UserRoles).ThenInclude(userRole => userRole.Role);

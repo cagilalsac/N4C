@@ -84,11 +84,5 @@ namespace N4C.Controllers
         {
             TempData[key] = result.Message;
         }
-
-        public IActionResult Language(string culture)
-        {
-            Service.CreateCookie(".N4C.Culture", culture);
-            return RedirectToAction("Index", "Home", new { area = "" });
-        }
     }
 }

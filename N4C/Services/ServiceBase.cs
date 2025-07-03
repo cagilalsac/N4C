@@ -49,7 +49,7 @@ namespace N4C.Services
             Set();
         }
 
-        public void Set(string culture = default, string titleTR = default, string titleEN = default)
+        internal void Set(string culture = default, string titleTR = default, string titleEN = default)
         {
             Config.SetCulture(_api ? culture.HasNotAny(Settings.Culture) : culture.HasNotAny(GetCookie(".N4C.Culture")));
             Config.SetTitle(titleTR, titleEN);

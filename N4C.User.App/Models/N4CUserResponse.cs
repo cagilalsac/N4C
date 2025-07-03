@@ -50,7 +50,6 @@ namespace N4C.User.App.Models
         public N4CStatusResponse Status { get; set; }
 
         [ExcelIgnore]
-        [JsonIgnore]
         public bool Active { get; set; }
 
         [DisplayName("Durum", "Status")]
