@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using N4C.Domain;
-using N4C.Extensions;
 using N4C.Models;
 using N4C.Services;
 
@@ -11,8 +10,6 @@ namespace N4C.Controllers
         where TEntity : Entity, new() where TRequest : Request, new() where TResponse : Response, new()
     {
         protected MvcControllerConfig Config { get; private set; } = new MvcControllerConfig();
-
-        protected string ApiUri => Config.ApiUri;
 
         protected override Service<TEntity, TRequest, TResponse> Service { get; }
 
@@ -29,10 +26,7 @@ namespace N4C.Controllers
             {
                 config.Invoke(Config);
                 SetViewData(Config.ViewData);
-                if (Config.RefreshTokenUri is not null && Config.RefreshTokenUri.AbsoluteUri.HasAny())
-                    Set(Config.Uri, Config.RefreshTokenUri, Config.TokenUri);
-                else
-                    Set(Config.Uri, Config.Token);
+                SetUri(Config.UriDictionaryKey);
             }
         }
 
@@ -120,14 +114,6 @@ namespace N4C.Controllers
         public virtual async Task DownloadExcel()
         {
             await Service.GetExcel();
-        }
-
-        public virtual IActionResult DownloadFile(string path)
-        {
-            var result = Service.GetFile(path);
-            if (result.Success)
-                return File(result.Data.FileStream, result.Data.FileContentType, result.Data.FileName);
-            return View("_N4Cmessage", result);
         }
     }
 }

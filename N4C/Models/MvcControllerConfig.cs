@@ -6,27 +6,16 @@ namespace N4C.Models
     {
         public Dictionary<string, object> ViewData { get; private set; } = new Dictionary<string, object>();
 
-        public string ApiUri { get; private set; }
-        public Uri Uri { get; private set; }
-        public Uri TokenUri { get; private set; }
-        public Uri RefreshTokenUri { get; private set; }
-        public string Token { get; private set; }
+        public string UriDictionaryKey { get; private set; }
 
-        public void SetUri(string uriPath, string uriOrigin, string token = default)
+        public void SetUri(bool api, string uriDictionaryKey)
         {
-            ApiUri = uriOrigin;
-            Token = token;
-            if (ApiUri.HasAny())
-                Uri = new Uri($"{ApiUri}/{uriPath}");
+            UriDictionaryKey = api ? uriDictionaryKey : null;
         }
 
-        public void SetTokenUri(string tokenUriOrigin)
+        public string GetUri(string otherUriDictionaryKey)
         {
-            if (tokenUriOrigin.HasAny())
-            {
-                TokenUri = new Uri($"{tokenUriOrigin}/Token");
-                RefreshTokenUri = new Uri($"{tokenUriOrigin}/RefreshToken");
-            }
+            return UriDictionaryKey.HasAny() ? otherUriDictionaryKey.GetUri() : null;
         }
 
         public void AddViewData(string key, object item)

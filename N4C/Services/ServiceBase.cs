@@ -84,8 +84,14 @@ namespace N4C.Services
                 previousResult.ModelStateErrors);
 
         protected Result Result(HttpResponseMessage httpResponseMessage, int? id = default)
-            => Result(httpResponseMessage.StatusCode, id, httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ?
-                Config.Unauthorized : JsonSerializer.Deserialize<Result>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message);
+        {
+            var message = httpResponseMessage.StatusCode == HttpStatusCode.NotFound ? Config.NotFound :
+                httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ? Config.Unauthorized :
+                httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError ? Config.Exception :
+                httpResponseMessage.StatusCode == HttpStatusCode.OK || httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ? 
+                JsonSerializer.Deserialize<Result>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message : string.Empty;
+            return Result(httpResponseMessage.StatusCode, id, message);
+        }
 
         protected Result<TData> Result<TData>(Exception exception, TData data) where TData : class, new()
         {
@@ -98,12 +104,24 @@ namespace N4C.Services
                 previousResult.ModelStateErrors);
 
         protected Result<List<TData>> Result<TData>(HttpResponseMessage httpResponseMessage, List<TData> list) where TData : class, new()
-            => Result(httpResponseMessage.StatusCode, list, httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ?
-                Config.Unauthorized : JsonSerializer.Deserialize<Result<List<TData>>>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message);
+        {
+            var message = httpResponseMessage.StatusCode == HttpStatusCode.NotFound ? Config.NotFound :
+                httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ? Config.Unauthorized :
+                httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError ? Config.Exception :
+                httpResponseMessage.StatusCode == HttpStatusCode.OK || httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ?
+                JsonSerializer.Deserialize<Result>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message : string.Empty;
+            return Result(httpResponseMessage.StatusCode, list, message);
+        }
 
         protected Result<TData> Result<TData>(HttpResponseMessage httpResponseMessage, TData item) where TData : class, new()
-            => Result(httpResponseMessage.StatusCode, item, httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ?
-                Config.Unauthorized : JsonSerializer.Deserialize<Result<TData>>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message);
+        {
+            var message = httpResponseMessage.StatusCode == HttpStatusCode.NotFound ? Config.NotFound :
+                httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ? Config.Unauthorized :
+                httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError ? Config.Exception :
+                httpResponseMessage.StatusCode == HttpStatusCode.OK || httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ?
+                JsonSerializer.Deserialize<Result>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message : string.Empty;
+            return Result(httpResponseMessage.StatusCode, item, message);
+        }
 
         public virtual Result Success(string tr = default, string en = default, int? id = default)
             => Result(HttpStatusCode.OK, id, string.Empty);
@@ -287,6 +305,8 @@ namespace N4C.Services
         public async Task Logout(string authenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme)
         {
             await HttpContextAccessor.HttpContext.SignOutAsync(authenticationScheme);
+            DeleteSession(nameof(Page));
+            DeleteSession(nameof(Order));
             DeleteCookie(".N4C.Token");
             DeleteCookie(".N4C.RefreshToken");
         }
@@ -767,7 +787,7 @@ namespace N4C.Services
         public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, string token = default, CancellationToken cancellationToken = default)
            where TResponse : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             List<TResponse> list = null;
             try
@@ -785,7 +805,7 @@ namespace N4C.Services
         public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, PageOrderRequest pageOrderRequest, string token = default, CancellationToken cancellationToken = default)
             where TResponse : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             List<TResponse> list = null;
             try
@@ -806,7 +826,7 @@ namespace N4C.Services
         public async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, PageOrderRequest pageOrderRequest, CancellationToken cancellationToken = default)
             where TResponse : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             List<TResponse> list = null;
             try
@@ -816,11 +836,11 @@ namespace N4C.Services
                 GetPageOrderSession(pageOrderRequest);
                 var httpResponseMessage = await CreateHttpClient(token)
                     .GetAsync($"{uri.AbsoluteUri}&pageNumber={pageOrderRequest.Page.Number}&recordsPerPageCount={pageOrderRequest.Page.RecordsPerPageCount}&orderExpression={pageOrderRequest.OrderExpression}", cancellationToken);
-                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
                 {
                     var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
                     if (!tokenResult.Success)
-                        return Result(tokenResult, list);
+                        return Result(tokenResult, list, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
                     return await GetResponse<TResponse>(uri, pageOrderRequest, token, cancellationToken);
                 }
@@ -836,13 +856,13 @@ namespace N4C.Services
         public async Task<Result<List<TResponse>>> GetResponse<TResponse>(string uri, string token = default, CancellationToken cancellationToken = default)
             where TResponse : class, new()
         {
-            return await GetResponse<TResponse>(uri.GetUri(), token, cancellationToken);
+            return await GetResponse<TResponse>(uri.GetUri(UriKind.Absolute), token, cancellationToken);
         }
 
         public async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, CancellationToken cancellationToken = default)
            where TResponse : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             List<TResponse> list = null;
             try
@@ -850,11 +870,11 @@ namespace N4C.Services
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
                 var token = GetToken();
                 var httpResponseMessage = await CreateHttpClient(token).GetAsync(uri.AbsoluteUri, cancellationToken);
-                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
                 {
                     var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
                     if (!tokenResult.Success)
-                        return Result(tokenResult, list);
+                        return Result(tokenResult, list, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
                     return await GetResponse<TResponse>(uri, token, cancellationToken);
                 }
@@ -869,7 +889,7 @@ namespace N4C.Services
         public virtual async Task<Result<TResponse>> GetResponse<TResponse>(Uri uri, int id, string token = default, CancellationToken cancellationToken = default)
             where TResponse : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             TResponse item = null;
             try
@@ -887,7 +907,7 @@ namespace N4C.Services
         public async Task<Result<TResponse>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
             where TResponse : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             TResponse item = null;
             try
@@ -895,11 +915,11 @@ namespace N4C.Services
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
                 var token = GetToken();
                 var httpResponseMessage = await CreateHttpClient(token).GetAsync($"{uri.GetLeftPart(UriPartial.Path)}/{id}{uri.Query}", cancellationToken);
-                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
                 {
                     var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
                     if (!tokenResult.Success)
-                        return Result(tokenResult, item);
+                        return Result(tokenResult, item, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
                     return await GetResponse<TResponse>(uri, id, token, cancellationToken);
                 }
@@ -914,7 +934,7 @@ namespace N4C.Services
         public virtual async Task<Result<TRequest>> Create<TRequest>(Uri uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             try
             {
@@ -931,18 +951,18 @@ namespace N4C.Services
         public async Task<Result<TRequest>> Create<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             try
             {
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
                 var token = GetToken();
                 var httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
-                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
                 {
                     var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
                     if (!tokenResult.Success)
-                        return Result(tokenResult, request);
+                        return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
                     return await Create(uri, request, token, cancellationToken);
                 }
@@ -957,7 +977,7 @@ namespace N4C.Services
         public virtual async Task<Result<TRequest>> Update<TRequest>(Uri uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             try
             {
@@ -974,18 +994,18 @@ namespace N4C.Services
         public async Task<Result<TRequest>> Update<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             try
             {
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
                 var token = GetToken();
                 var httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
-                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
                 {
                     var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
                     if (!tokenResult.Success)
-                        return Result(tokenResult, request);
+                        return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
                     return await Update(uri, request, token, cancellationToken);
                 }
@@ -1000,7 +1020,7 @@ namespace N4C.Services
         public virtual async Task<Result<TRequest>> Delete<TRequest>(Uri uri, int id, string token = default, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             TRequest request = null;
             try
@@ -1018,7 +1038,7 @@ namespace N4C.Services
         public async Task<Result<TRequest>> Delete<TRequest>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
-            if (uri is null || uri.AbsoluteUri.HasNotAny())
+            if (uri is null)
                 return null;
             TRequest request = null;
             try
@@ -1026,11 +1046,11 @@ namespace N4C.Services
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
                 var token = GetToken();
                 var httpResponseMessage = await CreateHttpClient(token).DeleteAsync($"{uri.GetLeftPart(UriPartial.Path)}/{id}{uri.Query}", cancellationToken);
-                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
                 {
                     var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
                     if (!tokenResult.Success)
-                        return Result(tokenResult, request);
+                        return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
                     return await Delete<TRequest>(uri, id, token, cancellationToken);
                 }

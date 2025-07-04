@@ -82,7 +82,7 @@
                             @(culture == Defaults.TR ? "MENÜ" : "MENU")
                         </span>
                     </li>
-                    @if (N4CAppSettings.Development)
+                    @if (Settings.Development)
                     {
                         <li class="menu-item">
                             <a asp-action="Seed" asp-controller="Db" asp-route-pin="2025" class="menu-link">

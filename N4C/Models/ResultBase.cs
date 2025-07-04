@@ -1,5 +1,6 @@
 ﻿using N4C.Extensions;
 using System.Net;
+using System.Text.Json.Serialization;
 
 namespace N4C.Models
 {
@@ -23,6 +24,7 @@ namespace N4C.Models
 
         public string Type => typeof(Result).ToString();
 
+        [JsonConstructor]
         public Result(HttpStatusCode httpStatusCode, string message = default, string culture = default, string title = default, 
             int? id = default, bool modelStateErrors = true)
         {

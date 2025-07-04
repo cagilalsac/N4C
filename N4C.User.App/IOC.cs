@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using N4C.Models;
 using N4C.Services;
 using N4C.User.App.Domain;
 using N4C.User.App.Models;
@@ -25,8 +24,7 @@ namespace N4C.User.App
             builder.Services.AddScoped<Service<N4CUser, N4CUserRequest, N4CUserResponse>, N4CUserService>();
 
             // AppSettings:
-            var appSettings = new N4CAppSettings(builder.Configuration, Defaults.TR, 30, 60,
-                5, 24 * 60, true, "https://need4code.com", "https://need4code.com", "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf", SecurityAlgorithms.HmacSha256Signature);
+            var appSettings = new N4CAppSettings(builder.Configuration, "4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf", SecurityAlgorithms.HmacSha256Signature);
             appSettings.Bind();
 
             // Authentication:

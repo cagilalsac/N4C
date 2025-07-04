@@ -93,7 +93,7 @@ foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
                     @:{
                     @:<div class="carousel-item active">
                         @:<div class="d-flex flex-column align-items-center">
-                            @:<a asp-action="DownloadFile" asp-route-path="@@Model.Data.MainFile">
+                            @:<a asp-action="Download" asp-controller="Files" asp-route-path="@@Model.Data.MainFile">
                                 @:<img src="@@Model.Data.MainFile" class="d-block img-fluid" />
                             @:</a>
                             @:<div class="mt-2">
@@ -110,7 +110,7 @@ foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
                     @:{
                     @:<div class="carousel-item @@active">
                         @:<div class="d-flex flex-column align-items-center">
-                            @:<a asp-action="DownloadFile" asp-route-path="@@otherFile">
+                            @:<a asp-action="Download" asp-controller="Files" asp-route-path="@@otherFile">
                                 @:<img src="@@otherFile" class="d-block img-fluid" />
                             @:</a>
                             @:<input type="hidden" value="@@otherFile" class="otherfiles" />
@@ -161,7 +161,7 @@ foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
     }
 }
 @:
-@:@@* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. *@@
+@:@@* Can be uncommented and used for many to many relationships. {Entity} must be replaced with the related name in the controller and views. *@@
     @:@@*
     <div class="row mb-3">
         <div class="col-2 fw-bold">

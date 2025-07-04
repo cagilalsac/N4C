@@ -20,13 +20,13 @@ namespace N4C.User.Web.Controllers
         // Service injections:
         private readonly Service<N4CStatus, N4CStatusRequest, N4CStatusResponse> _statusService;
 
-        /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+        /* Can be uncommented and used for many to many relationships. {Entity} must be replaced with the related name in the controller and views. */
         private readonly Service<N4CRole, N4CRoleRequest, N4CRoleResponse> _N4CRoleService;
 
         public N4CUserController(Service<N4CUser, N4CUserRequest, N4CUserResponse> service
             , Service<N4CStatus, N4CStatusRequest, N4CStatusResponse> statusService
 
-            /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+            /* Can be uncommented and used for many to many relationships. {Entity} must be replaced with the related name in the controller and views. */
             , Service<N4CRole, N4CRoleRequest, N4CRoleResponse> N4CRoleService
 
             , IModelMetadataProvider modelMetadataProvider
@@ -34,7 +34,7 @@ namespace N4C.User.Web.Controllers
         {
             _statusService = statusService;
 
-            /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
+            /* Can be uncommented and used for many to many relationships. {Entity} must be replaced with the related name in the controller and views. */
             _N4CRoleService = N4CRoleService;
 
             Set();
@@ -44,20 +44,15 @@ namespace N4C.User.Web.Controllers
         {
             base.Set(config => 
             {
-                // API Uri Path, Origin and optionally token can be provided as parameters to consume the related API.
-                // If no API Uri Origin parameter is provided, CRUD operations will be performed by the related services using the database. 
-                // ApiUri will be set as API Uri Origin parameter if provided and can be used for other Uri parameters.
-                config.SetUri("N4CUser", "https://localhost:7000/api");
-
-                // For getting the token and refresh token to be used with other APIs provided by the API Uri Origin parameter.
-                config.SetTokenUri(ApiUri);
+                // api parameter can be sent as true to consume the related API or false to use the related service.
+                config.SetUri(true, "N4CUser");
 
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
-                config.AddViewData("StatusId", new SelectList(_statusService.GetResponse<N4CStatusResponse>($"{ApiUri}/N4CStatus").Result?.Data ?? 
+                config.AddViewData("StatusId", new SelectList(_statusService.GetResponse<N4CStatusResponse>(config.GetUri("N4CStatus")).Result?.Data ?? 
                     _statusService.GetResponse().Result.Data, "Id", "Title"));
 
-                /* Can be uncommented and used for many to many relationships. Entity must be replaced with the related name in the controller and views. */
-                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.GetResponse<N4CRoleResponse>($"{ApiUri}/N4CRole").Result?.Data ?? 
+                /* Can be uncommented and used for many to many relationships. {Entity} must be replaced with the related name in the controller and views. */
+                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.GetResponse<N4CRoleResponse>(config.GetUri("N4CRole")).Result?.Data ?? 
                     _N4CRoleService.GetResponse().Result.Data, "Id", "Name"));
             });
         }

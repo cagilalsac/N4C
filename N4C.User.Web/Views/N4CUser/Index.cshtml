@@ -84,7 +84,7 @@
                         }
                         else
                         {
-                            <a asp-action="DownloadFile" asp-route-path="@item.MainFile"><img src="@item.MainFile" class="img-thumbnail" /></a>
+                            <a asp-action="Download" asp-controller="Files" asp-route-path="@item.MainFile"><img src="@item.MainFile" class="img-thumbnail" /></a>
                         }
                     </td>   
 				    <td>

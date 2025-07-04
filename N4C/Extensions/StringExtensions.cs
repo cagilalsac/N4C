@@ -143,11 +143,28 @@ namespace N4C.Extensions
             return queryString[key];
         }
 
-        public static Uri GetUri(this string value)
+        public static Uri GetUri(this string value, UriKind uriKind)
         {
             Uri uri = null;
-            bool result = value.HasAny() && Uri.TryCreate(value, UriKind.Absolute, out uri);
+            bool result = value.HasAny() && Uri.TryCreate(value, uriKind, out uri);
             return result ? uri : null;
+        }
+
+        public static string GetUri(this string value)
+        {
+            string uri = null;
+            if (value.HasAny() && Settings.UriDictionary is not null && Settings.UriDictionary.Any())
+            {
+                foreach (var item in Settings.UriDictionary)
+                {
+                    if (item.Key.ToLower() == value.ToLower())
+                    {
+                        uri = Settings.UriDictionary[item.Key];
+                        break;
+                    }
+                }
+            }
+            return uri;
         }
     }
 }

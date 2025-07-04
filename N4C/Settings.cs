@@ -10,41 +10,41 @@ namespace N4C
     {
         protected virtual string AppSettingsSection => "AppSettings";
 
-        public static string Culture { get; private set; }
+        public static string Culture { get; set; }
 
-        public static int SessionExpirationInMinutes { get; private set; }
-        public static int AuthCookieExpirationInMinutes { get; private set; }
+        public static int SessionExpirationInMinutes { get; set; }
+        public static int AuthCookieExpirationInMinutes { get; set; }
 
-        public static int JwtExpirationInMinutes { get; private set; }
-        public static string JwtAudience { get; private set; }
-        public static string JwtIssuer { get; private set; }
+        public static int JwtExpirationInMinutes { get; set; }
+        public static string JwtAudience { get; set; }
+        public static string JwtIssuer { get; set; }
         public static string JwtSecurityKey { get; private set; }
         public static string JwtSecurityAlgorithm { get; private set; }
 
         public static SecurityKey JwtSigningKey => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecurityKey));
 
-        public static int RefreshTokenExpirationInMinutes { get; private set; }
-        public static bool RefreshTokenSlidingExpiration { get; private set; }
+        public static int RefreshTokenExpirationInMinutes { get; set; }
+        public static bool RefreshTokenSlidingExpiration { get; set; }
+
+        public static Dictionary<string, string> UriDictionary { get; set; }
 
         public static bool Development { get; internal set; }
 
         private readonly IConfiguration _configuration;
 
-        protected Settings(IConfiguration configuration, string culture = default, int sessionExpirationInMinutes = 30, int authCookieExpirationInMinutes = 60,
-            int jwtExpirationInMinutes = 5, int refreshTokenExpirationInMinutes = 1440, bool refreshTokenSlidingExpiration = true,
-            string jwtAudience = default, string jwtIssuer = default, string jwtSecurityKey = default, string jwtSecurityAlgorithm = default)
+        protected Settings(IConfiguration configuration, string jwtSecurityKey = default, string jwtSecurityAlgorithm = default)
         {
             _configuration = configuration;
-            Culture = culture.HasNotAny(Defaults.TR);
-            SessionExpirationInMinutes = sessionExpirationInMinutes;
-            AuthCookieExpirationInMinutes = authCookieExpirationInMinutes;
-            JwtExpirationInMinutes = jwtExpirationInMinutes;
-            JwtAudience = jwtAudience.HasNotAny("https://need4code.com");
-            JwtIssuer = jwtIssuer.HasNotAny("https://need4code.com");
+            Culture = Defaults.TR;
+            SessionExpirationInMinutes = 30;
+            AuthCookieExpirationInMinutes = 60;
+            JwtExpirationInMinutes = 5;
+            JwtAudience = "https://need4code.com";
+            JwtIssuer = "https://need4code.com";
             JwtSecurityKey = jwtSecurityKey.HasNotAny("4QrJRmIu0R9PlAGrGgQAi6OJ5cf5VZNf");
             JwtSecurityAlgorithm = jwtSecurityAlgorithm.HasNotAny(SecurityAlgorithms.HmacSha256Signature);
-            RefreshTokenExpirationInMinutes = refreshTokenExpirationInMinutes;
-            RefreshTokenSlidingExpiration = refreshTokenSlidingExpiration;
+            RefreshTokenExpirationInMinutes = 1440;
+            RefreshTokenSlidingExpiration = true;
         }
 
         public void Bind() => _configuration.GetSection(AppSettingsSection).Bind(this);

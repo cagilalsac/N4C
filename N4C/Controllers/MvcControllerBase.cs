@@ -10,14 +10,14 @@ namespace N4C.Controllers
     [ApiExplorerSettings(IgnoreApi = true)]
     public abstract class MvcController : Controller
     {
-        protected string Culture { get; private set; } = Settings.Culture;
+        protected string Culture { get; private set; }
+        protected string Title { get; private set; }
 
         private Dictionary<string, object> _viewData;
 
         protected Uri Uri { get; private set; }
         protected Uri TokenUri { get; private set; }
         protected Uri RefreshTokenUri { get; private set; }
-        protected string RefreshToken { get; private set; }
         protected string Token { get; private set; }
 
         protected virtual Service Service { get; }
@@ -28,34 +28,31 @@ namespace N4C.Controllers
         {
             Service = service;
             _modelMetaDataProvider = modelMetaDataProvider;
+            Set();
         }
 
-        protected void Set(string culture, string titleTR, string titleEN)
+        protected void Set(string culture = default, string titleTR = default, string titleEN = default)
         {
-            Culture = culture.HasNotAny(Settings.Culture);
-            Service?.Set(Culture, titleTR, titleEN);
+            Service?.Set(culture, titleTR, titleEN);
+            Culture = Service?.Culture.HasNotAny(Settings.Culture);
+            Title = Culture == Defaults.TR ? Service?.TitleTR : Service?.TitleEN;
         }
 
-        protected void Set(Uri uri)
+        protected void SetUri(string uriDictionaryKey)
         {
-            Uri = uri is not null ? new Uri($"{uri.AbsoluteUri}?culture={Culture}") : null;
-            TokenUri = null;
-            RefreshTokenUri = null;
-            RefreshToken = null;
+            if (uriDictionaryKey.HasAny())
+                Uri = new Uri($"{uriDictionaryKey.GetUri()}?culture={Culture}");
+            TokenUri = new Uri($"{"token".GetUri()}?culture={Culture}");
+            RefreshTokenUri = new Uri($"{"refreshtoken".GetUri()}?culture={Culture}");
             Token = null;
         }
 
-        protected void Set(Uri uri, Uri refreshTokenUri, Uri tokenUri = default)
+        protected void SetUri(string uri, string token = default)
         {
-            Set(uri);
-            RefreshTokenUri = new Uri($"{refreshTokenUri.AbsoluteUri}?culture={Culture}");
-            TokenUri = tokenUri is not null ? new Uri($"{tokenUri.AbsoluteUri}?culture={Culture}") : null;
-        }
-
-        protected void Set(Uri uri, string token)
-        {
-            Set(uri);
+            Uri = new Uri($"{uri}?culture={Culture}");
             Token = token;
+            TokenUri = null;
+            RefreshTokenUri = null;
         }
 
         protected void SetViewData(Dictionary<string, object> viewData)

@@ -156,12 +156,12 @@ namespace N4C.User.App.Services
             if (user is null)
                 return Error(response, NotFound);
             user.RefreshToken = GetRefreshToken();
-            user.RefreshTokenExpiration = DateTime.Now.AddMinutes(N4CAppSettings.RefreshTokenExpirationInMinutes);
+            user.RefreshTokenExpiration = DateTime.Now.AddMinutes(Settings.RefreshTokenExpirationInMinutes);
             var result = await Update(user, true, cancellationToken);
             if (!result.Success)
                 return Result(result, response);
             var claims = GetClaims(user.Id, user.UserName, user.UserRoles.Select(userRole => userRole.Role.Name));
-            var expiration = DateTime.Now.AddMinutes(N4CAppSettings.JwtExpirationInMinutes);
+            var expiration = DateTime.Now.AddMinutes(Settings.JwtExpirationInMinutes);
             var token = GetToken(claims, expiration);
             return Success(new TokenResponse()
             {
@@ -188,13 +188,13 @@ namespace N4C.User.App.Services
             if (user is null)
                 return Error(response, NotFound);
             user.RefreshToken = GetRefreshToken();
-            if (N4CAppSettings.RefreshTokenSlidingExpiration)
-                user.RefreshTokenExpiration = DateTime.Now.AddMinutes(N4CAppSettings.RefreshTokenExpirationInMinutes);
+            if (Settings.RefreshTokenSlidingExpiration)
+                user.RefreshTokenExpiration = DateTime.Now.AddMinutes(Settings.RefreshTokenExpirationInMinutes);
             var result = await Update(user, true, cancellationToken);
             if (!result.Success)
                 return Result(result, response);
             claims = GetClaims(user.Id, user.UserName, user.UserRoles.Select(userRole => userRole.Role.Name));
-            var expiration = DateTime.Now.AddMinutes(N4CAppSettings.JwtExpirationInMinutes);
+            var expiration = DateTime.Now.AddMinutes(Settings.JwtExpirationInMinutes);
             var token = GetToken(claims, expiration);
             return Success(new TokenResponse()
             {
