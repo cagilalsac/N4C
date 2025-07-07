@@ -1,8 +1,10 @@
 ﻿#nullable disable
+using Azure.Core;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using N4C.Controllers;
+using N4C.Models;
 using N4C.Services;
 using N4C.User.App.Domain;
 using N4C.User.App.Models;
@@ -33,17 +35,17 @@ namespace N4C.User.Web.ApiControllers
         }
 
 		// POST: N4CRole
-        public override async Task<IActionResult> Post([FromBody] N4CRoleRequest request, string culture = default)
+        public override async Task<IActionResult> Post([FromForm] ApiRequest<N4CRoleRequest> apiRequest, string culture = default)
         {
             Set(culture);
-            return ActionResult(await Service.Create(request, ModelState));
+            return ActionResult(await Service.Create(apiRequest, ModelState));
         }
 
         // PUT: N4CRole
-        public override async Task<IActionResult> Put([FromBody] N4CRoleRequest request, string culture = default)
+        public override async Task<IActionResult> Put([FromForm] ApiRequest<N4CRoleRequest> apiRequest, string culture = default)
         {
             Set(culture);
-            return ActionResult(await Service.Update(request, ModelState));
+            return ActionResult(await Service.Update(apiRequest, ModelState));
         }
 
         // DELETE: N4CRole/5

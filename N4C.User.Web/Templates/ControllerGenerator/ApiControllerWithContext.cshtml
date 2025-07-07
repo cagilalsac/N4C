@@ -63,14 +63,14 @@ namespace @Model.ControllerNamespace
         }
 
 		// POST: @routePrefix
-        public override async Task<IActionResult> Post([FromBody] @requestType request, string culture)
+        public override async Task<IActionResult> Post([FromForm] @requestType request, string culture)
         {
             Set(culture);
             return ActionResult(await @(_serviceAbstractName).Create(request, ModelState));
         }
 
         // PUT: @routePrefix
-        public override async Task<IActionResult> Put([FromBody] @requestType request, string culture)
+        public override async Task<IActionResult> Put([FromForm] @requestType request, string culture)
         {
             Set(culture);
             return ActionResult(await @(_serviceAbstractName).Update(request, ModelState));

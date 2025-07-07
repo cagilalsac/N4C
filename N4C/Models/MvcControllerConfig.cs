@@ -13,7 +13,7 @@ namespace N4C.Models
             UriDictionaryKey = api ? uriDictionaryKey : null;
         }
 
-        public string GetUri(string otherUriDictionaryKey)
+        public Uri GetUri(string otherUriDictionaryKey)
         {
             return UriDictionaryKey.HasAny() ? otherUriDictionaryKey.GetUri() : null;
         }

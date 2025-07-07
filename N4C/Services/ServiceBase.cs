@@ -88,7 +88,7 @@ namespace N4C.Services
             var message = httpResponseMessage.StatusCode == HttpStatusCode.NotFound ? Config.NotFound :
                 httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized ? Config.Unauthorized :
                 httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError ? Config.Exception :
-                httpResponseMessage.StatusCode == HttpStatusCode.OK || httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ? 
+                httpResponseMessage.StatusCode == HttpStatusCode.OK || httpResponseMessage.StatusCode == HttpStatusCode.BadRequest ?
                 JsonSerializer.Deserialize<Result>(httpResponseMessage.Content.ReadAsStringAsync().Result, JsonSerializerOptions)?.Message : string.Empty;
             return Result(httpResponseMessage.StatusCode, id, message);
         }
@@ -704,7 +704,7 @@ namespace N4C.Services
             return httpClient;
         }
 
-        public async Task<Result<TokenResponse>> GetToken(Uri tokenUri, string userName, string password, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TokenResponse>> GetToken(Uri tokenUri, string userName, string password, CancellationToken cancellationToken = default)
         {
             TokenResponse response = null;
             try
@@ -739,7 +739,7 @@ namespace N4C.Services
             }
         }
 
-        public async Task<Result<TokenResponse>> GetRefreshToken(Uri refreshTokenUri, string token, string refreshToken, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TokenResponse>> GetRefreshToken(Uri refreshTokenUri, string token, string refreshToken, CancellationToken cancellationToken = default)
         {
             TokenResponse response = null;
             try
@@ -774,7 +774,8 @@ namespace N4C.Services
             }
         }
 
-        protected async Task<Result<TData>> GetResponse<TData>(HttpResponseMessage httpResponseMessage, TData data, CancellationToken cancellationToken = default) where TData : class, new()
+        protected async Task<Result<TData>> GetResponse<TData>(HttpResponseMessage httpResponseMessage, TData data, CancellationToken cancellationToken = default)
+            where TData : class, new()
         {
             if (!httpResponseMessage.IsSuccessStatusCode)
                 return Result(httpResponseMessage, data);
@@ -823,7 +824,7 @@ namespace N4C.Services
             }
         }
 
-        public async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, PageOrderRequest pageOrderRequest, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, PageOrderRequest pageOrderRequest, CancellationToken cancellationToken = default)
             where TResponse : class, new()
         {
             if (uri is null)
@@ -853,13 +854,7 @@ namespace N4C.Services
             }
         }
 
-        public async Task<Result<List<TResponse>>> GetResponse<TResponse>(string uri, string token = default, CancellationToken cancellationToken = default)
-            where TResponse : class, new()
-        {
-            return await GetResponse<TResponse>(uri.GetUri(UriKind.Absolute), token, cancellationToken);
-        }
-
-        public async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<List<TResponse>>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, CancellationToken cancellationToken = default)
            where TResponse : class, new()
         {
             if (uri is null)
@@ -904,7 +899,7 @@ namespace N4C.Services
             }
         }
 
-        public async Task<Result<TResponse>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TResponse>> GetResponse<TResponse>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
             where TResponse : class, new()
         {
             if (uri is null)
@@ -931,40 +926,41 @@ namespace N4C.Services
             }
         }
 
-        public virtual async Task<Result<TRequest>> Create<TRequest>(Uri uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TRequest>> Create<TRequest>(Uri uri, TRequest request, bool json = false, string token = default, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
             if (uri is null)
                 return null;
             try
             {
+                HttpResponseMessage httpResponseMessage;
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
-                var httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
-                return await GetResponse(httpResponseMessage, request, cancellationToken);
-            }
-            catch (Exception exception)
-            {
-                return Result(exception, request);
-            }
-        }
-
-        public async Task<Result<TRequest>> Create<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, CancellationToken cancellationToken = default)
-            where TRequest : class, new()
-        {
-            if (uri is null)
-                return null;
-            try
-            {
-                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
-                var token = GetToken();
-                var httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
-                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
+                if (json)
                 {
-                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
-                    if (!tokenResult.Success)
-                        return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
-                    token = tokenResult.Data.Token;
-                    return await Create(uri, request, token, cancellationToken);
+                    httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
+                }
+                else
+                {
+                    var apiRequest = new ApiRequest<TRequest>() { RequestJson = JsonSerializer.Serialize(request) };
+                    var multipartFormDataContent = new MultipartFormDataContent()
+                    {
+                        { new StringContent(apiRequest.RequestJson), nameof(apiRequest.RequestJson) }
+                    };
+                    if (request is FileRequest)
+                    {
+                        apiRequest.MainFormFile = (request as FileRequest).MainFormFile;
+                        if (apiRequest.MainFormFile is not null)
+                            multipartFormDataContent.Add(new StreamContent(apiRequest.MainFormFile.OpenReadStream()), apiRequest.MainFormFile.Name, apiRequest.MainFormFile.FileName);
+                        apiRequest.OtherFormFiles = (request as FileRequest).OtherFormFiles;
+                        if (apiRequest.OtherFormFiles.HasAny())
+                        {
+                            foreach (var otherFormFile in apiRequest.OtherFormFiles)
+                            {
+                                multipartFormDataContent.Add(new StreamContent(otherFormFile.OpenReadStream()), otherFormFile.Name, otherFormFile.FileName);
+                            }
+                        }
+                    }
+                    httpResponseMessage = await CreateHttpClient(token).PostAsync(uri, multipartFormDataContent, cancellationToken);
                 }
                 return await GetResponse(httpResponseMessage, request, cancellationToken);
             }
@@ -974,15 +970,51 @@ namespace N4C.Services
             }
         }
 
-        public virtual async Task<Result<TRequest>> Update<TRequest>(Uri uri, TRequest request, string token = default, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TRequest>> Create<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, bool json = false, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
             if (uri is null)
                 return null;
             try
             {
+                HttpResponseMessage httpResponseMessage;
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
-                var httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
+                var token = GetToken();
+                if (json)
+                {
+                    httpResponseMessage = await CreateHttpClient(token).PostAsJsonAsync(uri, request, cancellationToken);
+                }
+                else
+                {
+                    var apiRequest = new ApiRequest<TRequest>() { RequestJson = JsonSerializer.Serialize(request) };
+                    var multipartFormDataContent = new MultipartFormDataContent()
+                    {
+                        { new StringContent(apiRequest.RequestJson), nameof(apiRequest.RequestJson) }
+                    };
+                    if (request is FileRequest)
+                    {
+                        apiRequest.MainFormFile = (request as FileRequest).MainFormFile;
+                        if (apiRequest.MainFormFile is not null)
+                            multipartFormDataContent.Add(new StreamContent(apiRequest.MainFormFile.OpenReadStream()), apiRequest.MainFormFile.Name, apiRequest.MainFormFile.FileName);
+                        apiRequest.OtherFormFiles = (request as FileRequest).OtherFormFiles;
+                        if (apiRequest.OtherFormFiles.HasAny())
+                        {
+                            foreach (var otherFormFile in apiRequest.OtherFormFiles)
+                            {
+                                multipartFormDataContent.Add(new StreamContent(otherFormFile.OpenReadStream()), otherFormFile.Name, otherFormFile.FileName);
+                            }
+                        }
+                    }
+                    httpResponseMessage = await CreateHttpClient(token).PostAsync(uri, multipartFormDataContent, cancellationToken);
+                }
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
+                    token = tokenResult.Data.Token;
+                    return await Create(uri, request, json, token, cancellationToken);
+                }
                 return await GetResponse(httpResponseMessage, request, cancellationToken);
             }
             catch (Exception exception)
@@ -991,23 +1023,94 @@ namespace N4C.Services
             }
         }
 
-        public async Task<Result<TRequest>> Update<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TRequest>> Update<TRequest>(Uri uri, TRequest request, bool json = false, string token = default, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
             if (uri is null)
                 return null;
             try
             {
+                HttpResponseMessage httpResponseMessage;
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                if (json)
+                {
+                    httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
+                }
+                else
+                {
+                    var apiRequest = new ApiRequest<TRequest>() { RequestJson = JsonSerializer.Serialize(request) };
+                    var multipartFormDataContent = new MultipartFormDataContent()
+                    {
+                        { new StringContent(apiRequest.RequestJson), nameof(apiRequest.RequestJson) }
+                    };
+                    if (request is FileRequest)
+                    {
+                        apiRequest.MainFormFile = (request as FileRequest).MainFormFile;
+                        if (apiRequest.MainFormFile is not null)
+                            multipartFormDataContent.Add(new StreamContent(apiRequest.MainFormFile.OpenReadStream()), apiRequest.MainFormFile.Name, apiRequest.MainFormFile.FileName);
+                        apiRequest.OtherFormFiles = (request as FileRequest).OtherFormFiles;
+                        if (apiRequest.OtherFormFiles.HasAny())
+                        {
+                            foreach (var otherFormFile in apiRequest.OtherFormFiles)
+                            {
+                                multipartFormDataContent.Add(new StreamContent(otherFormFile.OpenReadStream()), otherFormFile.Name, otherFormFile.FileName);
+                            }
+                        }
+                    }
+                    httpResponseMessage = await CreateHttpClient(token).PutAsync(uri, multipartFormDataContent, cancellationToken);
+                }
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public virtual async Task<Result<TRequest>> Update<TRequest>(Uri uri, Uri refreshTokenUri, TRequest request, bool json = false, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null)
+                return null;
+            try
+            {
+                HttpResponseMessage httpResponseMessage;
                 Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
                 var token = GetToken();
-                var httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
+                if (json)
+                {
+                    httpResponseMessage = await CreateHttpClient(token).PutAsJsonAsync(uri, request, cancellationToken);
+                }
+                else
+                {
+                    var apiRequest = new ApiRequest<TRequest>() { RequestJson = JsonSerializer.Serialize(request) };
+                    var multipartFormDataContent = new MultipartFormDataContent()
+                    {
+                        { new StringContent(apiRequest.RequestJson), nameof(apiRequest.RequestJson) }
+                    };
+                    if (request is FileRequest)
+                    {
+                        apiRequest.MainFormFile = (request as FileRequest).MainFormFile;
+                        if (apiRequest.MainFormFile is not null)
+                            multipartFormDataContent.Add(new StreamContent(apiRequest.MainFormFile.OpenReadStream()), apiRequest.MainFormFile.Name, apiRequest.MainFormFile.FileName);
+                        apiRequest.OtherFormFiles = (request as FileRequest).OtherFormFiles;
+                        if (apiRequest.OtherFormFiles.HasAny())
+                        {
+                            foreach (var otherFormFile in apiRequest.OtherFormFiles)
+                            {
+                                multipartFormDataContent.Add(new StreamContent(otherFormFile.OpenReadStream()), otherFormFile.Name, otherFormFile.FileName);
+                            }
+                        }
+                    }
+                    httpResponseMessage = await CreateHttpClient(token).PutAsync(uri, multipartFormDataContent, cancellationToken);
+                }
                 if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
                 {
                     var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
                     if (!tokenResult.Success)
                         return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
-                    return await Update(uri, request, token, cancellationToken);
+                    return await Update(uri, request, json, token, cancellationToken);
                 }
                 return await GetResponse(httpResponseMessage, request, cancellationToken);
             }
@@ -1035,7 +1138,7 @@ namespace N4C.Services
             }
         }
 
-        public async Task<Result<TRequest>> Delete<TRequest>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
+        public virtual async Task<Result<TRequest>> Delete<TRequest>(Uri uri, Uri refreshTokenUri, int id, CancellationToken cancellationToken = default)
             where TRequest : class, new()
         {
             if (uri is null)
@@ -1053,6 +1156,51 @@ namespace N4C.Services
                         return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
                     token = tokenResult.Data.Token;
                     return await Delete<TRequest>(uri, id, token, cancellationToken);
+                }
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public virtual async Task<Result<TRequest>> DeleteFile<TRequest>(Uri uri, int id, string path = default, string token = default, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null)
+                return null;
+            TRequest request = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var httpResponseMessage = await CreateHttpClient(token).DeleteAsync($"{uri.GetLeftPart(UriPartial.Path)}/DeleteFile{uri.Query}&id={id}&path={path}", cancellationToken);
+                return await GetResponse(httpResponseMessage, request, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                return Result(exception, request);
+            }
+        }
+
+        public virtual async Task<Result<TRequest>> DeleteFile<TRequest>(Uri uri, Uri refreshTokenUri, int id, string path = default, CancellationToken cancellationToken = default)
+            where TRequest : class, new()
+        {
+            if (uri is null)
+                return null;
+            TRequest request = null;
+            try
+            {
+                Set(uri.AbsoluteUri.GetQueryStringValue(nameof(Culture)), TitleTR, TitleEN);
+                var token = GetToken();
+                var httpResponseMessage = await CreateHttpClient(token).DeleteAsync($"{uri.GetLeftPart(UriPartial.Path)}/DeleteFile{uri.Query}&id={id}&path={path}", cancellationToken);
+                if (httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized && refreshTokenUri is not null)
+                {
+                    var tokenResult = await GetRefreshToken(refreshTokenUri, token, GetRefreshToken(true), cancellationToken);
+                    if (!tokenResult.Success)
+                        return Result(tokenResult, request, "Lütfen çıkış yapıp tekrar giriş yapınız", "Please logout and login again");
+                    token = tokenResult.Data.Token;
+                    return await DeleteFile<TRequest>(uri, id, path, token, cancellationToken);
                 }
                 return await GetResponse(httpResponseMessage, request, cancellationToken);
             }

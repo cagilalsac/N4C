@@ -72,15 +72,15 @@ namespace N4C.Extensions
             return result;
         }
 
-        public static string GetDisplayName(this string value, string propertyName, string culture)
+        public static string GetDisplayName(this string displayName, string propertyName, string culture)
         {
             string result = string.Empty;
-            if (value.HasNotAny())
+            if (displayName.HasNotAny())
                 result = propertyName;
-            if (value.GetCount('{') == 1 && value.GetCount('}') == 1 && value.GetCount(';') == 1)
+            if (displayName.GetCount('{') == 1 && displayName.GetCount('}') == 1 && displayName.GetCount(';') == 1)
             {
-                value = value.Substring(1, value.Length - 2);
-                var valueParts = value.Split(';');
+                displayName = displayName.Substring(1, displayName.Length - 2);
+                var valueParts = displayName.Split(';');
                 if (culture == Defaults.TR)
                 {
                     result = valueParts.First();
@@ -100,27 +100,27 @@ namespace N4C.Extensions
             return result.Contains('_') ? result.Remove(result.IndexOf('_')) : result;
         }
 
-        public static string GetErrorMessage(this string value, string propertyName, string culture)
+        public static string GetErrorMessage(this string errorMessage, string propertyName, string culture)
         {
             string result = string.Empty;
             string displayName;
             string[] valueParts;
-            if (value.HasAny())
+            if (errorMessage.HasAny())
             {
-                if (value.Contains("not valid", StringComparison.OrdinalIgnoreCase) || value.Contains("invalid", StringComparison.OrdinalIgnoreCase))
+                if (errorMessage.Contains("not valid", StringComparison.OrdinalIgnoreCase) || errorMessage.Contains("invalid", StringComparison.OrdinalIgnoreCase))
                 {
                     result = culture == Defaults.TR ? "Geçersiz değer" : "Invalid value";
                 }
-                else if ((value.GetCount('{') == 0 && value.GetCount('}') == 0) || (value.GetCount('{') == 2 && value.GetCount('}') == 2))
+                else if ((errorMessage.GetCount('{') == 0 && errorMessage.GetCount('}') == 0) || (errorMessage.GetCount('{') == 2 && errorMessage.GetCount('}') == 2))
                 {
-                    if (value.GetCount('{') == 2 && value.GetCount('}') == 2)
+                    if (errorMessage.GetCount('{') == 2 && errorMessage.GetCount('}') == 2)
                     {
-                        displayName = value.Substring(value.IndexOf('{'), value.IndexOf('}') + 1);
-                        value = value.Replace(displayName, GetDisplayName(displayName, propertyName, culture));
+                        displayName = errorMessage.Substring(errorMessage.IndexOf('{'), errorMessage.IndexOf('}') + 1);
+                        errorMessage = errorMessage.Replace(displayName, GetDisplayName(displayName, propertyName, culture));
                     }
-                    if (value.GetCount(';') == 1)
+                    if (errorMessage.GetCount(';') == 1)
                     {
-                        valueParts = value.Split(';');
+                        valueParts = errorMessage.Split(';');
                         if (culture == Defaults.TR)
                             result = valueParts.First();
                         else
@@ -128,7 +128,7 @@ namespace N4C.Extensions
                     }
                     else
                     {
-                        result = value;
+                        result = errorMessage;
                     }
                 }
                 if (!result.EndsWith("!"))
@@ -143,28 +143,25 @@ namespace N4C.Extensions
             return queryString[key];
         }
 
-        public static Uri GetUri(this string value, UriKind uriKind)
+        public static Uri GetUri(this string uri, UriKind uriKind)
         {
-            Uri uri = null;
-            bool result = value.HasAny() && Uri.TryCreate(value, uriKind, out uri);
-            return result ? uri : null;
+            Uri uriResult = null;
+            bool result = uri.HasAny() && Uri.TryCreate(uri, uriKind, out uriResult);
+            return result ? uriResult : null;
         }
 
-        public static string GetUri(this string value)
+        public static Uri GetUri(this string uriDictionaryKey)
         {
-            string uri = null;
-            if (value.HasAny() && Settings.UriDictionary is not null && Settings.UriDictionary.Any())
+            Uri uriResult = null;
+            if (uriDictionaryKey.HasAny() && Settings.UriDictionary is not null && Settings.UriDictionary.Any())
             {
                 foreach (var item in Settings.UriDictionary)
                 {
-                    if (item.Key.ToLower() == value.ToLower())
-                    {
-                        uri = Settings.UriDictionary[item.Key];
+                    if (item.Key.ToLower() == uriDictionaryKey.ToLower() && Uri.TryCreate(item.Value, UriKind.Absolute, out uriResult))
                         break;
-                    }
                 }
             }
-            return uri;
+            return uriResult;
         }
     }
 }

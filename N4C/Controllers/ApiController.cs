@@ -38,17 +38,17 @@ namespace N4C.Controllers
         }
 
         [HttpPost]
-        public virtual async Task<IActionResult> Post([FromBody] TRequest request, string culture = default)
+        public virtual async Task<IActionResult> Post([FromForm] ApiRequest<TRequest> apiRequest, string culture = default)
         {
             Set(culture);
-            return ActionResult(await Service.Create(request, ModelState));
+            return ActionResult(await Service.Create(apiRequest, ModelState));
         }
 
         [HttpPut]
-        public virtual async Task<IActionResult> Put([FromBody] TRequest request, string culture = default)
+        public virtual async Task<IActionResult> Put([FromForm] ApiRequest<TRequest> apiRequest, string culture = default)
         {
             Set(culture);
-            return ActionResult(await Service.Update(request, ModelState));
+            return ActionResult(await Service.Update(apiRequest, ModelState));
         }
 
         [HttpDelete("{id}")]
@@ -56,6 +56,13 @@ namespace N4C.Controllers
         {
             Set(culture);
             return ActionResult(await Service.Delete(id));
+        }
+
+        [HttpDelete("[action]")]
+        public virtual async Task<IActionResult> DeleteFile(int id, string path = default, string culture = default)
+        {
+            Set(culture);
+            return ActionResult(await Service.DeleteFiles(id, path));
         }
     }
 }

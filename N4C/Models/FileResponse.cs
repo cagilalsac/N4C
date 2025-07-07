@@ -14,10 +14,10 @@ namespace N4C.Models
         [JsonIgnore, ExcelIgnore]
         public string FileName { get; set; }
 
-        [JsonIgnore, ExcelIgnore, DisplayName("Dosyalar", "Files")]
+        [ExcelIgnore, DisplayName("Dosyalar", "Files")]
         public virtual string MainFile { get; set; }
 
-        [JsonIgnore, ExcelIgnore]
+        [ExcelIgnore]
         public virtual List<string> OtherFiles { get; set; }
     }
 }

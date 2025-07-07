@@ -97,7 +97,7 @@ foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
                                 @:<img src="@@Model.Data.MainFile" class="d-block img-fluid" />
                             @:</a>
                             @:<div class="mt-2">
-                                @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@Model.Data.MainFile" class="btn btn-danger btn-sm deletemainfile">@@deleteMainFile</a>
+                                @:<a asp-action="DeleteFileConfirmed" asp-route-id="@@Model.Data.Id" asp-route-path="@@Model.Data.MainFile" class="btn btn-danger btn-sm deletemainfile">@@deleteMainFile</a>
                             @:</div>
                         @:</div>
                     @:</div>
@@ -115,7 +115,7 @@ foreach (var item in Model.ModelMetadata.ModelType.GetProperties())
                             @:</a>
                             @:<input type="hidden" value="@@otherFile" class="otherfiles" />
                             @:<div class="mt-2">
-                                @:<a asp-action="DeleteFile" asp-route-id="@@Model.Data.Id" asp-route-path="@@otherFile" class="btn btn-danger btn-sm">@@deleteOtherFile</a>
+                                @:<a asp-action="DeleteFileConfirmed" asp-route-id="@@Model.Data.Id" asp-route-path="@@otherFile" class="btn btn-danger btn-sm">@@deleteOtherFile</a>
                             @:</div>
                         @:</div>
                     @:</div>

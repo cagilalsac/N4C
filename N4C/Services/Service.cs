@@ -308,6 +308,17 @@ namespace N4C.Services
             return await Create(request, save, cancellationToken);
         }
 
+        public async Task<Result<TRequest>> Create(ApiRequest<TRequest> apiRequest, ModelStateDictionary modelState, bool save = true, CancellationToken cancellationToken = default)
+        {
+            var request = apiRequest.Request;
+            if (request is FileRequest)
+            {
+                (request as FileRequest).MainFormFile = apiRequest.MainFormFile;
+                (request as FileRequest).OtherFormFiles = apiRequest.OtherFormFiles;
+            }
+            return await Create(request, modelState, save, cancellationToken);
+        }
+
         protected async Task<Result<TEntity>> Update(TEntity entity, bool save = true, CancellationToken cancellationToken = default)
         {
             Db.Set<TEntity>().Update(entity);
@@ -365,6 +376,17 @@ namespace N4C.Services
                 return Result(validationResult, request);
             _validated = true;
             return await Update(request, save, cancellationToken);
+        }
+
+        public async Task<Result<TRequest>> Update(ApiRequest<TRequest> apiRequest, ModelStateDictionary modelState, bool save = true, CancellationToken cancellationToken = default)
+        {
+            var request = apiRequest.Request;
+            if (request is FileRequest)
+            {
+                (request as FileRequest).MainFormFile = apiRequest.MainFormFile;
+                (request as FileRequest).OtherFormFiles = apiRequest.OtherFormFiles;
+            }
+            return await Update(request, modelState, save, cancellationToken);
         }
 
         public virtual async Task<Result<TRequest>> Delete(TRequest request, bool save = true, CancellationToken cancellationToken = default)
@@ -531,7 +553,7 @@ namespace N4C.Services
             if (!deleteResult.Success)
                 return Result(deleteResult, request);
             await Save(cancellationToken);
-            return Success(request);
+            return Result(deleteResult, request, "Dosya başarıyla silindi", "File deleted successfully");
         }
 
         protected void GetFiles(TResponse item)

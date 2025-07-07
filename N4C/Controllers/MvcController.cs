@@ -32,13 +32,13 @@ namespace N4C.Controllers
 
         public virtual async Task<IActionResult> Index(PageOrderRequest request)
         {
-            var result = await Service.GetResponse(request);
+            var result = await Service.GetResponse<TResponse>(Uri, RefreshTokenUri, request) ?? await Service.GetResponse(request);
             return View(result);
         }
 
         public virtual async Task<IActionResult> Details(int id)
         {
-            var result = await Service.GetResponse(id);
+            var result = await Service.GetResponse<TResponse>(Uri, RefreshTokenUri, id) ?? await Service.GetResponse(id);
             return View(result);
         }
 
@@ -52,7 +52,7 @@ namespace N4C.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public virtual async Task<IActionResult> Create(TRequest request)
         {
-            var result = await Service.Create(request, ModelState);
+            var result = await Service.Create(Uri, RefreshTokenUri, request) ?? await Service.Create(request, ModelState);
             if (result.Success)
             {
                 SetTempData(result);
@@ -72,7 +72,7 @@ namespace N4C.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public virtual async Task<IActionResult> Edit(TRequest request)
         {
-            var result = await Service.Update(request, ModelState);
+            var result = await Service.Update(Uri, RefreshTokenUri, request) ?? await Service.Update(request, ModelState);
             if (result.Success)
             {
                 SetTempData(result);
@@ -92,21 +92,21 @@ namespace N4C.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public virtual async Task<IActionResult> DeleteConfirmed(TRequest request)
         {
-            var result = await Service.Delete(request);
+            var result = await Service.Delete<TRequest>(Uri, RefreshTokenUri, request.Id) ?? await Service.Delete(request);
             SetTempData(result);
             return RedirectToAction(nameof(Index));
         }
 
         public virtual async Task<IActionResult> DeleteByAlertify(TRequest request, bool pageOrderSession)
         {
-            var result = await Service.Delete(request);
+            var result = await Service.Delete<TRequest>(Uri, RefreshTokenUri, request.Id) ?? await Service.Delete(request);
             SetTempData(result);
             return RedirectToAction(nameof(Index), new { pageOrderSession });
         }
 
-        public virtual async Task<IActionResult> DeleteFile(int id, string path = null, string redirectToAction = "Details")
+        public virtual async Task<IActionResult> DeleteFileConfirmed(int id, string path = default, string redirectToAction = "Details")
         {
-            var result = await Service.DeleteFiles(id, path);
+            var result = await Service.DeleteFile<TRequest>(Uri, RefreshTokenUri, id, path) ?? await Service.DeleteFiles(id, path);
             SetTempData(result);
             return RedirectToAction(redirectToAction, new { id });
         }

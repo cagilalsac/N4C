@@ -17,7 +17,6 @@ namespace N4C.Models
         /// <summary>
         /// For only getting the main file path in MVC edit operation. Use MainFormFile to post file data with MVC.
         /// </summary>
-        [JsonIgnore]
         public string MainFile { get; set; }
     }
 }
