@@ -267,6 +267,11 @@ namespace N4C.Services
             }
         }
 
+        protected IQueryable<TRelationalEntity> Query<TRelationalEntity>() where TRelationalEntity : Entity, new()
+        {
+            return Db.Set<TRelationalEntity>().AsNoTracking();
+        }
+
         protected virtual async Task<Result<TRequest>> Create(TRequest request, bool save = true, CancellationToken cancellationToken = default)
         {
             try
