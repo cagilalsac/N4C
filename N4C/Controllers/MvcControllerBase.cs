@@ -42,8 +42,12 @@ namespace N4C.Controllers
         {
             if (uriDictionaryKey.HasAny())
                 Uri = new Uri($"{uriDictionaryKey.GetUri()}?culture={Culture}");
-            TokenUri = new Uri($"{"token".GetUri()}?culture={Culture}");
-            RefreshTokenUri = new Uri($"{"refreshtoken".GetUri()}?culture={Culture}");
+            TokenUri = "token".GetUri();
+            if (TokenUri is not null)
+                TokenUri = new Uri($"{TokenUri}?culture={Culture}");
+            RefreshTokenUri = "refreshtoken".GetUri();
+            if (RefreshTokenUri is not null)
+                RefreshTokenUri = new Uri($"{RefreshTokenUri}?culture={Culture}");
             Token = null;
         }
 

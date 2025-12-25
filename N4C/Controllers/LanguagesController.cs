@@ -10,10 +10,10 @@ namespace N4C.Controllers
         {
         }
 
-        public IActionResult Index(string culture)
+        public IActionResult Index(string culture, string area = "")
         {
             Service.CreateCookie(".N4C.Culture", culture);
-            return RedirectToAction("Index", "Home", new { area = "" });
+            return RedirectToAction("Index", "Home", new { area });
         }
     }
 }

@@ -13,7 +13,7 @@ using N4C.User.App.Models;
 
 namespace N4C.User.Web.ApiControllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "system")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "admin,system")]
     public class N4CRoleController : ApiController<N4CRole, N4CRoleRequest, N4CRoleResponse>
     {
         public N4CRoleController(Service<N4CRole, N4CRoleRequest, N4CRoleResponse> service) : base(service)

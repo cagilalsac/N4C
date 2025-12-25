@@ -9,7 +9,7 @@
 @{
     var culture = Model.Culture;
     var isAuthenticated = User.Identity.IsAuthenticated;
-    var isInRoleSystem = User.IsInRole("system");
+    var isAuthorized = User.IsInRole("admin") || User.IsInRole("system");
 }
 
 <!doctype html>
@@ -101,7 +101,7 @@
                             </a>
                         </li>
                     }
-                    @if (isInRoleSystem)
+                    @if (isAuthorized)
                     {
                         <li class="menu-item">
                             <a asp-area="" asp-action="Index" asp-controller="N4CUser" class="menu-link">

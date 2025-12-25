@@ -13,7 +13,7 @@ using N4C.User.App.Models;
 
 namespace N4C.User.Web.Controllers
 {
-    [Authorize(Roles = "system")]
+    [Authorize(Roles = "admin,system")]
     public class N4CRoleController : MvcController<N4CRole, N4CRoleRequest, N4CRoleResponse>
     {
         // Service injections:

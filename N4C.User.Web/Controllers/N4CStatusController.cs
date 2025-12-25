@@ -16,7 +16,7 @@ using N4C.User.App.Services;
 
 namespace N4C.User.Web.Controllers
 {
-    [Authorize(Roles = "system")]
+    [Authorize(Roles = "admin,system")]
     public class N4CStatusController : MvcController<N4CStatus, N4CStatusRequest, N4CStatusResponse>
     {
         // Service injections:

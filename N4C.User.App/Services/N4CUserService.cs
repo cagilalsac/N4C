@@ -13,7 +13,7 @@ namespace N4C.User.App.Services
 {
     public class N4CUserService : Service<N4CUser, N4CUserRequest, N4CUserResponse>
     {
-        public N4CUserService(N4CUserDb db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger)
+        public N4CUserService(DbContext db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger)
             : base(db, httpContextAccessor, httpClientFactory, logger)
         {
         }

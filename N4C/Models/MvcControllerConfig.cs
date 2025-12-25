@@ -8,7 +8,7 @@ namespace N4C.Models
 
         public string UriDictionaryKey { get; private set; }
 
-        public void SetUri(bool api, string uriDictionaryKey)
+        public void SetUri(bool api, string uriDictionaryKey = "")
         {
             UriDictionaryKey = api ? uriDictionaryKey : null;
         }

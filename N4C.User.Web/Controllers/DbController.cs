@@ -120,7 +120,7 @@ namespace N4C.User.Web.Controllers
                     CreatedBy = Defaults.System,
                     RoleIds = new List<int>()
                     {
-                        _db.Roles.SingleOrDefault(r => r.Name == Defaults.System).Id
+                        _db.Roles.SingleOrDefault(r => r.Name == Defaults.Admin).Id
                     },
                     StatusId = _db.Statuses.SingleOrDefault(s => s.Title == Defaults.Active).Id
                 });

@@ -11,7 +11,7 @@ namespace N4C.User.App.Services
 {
     public class N4CStatusService : Service<N4CStatus, N4CStatusRequest, N4CStatusResponse>
     {
-        public N4CStatusService(N4CUserDb db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger) 
+        public N4CStatusService(DbContext db, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<Service> logger) 
             : base(db, httpContextAccessor, httpClientFactory, logger)
         {
         }

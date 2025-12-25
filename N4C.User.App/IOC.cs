@@ -16,7 +16,7 @@ namespace N4C.User.App
         public static void ConfigureN4CUser(this WebApplicationBuilder builder)
         {
             // Inversion of Control for DbContext:
-            builder.Services.AddDbContext<N4CUserDb>(options => options.UseSqlServer(builder.Configuration.GetConnectionString(nameof(N4CUserDb))));
+            builder.Services.AddDbContext<DbContext, N4CUserDb>(options => options.UseSqlServer(builder.Configuration.GetConnectionString(nameof(N4CUserDb))));
 
             // Inversion of Control for Services:
             builder.Services.AddScoped<Service<N4CRole, N4CRoleRequest, N4CRoleResponse>, N4CRoleService>();

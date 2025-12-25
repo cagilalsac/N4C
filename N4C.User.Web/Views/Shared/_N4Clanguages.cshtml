@@ -15,5 +15,6 @@
 }
 
 <form asp-area="" asp-action="Index" asp-controller="Languages">
+    <input type="hidden" name="area" value="" />
     <select name="culture" class="form-select" onchange="this.form.submit();" asp-items="languageSelectList"></select>
 </form>
