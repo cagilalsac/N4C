@@ -39,8 +39,8 @@ namespace N4C.User.Web.Controllers
         {
             base.Set(config => 
             {
-                // api parameter can be sent as true to consume the related API or false to use the related service.
-                config.SetUri(true, "N4CRole");
+                // Uri dictionary key can be sent to consume the related uri dictionary value api. If not sent, the related service will be used.
+                config.SetApi("N4CRole");
 
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
 

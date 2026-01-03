@@ -8,14 +8,14 @@ namespace N4C.Models
 
         public string UriDictionaryKey { get; private set; }
 
-        public void SetUri(bool api, string uriDictionaryKey = "")
+        public void SetApi(string uriDictionaryKey = default)
         {
-            UriDictionaryKey = api ? uriDictionaryKey : null;
+            UriDictionaryKey = uriDictionaryKey;
         }
 
-        public Uri GetUri(string otherUriDictionaryKey)
+        public Uri GetApi(string uriDictionaryKey)
         {
-            return UriDictionaryKey.HasAny() ? otherUriDictionaryKey.GetUri() : null;
+            return UriDictionaryKey.HasAny() ? uriDictionaryKey.GetUri() : null;
         }
 
         public void AddViewData(string key, object item)

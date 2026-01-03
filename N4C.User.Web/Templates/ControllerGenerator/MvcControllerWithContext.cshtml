@@ -125,7 +125,7 @@ namespace @Model.ControllerNamespace
         {
             base.Set(config => 
             {
-                // api parameter can be sent as true to consume the related API or false to use the related service.
+                // Uri dictionary key can be sent to consume the related uri dictionary value api. If not sent, the related service will be used.
                 config.SetUri(false, "@(Model.ModelTypeName)");
 
 @{

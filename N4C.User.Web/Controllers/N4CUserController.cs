@@ -44,15 +44,15 @@ namespace N4C.User.Web.Controllers
         {
             base.Set(config => 
             {
-                // api parameter can be sent as true to consume the related API or false to use the related service.
-                config.SetUri(true, "N4CUser");
+                // Uri dictionary key can be sent to consume the related uri dictionary value api. If not sent, the related service will be used.
+                config.SetApi("N4CUser");
 
                 // Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
-                config.AddViewData("StatusId", new SelectList(_statusService.GetResponse<N4CStatusResponse>(config.GetUri("N4CStatus")).Result?.Data ?? 
+                config.AddViewData("StatusId", new SelectList(_statusService.GetResponse<N4CStatusResponse>(config.GetApi("N4CStatus")).Result?.Data ?? 
                     _statusService.GetResponse().Result.Data, "Id", "Title"));
 
                 /* Can be uncommented and used for many to many relationships. {Entity} must be replaced with the related name in the controller and views. */
-                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.GetResponse<N4CRoleResponse>(config.GetUri("N4CRole")).Result?.Data ?? 
+                config.AddViewData("RoleIds", new MultiSelectList(_N4CRoleService.GetResponse<N4CRoleResponse>(config.GetApi("N4CRole")).Result?.Data ?? 
                     _N4CRoleService.GetResponse().Result.Data, "Id", "Name"));
             });
         }
