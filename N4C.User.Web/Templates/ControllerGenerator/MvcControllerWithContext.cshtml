@@ -126,7 +126,7 @@ namespace @Model.ControllerNamespace
             base.Set(config => 
             {
                 // Uri dictionary key can be sent to consume the related uri dictionary value api. If not sent, the related service will be used.
-                config.SetUri(false, "@(Model.ModelTypeName)");
+                config.SetApi("@(Model.ModelTypeName)");
 
 @{
                 @:// Related items logic to set ViewData SelectLists (Id and Name parameters may need to be changed in the SelectList constructors):
@@ -134,13 +134,13 @@ namespace @Model.ControllerNamespace
     {
         foreach (var property in relatedProperties.Values)
         {
-                @:config.AddViewData("@(property.ForeignKeyPropertyNames[0])", new SelectList(_@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(0, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1))Service.GetResponse<@responseType>(config.GetUri("@(Model.ModelTypeName)")).Result?.Data ?? _@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(0, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1))Service.GetResponse().Result.Data, "Id", "Name"));
+                @:config.AddViewData("@(property.ForeignKeyPropertyNames[0])", new SelectList(_@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(0, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1))Service.GetResponse<@responseType>(config.GetApi("@(Model.ModelTypeName)")).Result?.Data ?? _@(relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(0, 1).ToLower() + relatedProperties.FirstOrDefault(rp => rp.Value == property).Key.Substring(1))Service.GetResponse().Result.Data, "Id", "Name"));
         }
     }
 }  
 
                 /* Can be uncommented and used for many to many relationships. {Entity} must be replaced with the related name in the controller and views. */
-                //config.AddViewData("{Entity}Ids", new MultiSelectList(_{Entity}Service.GetResponse<{Entity}Response>(config.GetUri("{Entity}")).Result?.Data ?? _{Entity}Service.GetResponse().Result.Data, "Id", "Name"));
+                //config.AddViewData("{Entity}Ids", new MultiSelectList(_{Entity}Service.GetResponse<{Entity}Response>(config.GetApi("{Entity}")).Result?.Data ?? _{Entity}Service.GetResponse().Result.Data, "Id", "Name"));
             });
         }
 
